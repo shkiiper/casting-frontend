@@ -1,0 +1,158 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap");
+@import "../../shared/theme/colors.css";
+@import "../../shared/theme/base.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* базовый фон/типографика */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  background: #f6f6f4;
+  color: #0f172a;
+  font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* marquee */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+}
+
+.marquee__track {
+  display: inline-flex;
+  gap: 48px;
+  padding-left: 24px;
+  animation: marquee 28s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track {
+    animation: none;
+  }
+}
+
+/* Home hero glass + white neon */
+.hero-glass {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.42), rgba(226, 232, 240, 0.24));
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.46) inset,
+    0 8px 20px rgba(15, 23, 42, 0.08),
+    0 0 16px rgba(255, 255, 255, 0.46),
+    0 0 32px rgba(203, 213, 225, 0.38);
+  isolation: isolate;
+}
+
+.hero-glass-chip {
+  background: rgba(255, 255, 255, 0.48);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.44) inset,
+    0 0 14px rgba(255, 255, 255, 0.45);
+}
+
+.hero-glass-card {
+  background: rgba(255, 255, 255, 0.44);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.35) inset,
+    0 0 18px rgba(255, 255, 255, 0.36);
+}
+
+.hero-glass-footer {
+  background: rgba(255, 255, 255, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.hero-octopus-behind {
+  position: absolute;
+  right: -385px;
+  top: 14%;
+  width: 620px;
+  height: auto;
+  object-fit: contain;
+  transform: rotate(88deg);
+  transform-origin: center;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  opacity: 0.9;
+  filter: drop-shadow(0 10px 18px rgba(15, 23, 42, 0.16));
+}
+
+.hero-glass > .relative {
+  z-index: 1;
+}
+
+@media (max-width: 1024px) {
+  .hero-octopus-behind {
+    display: none;
+  }
+}
+
+.glass-object {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.34),
+    rgba(255, 255, 255, 0.16)
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.42) inset,
+    0 6px 16px rgba(15, 23, 42, 0.08),
+    0 0 12px rgba(255, 255, 255, 0.38),
+    0 0 24px rgba(203, 213, 225, 0.28) !important;
+}
+
+.glass-object-soft {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0.12)
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.68) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.38) inset,
+    0 0 10px rgba(255, 255, 255, 0.32);
+}
+
+/* Performance fallback for lower-powered devices */
+@media (max-width: 1024px) {
+  .hero-glass,
+  .glass-object,
+  .glass-object-soft {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

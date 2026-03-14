@@ -1,0 +1,23 @@
+:root {
+  --bg-body: #f2f4f8;
+  --bg-card: rgba(255, 255, 255, 0.95);
+  --bg-card-soft: rgba(241, 245, 255, 0.96);
+
+  --accent-primary: #ffffff;
+  --accent-primary-soft: #e6edff;
+
+  --text-main: #1f2937;
+  --text-muted: #64748b;
+  --text-on-dark: #ffffff;
+
+  --surface-dark: #151515;
+  --surface-dark-soft: #1f1f23;
+
+  --border-subtle: rgba(0, 0, 0, 0.08);
+
+  --shadow-soft: 0 24px 60px rgba(0, 0, 0, 0.18);
+
+  --radius-xl: 36px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+}

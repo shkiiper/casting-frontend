@@ -1,0 +1,27 @@
+.auth-root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-scene {
+  position: absolute;
+  inset: -60px;
+  background:
+    radial-gradient(circle at 80% 20%, rgba(255, 166, 102, 0.35), transparent 55%),
+    radial-gradient(circle at 15% 85%, rgba(0, 0, 0, 0.12), transparent 55%);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.auth-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 40px;
+  align-items: stretch;
+}

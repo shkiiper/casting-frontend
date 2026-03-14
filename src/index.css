@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* белый сайт */
+html, body, #root { height: 100%; }
+body { margin: 0; background: #fff; color: #0f172a; }

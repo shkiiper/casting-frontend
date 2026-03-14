@@ -1,0 +1,155 @@
+.submodal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 12, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 2000;
+}
+
+.submodal {
+  width: 100%;
+  max-width: 560px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.submodal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.submodal-title {
+  font-size: 16px;
+  font-weight: 750;
+  color: #0f172a;
+}
+
+.submodal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 18px;
+  color: rgba(15, 23, 42, 0.85);
+}
+
+.submodal-close:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.submodal-loading {
+  padding: 16px;
+  font-size: 13px;
+  color: rgba(15, 23, 42, 0.7);
+}
+
+.submodal-body {
+  padding: 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.submodal-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(15, 23, 42, 0.70);
+}
+
+.submodal-select,
+.submodal-input {
+  border-radius: 999px;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  padding: 10px 14px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.75);
+  outline: none;
+  color: #0f172a;
+}
+
+.submodal-select:focus,
+.submodal-input:focus {
+  border-color: rgba(15, 23, 42, 0.35);
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+}
+
+.submodal-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.submodal-kv span {
+  display: block;
+  font-size: 11px;
+  color: rgba(15, 23, 42, 0.60);
+}
+
+.submodal-kv strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.submodal-error {
+  font-size: 13px;
+  color: #b42318;
+}
+
+.submodal-footer {
+  padding: 14px 16px 16px;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(15, 23, 42, 0.07);
+}
+
+.submodal-secondary,
+.submodal-primary {
+  border-radius: 999px;
+  border: none;
+  padding: 10px 16px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.submodal-secondary {
+  background: rgba(15, 23, 42, 0.06);
+  color: rgba(15, 23, 42, 0.78);
+}
+
+.submodal-secondary:hover {
+  background: rgba(15, 23, 42, 0.09);
+}
+
+.submodal-primary {
+  background: #0f172a;
+  color: white;
+  font-weight: 650;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.25);
+}
+
+.submodal-primary:disabled,
+.submodal-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
