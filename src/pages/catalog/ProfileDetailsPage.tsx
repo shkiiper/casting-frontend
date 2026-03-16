@@ -474,10 +474,24 @@ export const ProfileDetailsPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10 pt-8 pb-16">
         <Container>
-          <div className="mx-auto max-w-[1280px] rounded-[30px] bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] border border-black/5 overflow-visible">
+          <div
+            className={[
+              "mx-auto max-w-[1280px] overflow-visible rounded-[26px] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:rounded-[30px]",
+              premium.active
+                ? "border-amber-300/80 shadow-[0_20px_54px_rgba(217,119,6,0.18)]"
+                : "border-black/5",
+            ].join(" ")}
+          >
             <InlineNav active={navActive} />
 
-            <header className="px-6 md:px-8 py-6 border-b border-black/10 bg-slate-50/70 flex flex-wrap items-center justify-between gap-4">
+            <header
+              className={[
+                "flex flex-wrap items-center justify-between gap-4 border-b px-4 py-5 sm:px-6 md:px-8 md:py-6",
+                premium.active
+                  ? "border-amber-200/70 bg-[linear-gradient(135deg,rgba(255,251,235,0.95)_0%,rgba(255,255,255,0.92)_100%)]"
+                  : "border-black/10 bg-slate-50/70",
+              ].join(" ")}
+            >
               <div>
                 <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
                   Профиль
@@ -516,7 +530,7 @@ export const ProfileDetailsPage = () => {
               </div>
             </header>
 
-            <section className="px-6 md:px-8 py-8">
+            <section className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
               {loading && (
                 <div className="text-sm text-slate-500">Загрузка профиля...</div>
               )}
@@ -535,7 +549,7 @@ export const ProfileDetailsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid lg:grid-cols-[1.05fr_1fr] gap-3">
+                  <div className="grid gap-3 lg:grid-cols-[1.05fr_1fr]">
                     <div className="relative rounded-xl overflow-hidden border border-black/10 bg-slate-200 aspect-[4/5]">
                       {galleryPhotos[0] ? (
                         <button
@@ -596,7 +610,7 @@ export const ProfileDetailsPage = () => {
                     </div>
                   </div>
 
-                  <div className="mt-10 grid xl:grid-cols-[1fr_340px] gap-8">
+                  <div className="mt-8 grid gap-8 xl:mt-10 xl:grid-cols-[1fr_340px]">
                     <div>
                       <h2 className="text-2xl md:text-3xl font-bold leading-tight">{name}</h2>
                       <p className="text-lg md:text-xl mt-2 text-slate-700">
@@ -608,7 +622,14 @@ export const ProfileDetailsPage = () => {
                           "Пол не указан"}
                       </p>
 
-                      <div className="mt-6 inline-block rounded-2xl border border-black/10 bg-slate-50 px-5 py-4">
+                      <div
+                        className={[
+                          "mt-6 inline-block rounded-2xl px-5 py-4",
+                          premium.active
+                            ? "border border-amber-200 bg-amber-50/80"
+                            : "border border-black/10 bg-slate-50",
+                        ].join(" ")}
+                      >
                         <div className="text-lg font-semibold">Опытный</div>
                         <div className="text-slate-600 mt-1 text-sm">
                           Профессионал с подтвержденным опытом
@@ -792,11 +813,11 @@ export const ProfileDetailsPage = () => {
 
       {lightboxOpen && currentPhoto && (
         <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4"
           onClick={() => setLightboxOpen(false)}
         >
           <div
-            className="relative max-w-6xl w-full h-full flex items-center justify-center"
+            className="relative flex h-full w-full max-w-6xl items-center justify-center"
             onClick={(e) => e.stopPropagation()}
           >
             <img
@@ -816,14 +837,14 @@ export const ProfileDetailsPage = () => {
                 <button
                   type="button"
                   onClick={showPrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 bg-white/90 text-slate-900"
+                  className="absolute left-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-white/90 text-slate-900 sm:left-2 sm:h-10 sm:w-10"
                 >
                   ←
                 </button>
                 <button
                   type="button"
                   onClick={showNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full w-10 h-10 bg-white/90 text-slate-900"
+                  className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-white/90 text-slate-900 sm:right-2 sm:h-10 sm:w-10"
                 >
                   →
                 </button>
@@ -928,7 +949,7 @@ const AppearancePassport = ({
         {rows.map((row, index) => (
           <div
             key={`${row.label}-${index}`}
-            className="grid grid-cols-[160px_1fr] md:grid-cols-[220px_1fr] gap-3 px-4 py-3 border-b border-slate-200 last:border-b-0"
+            className="grid gap-1 border-b border-slate-200 px-4 py-3 last:border-b-0 sm:grid-cols-[160px_1fr] sm:gap-3 md:grid-cols-[220px_1fr]"
           >
             <div className="text-xs md:text-sm uppercase tracking-[0.08em] text-slate-500">
               {row.label}
@@ -1201,7 +1222,7 @@ const EducationRow = ({
   teacher: string;
   city: string;
 }) => (
-  <div className="grid md:grid-cols-[120px_1fr_1fr] gap-4 p-4 border-b border-black/10 last:border-b-0">
+  <div className="grid gap-3 border-b border-black/10 p-4 last:border-b-0 md:grid-cols-[120px_1fr_1fr] md:gap-4">
     <div className="text-sm text-slate-500">{year}</div>
     <div>
       <div className="text-lg font-semibold">{school}</div>

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { resendVerification, verifyEmail } from "../../api/auth";
 import { useAuthStore } from "../../entities/user/model/authStore";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { getApiErrorMessage, sanitizeEmail, trimToNull } from "@/shared/lib/safety";
 import "./CheckEmailPage.css";
 
 type UserRole =
@@ -37,7 +38,7 @@ export function CheckEmailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit = useMemo(
-    () => email.trim().length > 3 && code.trim().length >= 6,
+    () => Boolean(sanitizeEmail(email) && code.trim().length >= 6),
     [email, code]
   );
 
@@ -48,9 +49,15 @@ export function CheckEmailPage() {
     setLoading(true);
 
     try {
+      const normalizedEmail = sanitizeEmail(email);
+      const normalizedCode = trimToNull(code, 6);
+      if (!normalizedEmail || !normalizedCode || normalizedCode.length < 6) {
+        setError("Введите корректные email и код");
+        return;
+      }
       const res = await verifyEmail({
-        email: email.trim(),
-        code: code.trim(),
+        email: normalizedEmail,
+        code: normalizedCode,
       });
 
       const maybeAuth = res as { token?: string | null; role?: string };
@@ -74,11 +81,8 @@ export function CheckEmailPage() {
         (res as { message?: string }).message || "Email подтверждён. Теперь войдите."
       );
       setTimeout(() => navigate("/login"), 600);
-    } catch (e: unknown) {
-      const message =
-        (e as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Неверный код или код истёк";
-      setError(message);
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Неверный код или код истёк"));
     } finally {
       setLoading(false);
     }
@@ -89,14 +93,16 @@ export function CheckEmailPage() {
     setMsg(null);
     setLoading(true);
     try {
-      const res = await resendVerification({ email: email.trim() });
+      const normalizedEmail = sanitizeEmail(email);
+      if (!normalizedEmail) {
+        setError("Введите корректный email");
+        return;
+      }
+      const res = await resendVerification({ email: normalizedEmail });
       setMsg(res.message || "Письмо отправлено");
-    } catch (e: unknown) {
-      console.error(e);
-      setError(
-        (e as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Не удалось отправить письмо"
-      );
+    } catch (error: unknown) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Не удалось отправить письмо"));
     } finally {
       setLoading(false);
     }

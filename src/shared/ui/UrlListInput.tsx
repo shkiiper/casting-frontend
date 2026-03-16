@@ -7,9 +7,9 @@ export const UrlListInput = ({
   values: string[];
   onChange: (v: string[]) => void;
 }) => {
-  const add = () => onChange([...values, ""]);
+  const add = () => onChange(values.length >= 10 ? values : [...values, ""]);
   const update = (i: number, v: string) =>
-    onChange(values.map((x, idx) => (idx === i ? v : x)));
+    onChange(values.map((x, idx) => (idx === i ? v.slice(0, 500) : x)));
   const remove = (i: number) =>
     onChange(values.filter((_, idx) => idx !== i));
 
@@ -24,7 +24,7 @@ export const UrlListInput = ({
             onChange={(e) => update(i, e.target.value)}
             placeholder="https://..."
           />
-          <button onClick={() => remove(i)}>✕</button>
+          <button type="button" onClick={() => remove(i)}>✕</button>
         </div>
       ))}
       <button

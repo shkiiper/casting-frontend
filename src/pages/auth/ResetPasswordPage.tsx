@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../../api/auth";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { getApiErrorMessage, trimToNull } from "@/shared/lib/safety";
 import "./ResetPasswordPage.css";
 
 export function ResetPasswordPage() {
@@ -15,7 +16,10 @@ export function ResetPasswordPage() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const canSubmit = useMemo(() => token && newPassword.trim().length >= 6, [token, newPassword]);
+  const canSubmit = useMemo(
+    () => Boolean(trimToNull(token, 2000) && trimToNull(newPassword, 200)?.length && newPassword.trim().length >= 6),
+    [token, newPassword]
+  );
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -23,12 +27,18 @@ export function ResetPasswordPage() {
     setError(null);
     setLoading(true);
     try {
-      const res = await resetPassword({ token, newPassword });
+      const safeToken = trimToNull(token, 2000);
+      const safePassword = trimToNull(newPassword, 200);
+      if (!safeToken || !safePassword || safePassword.length < 6) {
+        setError("Проверьте ссылку и новый пароль");
+        return;
+      }
+      const res = await resetPassword({ token: safeToken, newPassword: safePassword });
       setMsg(res.message || "Пароль обновлён");
       setTimeout(() => navigate("/login"), 800);
-    } catch (e: any) {
-      console.error(e);
-      setError(e?.response?.data?.message || "Ошибка сброса пароля");
+    } catch (error) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Ошибка сброса пароля"));
     } finally {
       setLoading(false);
     }

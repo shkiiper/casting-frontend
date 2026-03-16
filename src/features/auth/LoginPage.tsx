@@ -7,6 +7,7 @@ import {
 } from "../../api/auth";
 import api from "../../api/client";
 import { useAuthStore } from "../../entities/user/model/authStore";
+import { getApiErrorMessage, sanitizeEmail, trimToNull } from "@/shared/lib/safety";
 import "./LoginPage.css";
 
 type Mode = "LOGIN" | "RESEND" | "FORGOT";
@@ -43,8 +44,8 @@ const getErrorMessage = (error: unknown): string =>
 export const LoginPage = () => {
   const [mode, setMode] = useState<Mode>("LOGIN");
 
-  const [email, setEmail] = useState("customer@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,8 +55,8 @@ export const LoginPage = () => {
   const navigate = useNavigate();
 
   const canSubmit = useMemo(() => {
-    if (mode === "LOGIN") return email.trim() && password.trim();
-    return email.trim();
+    if (mode === "LOGIN") return Boolean(sanitizeEmail(email) && trimToNull(password, 200));
+    return Boolean(sanitizeEmail(email));
   }, [mode, email, password]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -66,7 +67,13 @@ export const LoginPage = () => {
 
     try {
       if (mode === "LOGIN") {
-        const resp = await apiLogin({ email: email.trim(), password });
+        const normalizedEmail = sanitizeEmail(email);
+        const normalizedPassword = trimToNull(password, 200);
+        if (!normalizedEmail || !normalizedPassword) {
+          setError("Введите корректные email и пароль");
+          return;
+        }
+        const resp = await apiLogin({ email: normalizedEmail, password: normalizedPassword });
         // ожидаем { token, role }
         if (!resp?.token) {
           setError("Токен не получен. Проверь email подтверждение.");
@@ -113,19 +120,29 @@ export const LoginPage = () => {
       }
 
       if (mode === "RESEND") {
-        const res = await resendVerification({ email: email.trim() });
+        const normalizedEmail = sanitizeEmail(email);
+        if (!normalizedEmail) {
+          setError("Введите корректный email");
+          return;
+        }
+        const res = await resendVerification({ email: normalizedEmail });
         setInfo(res.message || "Письмо отправлено");
         return;
       }
 
       if (mode === "FORGOT") {
-        const res = await forgotPassword({ email: email.trim() });
+        const normalizedEmail = sanitizeEmail(email);
+        if (!normalizedEmail) {
+          setError("Введите корректный email");
+          return;
+        }
+        const res = await forgotPassword({ email: normalizedEmail });
         setInfo(res.message || "Письмо для сброса отправлено");
         return;
       }
     } catch (e: unknown) {
       console.error(e);
-      const msg = getErrorMessage(e);
+      const msg = getApiErrorMessage(e, getErrorMessage(e));
 
       if (msg.toLowerCase().includes("not verified")) {
         setError("Email не подтвержден. Нажми “Отправить письмо повторно”.");
@@ -143,7 +160,7 @@ export const LoginPage = () => {
       <div className="auth-card">
         <div className="auth-card-left">
           <header className="auth-card-header">
-            <div className="auth-brand">Casting Manager</div>
+            <div className="auth-brand">Onset</div>
             <button
               type="button"
               className="auth-link-button"

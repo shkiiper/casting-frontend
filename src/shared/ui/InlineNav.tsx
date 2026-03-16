@@ -33,6 +33,7 @@ export const InlineNav = ({
   const role = (localStorage.getItem("role") || "").toUpperCase();
   const isAdmin = role === "ADMIN";
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
   const effectiveProfileMenu =
     profileMenu ??
@@ -80,6 +81,11 @@ export const InlineNav = ({
       }
     };
   }, []);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+    setMenuOpen(false);
+  }, [location.pathname]);
   const resolvedActive: ActiveKey | undefined =
     active ??
     (location.pathname.startsWith("/ads")
@@ -96,18 +102,20 @@ export const InlineNav = ({
       ? "home"
       : undefined);
 
+  const navItemClass = "text-slate-600 hover:text-slate-900";
+  const navItemActiveClass = "text-slate-900 font-semibold";
   const navItem = (key: ActiveKey, label: string, to: string) =>
     resolvedActive === key ? (
-      <span className="text-slate-900 font-semibold">{label}</span>
+      <span className={navItemActiveClass}>{label}</span>
     ) : (
-      <Link to={to} className="text-slate-600 hover:text-slate-900">
+      <Link to={to} className={navItemClass}>
         {label}
       </Link>
     );
 
   return (
-    <header className="sticky top-0 z-40 px-8 py-5 border-b border-black/5 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-      <div className="flex items-center justify-between gap-6">
+    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:px-6 md:px-8 md:py-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 md:gap-6">
         <Link to="/" className="flex items-center gap-3">
           <img src={logo} alt="onset" className="h-9 w-9 rounded-xl" />
           <div className="leading-tight">
@@ -118,7 +126,7 @@ export const InlineNav = ({
           </div>
         </Link>
 
-        <nav className="flex-1 flex items-center justify-center gap-7 text-sm">
+        <nav className="hidden flex-1 items-center justify-center gap-5 text-sm lg:flex">
           {navItem("home", "Главная", "/")}
           {navItem("actors", "Актёры", "/actors")}
           {navItem("creators", "Креаторы", "/creators")}
@@ -127,7 +135,16 @@ export const InlineNav = ({
           {isAdmin && navItem("admin", "Админка", "/admin")}
         </nav>
 
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen((value) => !value)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 lg:hidden"
+            aria-label="Открыть навигацию"
+            aria-expanded={mobileNavOpen}
+          >
+            <span className="text-lg leading-none">{mobileNavOpen ? "✕" : "☰"}</span>
+          </button>
           {!isAuthed ? (
             <Link
               to="/login"
@@ -194,6 +211,57 @@ export const InlineNav = ({
           )}
         </div>
       </div>
+
+      {mobileNavOpen ? (
+        <div className="mt-4 rounded-2xl border border-black/5 bg-white/90 p-4 shadow-sm lg:hidden">
+          <nav className="flex flex-col gap-3 text-sm">
+            {resolvedActive === "home" ? (
+              <span className={navItemActiveClass}>Главная</span>
+            ) : (
+              <Link to="/" className={navItemClass}>
+                Главная
+              </Link>
+            )}
+            {resolvedActive === "actors" ? (
+              <span className={navItemActiveClass}>Актёры</span>
+            ) : (
+              <Link to="/actors" className={navItemClass}>
+                Актёры
+              </Link>
+            )}
+            {resolvedActive === "creators" ? (
+              <span className={navItemActiveClass}>Креаторы</span>
+            ) : (
+              <Link to="/creators" className={navItemClass}>
+                Креаторы
+              </Link>
+            )}
+            {resolvedActive === "locations" ? (
+              <span className={navItemActiveClass}>Локации</span>
+            ) : (
+              <Link to="/locations" className={navItemClass}>
+                Локации
+              </Link>
+            )}
+            {resolvedActive === "ads" ? (
+              <span className={navItemActiveClass}>Объявления</span>
+            ) : (
+              <Link to="/ads" className={navItemClass}>
+                Объявления
+              </Link>
+            )}
+            {isAdmin ? (
+              resolvedActive === "admin" ? (
+                <span className={navItemActiveClass}>Админка</span>
+              ) : (
+                <Link to="/admin" className={navItemClass}>
+                  Админка
+                </Link>
+              )
+            ) : null}
+          </nav>
+        </div>
+      ) : null}
     </header>
   );
 };

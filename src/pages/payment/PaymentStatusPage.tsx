@@ -9,6 +9,7 @@ import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
+import { sanitizeHttpUrl, sanitizeInternalPath } from "@/shared/lib/safety";
 
 const POLL_INTERVAL_MS = 2500;
 
@@ -17,8 +18,8 @@ export const PaymentStatusPage = () => {
   const [searchParams] = useSearchParams();
 
   const externalId = searchParams.get("externalId") || "";
-  const paymentUrl = searchParams.get("paymentUrl") || "";
-  const returnTo = searchParams.get("returnTo") || "/account";
+  const paymentUrl = sanitizeHttpUrl(searchParams.get("paymentUrl")) || "";
+  const returnTo = sanitizeInternalPath(searchParams.get("returnTo"), "/account");
   const title = searchParams.get("title") || "Ожидание оплаты";
 
   const [status, setStatus] = useState<string>("PENDING");
@@ -32,7 +33,8 @@ export const PaymentStatusPage = () => {
 
   const computedMockUrl = useMemo(() => {
     const base = String(api.defaults.baseURL || "").replace(/\/$/, "");
-    return externalId ? `${base}/mock-pay/${encodeURIComponent(externalId)}` : "";
+    const candidate = externalId ? `${base}/mock-pay/${encodeURIComponent(externalId)}` : "";
+    return sanitizeHttpUrl(candidate) || "";
   }, [externalId]);
 
   const checkStatus = async () => {
@@ -101,13 +103,13 @@ export const PaymentStatusPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10 pt-8 pb-16">
         <Container>
-          <div className="glass-object mx-auto max-w-4xl rounded-[36px] overflow-visible">
+          <div className="glass-object mx-auto max-w-4xl overflow-visible rounded-[28px] sm:rounded-[36px]">
             <InlineNav
               active={role === "ADMIN" ? "admin" : undefined}
               profileMenu={[{ label: "Выйти", onClick: logout, danger: true }]}
             />
 
-            <section className="px-8 py-8">
+            <section className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
               <div className="text-xs uppercase tracking-wide text-slate-500">
                 Платеж
               </div>

@@ -16,6 +16,15 @@ import type {
 } from "@/types/customer";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
+import {
+  getApiErrorMessage,
+  sanitizeEmail,
+  sanitizeHttpUrl,
+  sanitizePhone,
+  sanitizeTelegram,
+  trimMultilineToNull,
+  trimToNull,
+} from "@/shared/lib/safety";
 
 const PHOTO_TYPES = [
   "image/jpeg",
@@ -49,13 +58,13 @@ type CustomerProfileForm = {
 /* ================= HELPERS ================= */
 
 const mapToForm = (p: CustomerProfileResponse): CustomerProfileForm => ({
-  displayName: p.displayName ?? "",
-  description: p.description ?? "",
-  city: p.city ?? "",
-  contactPhone: p.contactPhone ?? "",
-  contactEmail: p.contactEmail ?? "",
-  contactTelegram: p.contactTelegram ?? "",
-  mainPhotoUrl: p.mainPhotoUrl ?? "",
+  displayName: trimToNull(p.displayName, 120) ?? "",
+  description: trimMultilineToNull(p.description, 2000) ?? "",
+  city: trimToNull(p.city, 120) ?? "",
+  contactPhone: sanitizePhone(p.contactPhone) ?? "",
+  contactEmail: sanitizeEmail(p.contactEmail) ?? "",
+  contactTelegram: sanitizeTelegram(p.contactTelegram) ?? "",
+  mainPhotoUrl: trimToNull(p.mainPhotoUrl, 1500) ?? "",
 });
 
 const toPercent = (used: number, limit: number) =>
@@ -136,10 +145,14 @@ export const CustomerAccountPage = () => {
         fd
       );
 
-      const next = urls?.[0] ?? "";
+      const next = sanitizeHttpUrl(urls?.[0]) || (typeof urls?.[0] === "string" && urls[0].startsWith("/") ? urls[0] : "");
+      if (!next) {
+        setError("Сервер вернул некорректный адрес фото");
+        return;
+      }
       setForm({ ...form, mainPhotoUrl: next });
-    } catch {
-      setError("Ошибка загрузки фото");
+    } catch (error) {
+      setError(getApiErrorMessage(error, "Ошибка загрузки фото"));
     } finally {
       setUploading(false);
     }
@@ -157,15 +170,23 @@ export const CustomerAccountPage = () => {
 
       const res = await api.patch<CustomerProfileResponse>(
         "/api/customer/me",
-        form
+        {
+          displayName: trimToNull(form.displayName, 120),
+          description: trimMultilineToNull(form.description, 2000),
+          city: trimToNull(form.city, 120),
+          contactPhone: sanitizePhone(form.contactPhone),
+          contactEmail: sanitizeEmail(form.contactEmail),
+          contactTelegram: sanitizeTelegram(form.contactTelegram),
+          mainPhotoUrl: trimToNull(form.mainPhotoUrl, 1500),
+        }
       );
 
       setForm(mapToForm(res.data));
       setSaveNotice("Профиль успешно сохранен");
       window.setTimeout(() => setSaveNotice(null), 2500);
-    } catch {
+    } catch (error) {
       setSaveNotice(null);
-      setError("Ошибка сохранения профиля");
+      setError(getApiErrorMessage(error, "Ошибка сохранения профиля"));
     } finally {
       setSaving(false);
     }
@@ -201,7 +222,7 @@ export const CustomerAccountPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-          <div className="glass-object mx-auto max-w-7xl mt-8 rounded-[44px] overflow-visible">
+          <div className="glass-object mx-auto mt-6 max-w-7xl overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
           <InlineNav
             profileMenu={[
               {
@@ -223,7 +244,7 @@ export const CustomerAccountPage = () => {
               },
             ]}
           />
-          <header className="glass-object-soft px-8 py-6 border-b border-white/50 flex flex-wrap items-center justify-between gap-3">
+          <header className="glass-object-soft flex flex-wrap items-center justify-between gap-3 border-b border-white/50 px-4 py-5 sm:px-6 md:px-8 md:py-6">
             <div>
               <div className="text-xs text-slate-500">Личный кабинет</div>
               <h1 className="text-2xl font-bold">Кабинет заказчика</h1>
@@ -232,14 +253,14 @@ export const CustomerAccountPage = () => {
             <div />
           </header>
 
-          <section className="px-8 py-8">
+          <section className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
             {error && (
               <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm mb-6">
                 {error}
               </div>
             )}
 
-            <div className="grid lg:grid-cols-[1.4fr_0.8fr] gap-8">
+            <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
               <div className="space-y-8">
                 <Section title="Профиль заказчика">
                   {form && (
@@ -349,13 +370,13 @@ export const CustomerAccountPage = () => {
                         <button
                           onClick={saveProfile}
                           disabled={saving}
-                          className="px-6 py-3 bg-slate-900 text-white rounded-xl"
+                          className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto"
                         >
                           {saving ? "Сохраняем..." : "Сохранить изменения"}
                         </button>
                         <Link
                           to="/account/my-castings"
-                          className="px-6 py-3 border rounded-xl"
+                          className="w-full rounded-xl border px-6 py-3 text-center sm:w-auto"
                         >
                           Перейти к объявлениям
                         </Link>
@@ -443,13 +464,18 @@ export const CustomerAccountPage = () => {
         onClose={() => setModalOpen(false)}
         onPaymentCreated={(resp) => {
           const externalId = getExternalIdFromInit(resp);
+          const paymentUrl = sanitizeHttpUrl(resp.paymentUrl);
           if (!externalId) {
             setError("Не удалось получить идентификатор платежа");
             return;
           }
+          if (!paymentUrl) {
+            setError("Платежный сервис вернул некорректную ссылку оплаты");
+            return;
+          }
           const params = new URLSearchParams({
             externalId,
-            paymentUrl: resp.paymentUrl,
+            paymentUrl,
             returnTo: "/account",
             title:
               modalMode === "BOOSTERS"
@@ -476,7 +502,7 @@ const Section = ({
 }) => (
   <section>
     <div className="font-semibold text-sm mb-3">{title}</div>
-    <div className="glass-object-soft rounded-2xl p-6">{children}</div>
+    <div className="glass-object-soft rounded-2xl p-4 sm:p-6">{children}</div>
   </section>
 );
 

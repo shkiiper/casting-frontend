@@ -8,6 +8,13 @@ import { Textarea } from "@/shared/ui/Textarea";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import type { PageResponse } from "@/types/common";
+import {
+  getApiErrorMessage,
+  sanitizeHttpUrl,
+  sanitizeInternalPath,
+  trimMultilineToNull,
+  trimToNull,
+} from "@/shared/lib/safety";
 
 type CastingResponse = {
   id: number;
@@ -66,16 +73,26 @@ export const AdsPage = () => {
   }, []);
 
   const requestPayment = async () => {
-    if (!form.title.trim() || form.title.trim().length < 5) {
+    const title = trimToNull(form.title, 120) ?? "";
+    const description = trimMultilineToNull(form.description, 4000) ?? "";
+
+    if (!title || title.length < 5) {
       setError("Заголовок должен быть не короче 5 символов");
       return;
     }
 
-    if (!form.description.trim() || form.description.trim().length < 20) {
+    if (!description || description.length < 20) {
       setError("Описание должно быть не короче 20 символов");
       return;
     }
 
+    setForm((prev) => ({
+      ...prev,
+      title,
+      description,
+      city: trimToNull(prev.city, 120) ?? "",
+      projectType: trimToNull(prev.projectType, 120) ?? "",
+    }));
     setError(null);
     setPayOpen(true);
   };
@@ -86,27 +103,28 @@ export const AdsPage = () => {
       setError(null);
 
       const payment = await createCastingPayment({
-        title: form.title,
-        description: form.description,
-        city: form.city || null,
-        projectType: form.projectType || null,
+        title: trimToNull(form.title, 120) ?? "",
+        description: trimMultilineToNull(form.description, 4000) ?? "",
+        city: trimToNull(form.city, 120),
+        projectType: trimToNull(form.projectType, 120),
         days: form.days,
       });
       const externalId = getExternalIdFromInit(payment);
-      if (!externalId) {
+      const paymentUrl = sanitizeHttpUrl(payment.paymentUrl);
+      if (!externalId || !paymentUrl) {
         setError("Не удалось получить идентификатор платежа");
         return;
       }
       setPayOpen(false);
       const params = new URLSearchParams({
         externalId,
-        paymentUrl: payment.paymentUrl,
-        returnTo: "/ads/manage",
+        paymentUrl,
+        returnTo: sanitizeInternalPath("/ads/manage", "/ads/manage"),
         title: "Оплата размещения объявления",
       });
       navigate(`/payments/status?${params.toString()}`);
-    } catch {
-      setError("Ошибка создания платежа за объявление");
+    } catch (error) {
+      setError(getApiErrorMessage(error, "Ошибка создания платежа за объявление"));
     } finally {
       setSaving(false);
     }
@@ -131,9 +149,9 @@ export const AdsPage = () => {
       <div className="relative z-10">
         <Container>
         <div className="mx-auto max-w-7xl mt-10">
-          <div className="glass-object rounded-[36px]">
+          <div className="glass-object rounded-[28px] sm:rounded-[36px]">
             <InlineNav active="ads" />
-            <header className="px-8 py-6 border-b flex flex-wrap items-center justify-between gap-3">
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-5 sm:px-6 md:px-8 md:py-6">
               <div>
                 <div className="text-xs text-slate-500">Объявления</div>
                 <h1 className="text-2xl font-bold">Мои объявления</h1>
@@ -143,7 +161,7 @@ export const AdsPage = () => {
               </Link>
             </header>
 
-            <section className="px-8 py-8 grid lg:grid-cols-[1fr_1.1fr] gap-8">
+            <section className="grid gap-8 px-4 py-6 sm:px-6 md:px-8 md:py-8 lg:grid-cols-[1fr_1.1fr]">
               <div>
                 <div className="font-semibold text-sm mb-3">
                   Создать объявление

@@ -23,12 +23,14 @@ const emptyPlan: AdminPlanPayload = {
   boosterContacts: 0,
   castingPostPrice: 0,
   castingPostDays: 30,
+  premiumProfilePrice: 0,
+  premiumProfileDays: 30,
   active: true,
 };
 
 const toNum = (value: string) => {
   const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
 };
 
 const formatNumber = (value: number) =>
@@ -203,7 +205,7 @@ export const AdminPage = () => {
       </div>
 
       <header className="border-b border-black/10 bg-white">
-        <div className="w-full px-6 py-8 md:px-8 xl:px-10">
+        <div className="w-full px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
             <div>
               <div className="text-xs uppercase tracking-[0.22em] text-slate-500">
@@ -255,7 +257,7 @@ export const AdminPage = () => {
         </div>
       </header>
 
-      <main className="w-full px-6 py-8 md:px-8 xl:px-10">
+      <main className="w-full px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
         <section className="space-y-6">
           {error && (
             <div className="rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
@@ -387,6 +389,10 @@ export const AdminPage = () => {
                             label="Объявление"
                             value={`${formatNumber(newPlan.castingPostPrice)} сом / ${newPlan.castingPostDays} дн.`}
                           />
+                          <SummaryChip
+                            label="Premium профиль"
+                            value={`${formatNumber(newPlan.premiumProfilePrice)} сом / ${newPlan.premiumProfileDays} дн.`}
+                          />
                         </div>
                       </div>
                     </div>
@@ -494,6 +500,10 @@ export const AdminPage = () => {
                         <SummaryChip
                           label="Объявление"
                           value={`${formatNumber(plan.castingPostPrice)} сом / ${plan.castingPostDays} дн.`}
+                        />
+                        <SummaryChip
+                          label="Premium профиль"
+                          value={`${formatNumber(plan.premiumProfilePrice)} сом / ${plan.premiumProfileDays} дн.`}
                         />
                       </div>
                     </div>
@@ -617,7 +627,7 @@ const PlanFields = ({
       />
     </div>
 
-    <div className="grid gap-4 lg:grid-cols-3">
+    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
       <FieldGroup title="Подписка" description="Базовая стоимость и срок действия">
         <Field
           label="Цена периода"
@@ -673,6 +683,26 @@ const PlanFields = ({
           value={String(plan.castingPostDays)}
           suffix="дней"
           onChange={(v) => onChange({ ...plan, castingPostDays: toNum(v) })}
+        />
+      </FieldGroup>
+
+      <FieldGroup
+        title="Premium профиль"
+        description="Цена и срок визуального выделения performer-профиля"
+      >
+        <Field
+          label="Цена premium"
+          type="number"
+          value={String(plan.premiumProfilePrice)}
+          suffix="сом"
+          onChange={(v) => onChange({ ...plan, premiumProfilePrice: toNum(v) })}
+        />
+        <Field
+          label="Срок premium"
+          type="number"
+          value={String(plan.premiumProfileDays)}
+          suffix="дней"
+          onChange={(v) => onChange({ ...plan, premiumProfileDays: toNum(v) })}
         />
       </FieldGroup>
     </div>

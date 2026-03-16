@@ -16,7 +16,7 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-black/5">
-      <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-3">
           <img src={logo} alt="onset" className="w-9 h-9 rounded-xl" />
           <span className="text-sm font-semibold tracking-[0.12em] text-slate-700">
@@ -24,7 +24,7 @@ export const Header = () => {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-8 text-sm font-medium text-slate-700">
+        <nav className="hidden items-center gap-8 text-sm font-medium text-slate-700 md:flex">
           <Link to="/actors">Актёры</Link>
           <Link to="/creators">Креаторы</Link>
           <Link to="/locations">Локации</Link>

@@ -39,6 +39,8 @@ export type AdminPlan = {
   boosterContacts: number;
   castingPostPrice: number;
   castingPostDays: number;
+  premiumProfilePrice: number;
+  premiumProfileDays: number;
   active: boolean;
 };
 

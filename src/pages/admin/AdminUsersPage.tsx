@@ -160,7 +160,7 @@ export const AdminUsersPage = () => {
       </div>
 
       <header className="border-b border-black/10 bg-white">
-        <div className="w-full px-6 py-8 md:px-8 xl:px-10">
+        <div className="w-full px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
@@ -181,7 +181,7 @@ export const AdminUsersPage = () => {
         </div>
       </header>
 
-      <main className="w-full px-6 py-8 md:px-8 xl:px-10">
+      <main className="w-full px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
         <section className="space-y-4">
           {error && (
             <div className="rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
@@ -380,7 +380,7 @@ const UserDrawer = ({
   return (
     <div className="fixed inset-0 z-[90] bg-black/30" onClick={onClose}>
       <aside
-        className="absolute right-0 top-0 h-full w-[440px] bg-white shadow-2xl p-5 overflow-y-auto"
+        className="absolute right-0 top-0 h-full w-full max-w-[440px] overflow-y-auto bg-white p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-3">

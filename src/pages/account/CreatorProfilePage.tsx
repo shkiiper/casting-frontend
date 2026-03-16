@@ -12,6 +12,16 @@ import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
+import {
+  mergeUniqueUrls,
+  sanitizeEmail,
+  sanitizeHttpUrl,
+  sanitizePhone,
+  sanitizeTelegram,
+  toOptionalNumber,
+  trimMultilineToNull,
+  trimToNull,
+} from "@/shared/lib/safety";
 
 /* ================= CONFIG ================= */
 
@@ -237,14 +247,16 @@ export const CreatorProfilePage = () => {
         const fd = new FormData();
         fd.append("files", file);
         const { data: urls } = await api.post<string[]>("/api/files/upload", fd);
-        uploaded.push(...urls);
+        uploaded.push(...mergeUniqueUrls([], urls, { maxItems: 20 }));
       }
 
       setForm((prev) => {
         if (!prev) return prev;
 
         const nextPhotoUrls =
-          type === "photo" ? [...prev.photoUrls, ...uploaded] : prev.photoUrls;
+          type === "photo"
+            ? mergeUniqueUrls(prev.photoUrls, uploaded, { maxItems: 20 })
+            : prev.photoUrls;
         const nextMainPhotoUrl =
           type === "photo"
             ? prev.mainPhotoUrl || nextPhotoUrls[0] || ""
@@ -253,7 +265,10 @@ export const CreatorProfilePage = () => {
         return {
           ...prev,
           photoUrls: nextPhotoUrls,
-          videoUrls: type === "video" ? [...prev.videoUrls, ...uploaded] : prev.videoUrls,
+          videoUrls:
+            type === "video"
+              ? mergeUniqueUrls(prev.videoUrls, uploaded, { maxItems: 12 })
+              : prev.videoUrls,
           mainPhotoUrl: nextMainPhotoUrl,
         };
       });
@@ -319,7 +334,7 @@ export const CreatorProfilePage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-          <div className="glass-object mx-auto max-w-7xl mt-8 rounded-[44px] overflow-visible">
+          <div className="glass-object mx-auto mt-6 max-w-7xl overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
           <InlineNav
             profileMenu={[
               {
@@ -330,7 +345,7 @@ export const CreatorProfilePage = () => {
             ]}
           />
 
-          <header className="glass-object-soft px-8 py-6 border-b border-white/50">
+          <header className="glass-object-soft border-b border-white/50 px-4 py-5 sm:px-6 md:px-8 md:py-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-bold">Профиль креатора</h1>
@@ -349,7 +364,7 @@ export const CreatorProfilePage = () => {
             </div>
           </header>
 
-          <section className="px-8 py-8 space-y-6">
+          <section className="space-y-6 px-4 py-6 sm:px-6 md:px-8 md:py-8">
             {error && (
               <div className="rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
                 {error}
@@ -406,7 +421,7 @@ export const CreatorProfilePage = () => {
                   <button
                     onClick={saveProfile}
                     disabled={saving}
-                    className="rounded-xl px-6 py-3 bg-slate-900 text-white min-w-44 disabled:opacity-60"
+                    className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white disabled:opacity-60 sm:min-w-44 sm:w-auto"
                   >
                     {saving
                       ? "Сохраняем..."
@@ -417,7 +432,7 @@ export const CreatorProfilePage = () => {
 
                   <button
                     onClick={() => setForm(emptyForm())}
-                    className="rounded-xl px-6 py-3 border text-slate-600"
+                    className="w-full rounded-xl border px-6 py-3 text-slate-600 sm:w-auto"
                   >
                     Очистить форму
                   </button>
@@ -894,26 +909,26 @@ const mapToForm = (p: CreatorProfile): CreatorProfileForm => {
   const parsed = parseExperienceBundle(p.experienceText);
   return {
     published: Boolean(p.published),
-    firstName: p.firstName ?? "",
-    lastName: p.lastName ?? "",
-    city: p.city ?? "",
-    mainPhotoUrl: p.mainPhotoUrl ?? p.photoUrls?.[0] ?? "",
-    description: p.description ?? "",
-    bio: p.bio ?? "",
+    firstName: trimToNull(p.firstName, 80) ?? "",
+    lastName: trimToNull(p.lastName, 80) ?? "",
+    city: trimToNull(p.city, 120) ?? "",
+    mainPhotoUrl: trimToNull(p.mainPhotoUrl ?? p.photoUrls?.[0], 1500) ?? "",
+    description: trimMultilineToNull(p.description, 2000) ?? "",
+    bio: trimMultilineToNull(p.bio, 4000) ?? "",
     experienceLevel: parsed.experienceLevel,
     projectFormats: parsed.projectFormats,
     caseHighlights: parsed.caseHighlights,
     skills: parsed.skills,
-    activityType: p.activityType ?? "",
+    activityType: trimToNull(p.activityType, 120) ?? "",
     minRate: p.minRate ?? "",
     rateUnit: p.rateUnit ?? "PER_PROJECT",
-    contactPhone: p.contactPhone ?? "",
-    contactEmail: p.contactEmail ?? "",
-    contactWhatsapp: p.contactWhatsapp ?? "",
-    contactTelegram: p.contactTelegram ?? "",
+    contactPhone: sanitizePhone(p.contactPhone) ?? "",
+    contactEmail: sanitizeEmail(p.contactEmail) ?? "",
+    contactWhatsapp: sanitizePhone(p.contactWhatsapp) ?? "",
+    contactTelegram: sanitizeTelegram(p.contactTelegram) ?? "",
     socialLinks: parseSocialLinks(p.socialLinksJson),
-    photoUrls: p.photoUrls ?? [],
-    videoUrls: p.videoUrls ?? [],
+    photoUrls: mergeUniqueUrls([], p.photoUrls ?? [], { maxItems: 20 }),
+    videoUrls: mergeUniqueUrls([], p.videoUrls ?? [], { maxItems: 12 }),
   };
 };
 
@@ -923,44 +938,49 @@ const parseSocialLinks = (raw?: string | null): string[] => {
   try {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
-      return parsed.map((x) => String(x).trim()).filter(Boolean);
+      return parsed
+        .map((x) => sanitizeHttpUrl(String(x)))
+        .filter((value): value is string => Boolean(value));
     }
     if (parsed && typeof parsed === "object") {
       return Object.values(parsed)
-        .map((x) => String(x).trim())
-        .filter(Boolean);
+        .map((x) => sanitizeHttpUrl(String(x)))
+        .filter((value): value is string => Boolean(value));
     }
     return [];
   } catch {
     return raw
       .split(",")
-      .map((x) => x.trim())
-      .filter(Boolean);
+      .map((x) => sanitizeHttpUrl(x))
+      .filter((value): value is string => Boolean(value));
   }
 };
 
 const normalize = (f: CreatorProfileForm) => {
-  const socialLinks = f.socialLinks.map((x) => x.trim()).filter(Boolean);
+  const socialLinks = f.socialLinks
+    .map((x) => sanitizeHttpUrl(x))
+    .filter((value): value is string => Boolean(value))
+    .slice(0, 10);
   const experienceText = buildExperienceBundle(f);
 
   return {
     published: f.published,
-    firstName: f.firstName || null,
-    lastName: f.lastName || null,
-    city: f.city || null,
-    mainPhotoUrl: f.mainPhotoUrl || f.photoUrls[0] || null,
-    description: f.description || null,
-    bio: f.bio || null,
-    experienceText: experienceText || null,
-    activityType: f.activityType || null,
-    minRate: f.minRate || null,
-    rateUnit: f.rateUnit || null,
-    contactPhone: f.contactPhone || null,
-    contactEmail: f.contactEmail || null,
-    contactWhatsapp: f.contactWhatsapp || null,
-    contactTelegram: f.contactTelegram || null,
+    firstName: trimToNull(f.firstName, 80),
+    lastName: trimToNull(f.lastName, 80),
+    city: trimToNull(f.city, 120),
+    mainPhotoUrl: trimToNull(f.mainPhotoUrl || f.photoUrls[0], 1500),
+    description: trimMultilineToNull(f.description, 2000),
+    bio: trimMultilineToNull(f.bio, 4000),
+    experienceText: trimMultilineToNull(experienceText, 5000),
+    activityType: trimToNull(f.activityType, 120),
+    minRate: toOptionalNumber(f.minRate, { min: 0, max: 100000000 }),
+    rateUnit: trimToNull(f.rateUnit, 40),
+    contactPhone: sanitizePhone(f.contactPhone),
+    contactEmail: sanitizeEmail(f.contactEmail),
+    contactWhatsapp: sanitizePhone(f.contactWhatsapp),
+    contactTelegram: sanitizeTelegram(f.contactTelegram),
     socialLinksJson: socialLinks.length ? JSON.stringify(socialLinks) : null,
-    photoUrls: f.photoUrls,
-    videoUrls: f.videoUrls,
+    photoUrls: mergeUniqueUrls([], f.photoUrls, { maxItems: 20 }),
+    videoUrls: mergeUniqueUrls([], f.videoUrls, { maxItems: 12 }),
   };
 };

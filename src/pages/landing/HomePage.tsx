@@ -130,14 +130,14 @@ export const HomePage = () => {
       <PageOctopusDecor />
       <div className="relative z-10 pt-10 pb-16">
         <Container>
-          <div className="relative mx-auto max-w-7xl rounded-[44px] bg-white/88 border border-black/5 shadow-[0_16px_56px_rgba(15,23,42,0.10)] overflow-visible">
+          <div className="relative mx-auto max-w-7xl overflow-visible rounded-[30px] border border-black/5 bg-white/88 shadow-[0_16px_56px_rgba(15,23,42,0.10)] sm:rounded-[36px] lg:rounded-[44px]">
             <InlineNav active="home" />
 
-            <section className="px-8 pt-8 pb-10">
+            <section className="px-4 pb-8 pt-6 sm:px-6 md:px-8 md:pb-10 md:pt-8">
               <div className="relative">
                 <div className="hero-glass relative rounded-[30px] overflow-hidden">
 
-                  <div className="relative p-8 md:p-12">
+                  <div className="relative p-5 sm:p-7 md:p-10 lg:p-12">
                     <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-10 items-center">
                       <div>
                         <div className="hero-glass-chip inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-slate-600">
@@ -147,23 +147,23 @@ export const HomePage = () => {
                           Onset platform
                         </div>
 
-                        <h1 className="mt-7 text-4xl md:text-6xl font-extrabold leading-[1.05] tracking-tight">
+                        <h1 className="mt-6 text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-4xl md:mt-7 md:text-6xl">
                           Кастинг и продакшен
                           <span className="text-slate-500"> в одной системе</span>
                         </h1>
 
                         <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                          <Link to="/actors">
+                          <Link to="/actors" className="w-full sm:w-auto">
                             <button
-                              className="inline-flex items-center justify-center rounded-xl px-8 py-3 font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors shadow-[0_0_22px_rgba(255,255,255,0.52)]"
+                              className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-[0_0_22px_rgba(255,255,255,0.52)] transition-colors hover:bg-slate-800 sm:w-auto sm:px-8"
                               type="button"
                             >
                               Перейти в каталог
                             </button>
                           </Link>
-                          <Link to="/ads">
+                          <Link to="/ads" className="w-full sm:w-auto">
                             <button
-                              className="hero-glass-chip inline-flex items-center justify-center rounded-xl px-8 py-3 font-semibold text-slate-900 transition-colors"
+                              className="hero-glass-chip inline-flex w-full items-center justify-center rounded-xl px-6 py-3 font-semibold text-slate-900 transition-colors sm:w-auto sm:px-8"
                               type="button"
                             >
                               Смотреть объявления
@@ -206,7 +206,7 @@ export const HomePage = () => {
               </div>
             </section>
 
-            <section className="relative px-8 pb-12">
+            <section className="relative px-4 pb-10 sm:px-6 md:px-8 md:pb-12">
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-x-0 top-0 h-30 bg-gradient-to-b from-[#f3f4f7]/90 via-[#f3f4f7]/68 to-transparent"
@@ -241,7 +241,7 @@ export const HomePage = () => {
               </div>
             </section>
 
-            <section className="px-8 pb-12">
+            <section className="px-4 pb-10 sm:px-6 md:px-8 md:pb-12">
               <div className="text-center">
                 <h2 className="text-2xl md:text-3xl font-bold">Как это работает</h2>
                 <p className="mt-2 text-slate-600 max-w-2xl mx-auto">
@@ -268,8 +268,8 @@ export const HomePage = () => {
               </div>
             </section>
 
-            <section className="px-8 pb-14">
-              <div className="rounded-[30px] border border-black/5 bg-slate-900 text-white p-8 md:p-10">
+            <section className="px-4 pb-12 sm:px-6 md:px-8 md:pb-14">
+              <div className="rounded-[24px] border border-black/5 bg-slate-900 p-6 text-white sm:rounded-[30px] md:p-10">
                 <div className="grid lg:grid-cols-[1fr_auto] gap-6 items-center">
                   <div>
                     <h3 className="text-2xl md:text-3xl font-bold">

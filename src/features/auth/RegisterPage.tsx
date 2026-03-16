@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { register as apiRegister } from "../../api/auth";
 import type { RegisterRequest } from "../../types/auth";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { getApiErrorMessage, sanitizeEmail, sanitizePhone, trimToNull } from "@/shared/lib/safety";
 import "./RegisterPage.css";
 
 export function RegisterPage() {
@@ -21,7 +22,7 @@ export function RegisterPage() {
   const [registeredEmail, setRegisteredEmail] = useState("");
 
   const canSubmit = useMemo(() => {
-    return email.trim() && phone.trim() && password.trim().length >= 6;
+    return Boolean(sanitizeEmail(email) && sanitizePhone(phone) && password.trim().length >= 6);
   }, [email, phone, password]);
 
   const onSubmit = async (e: FormEvent) => {
@@ -29,19 +30,28 @@ export function RegisterPage() {
     setError(null);
     setLoading(true);
     try {
+      const normalizedEmail = sanitizeEmail(email);
+      const normalizedPhone = sanitizePhone(phone);
+      const normalizedPassword = trimToNull(password, 200);
+
+      if (!normalizedEmail || !normalizedPhone || !normalizedPassword || normalizedPassword.length < 6) {
+        setError("Проверьте email, телефон и пароль");
+        return;
+      }
+
       await apiRegister({
-        email: email.trim(),
-        phone: phone.trim(),
-        password,
+        email: normalizedEmail,
+        phone: normalizedPhone,
+        password: normalizedPassword,
         role,
       });
 
-      setRegisteredEmail(email.trim());
+      setRegisteredEmail(normalizedEmail);
       setAgreementAccepted(false);
       setAgreementOpen(true);
-    } catch (e: any) {
-      console.error(e);
-      setError(e?.response?.data?.message || "Ошибка регистрации");
+    } catch (error) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Ошибка регистрации"));
     } finally {
       setLoading(false);
     }
@@ -53,7 +63,7 @@ export function RegisterPage() {
       <div className="auth-card relative z-10">
         <div className="auth-card-left">
           <header className="auth-card-header">
-            <div className="auth-brand">Casting Manager</div>
+            <div className="auth-brand">Onset</div>
             <button
               type="button"
               className="auth-link-button"

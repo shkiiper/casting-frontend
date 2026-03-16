@@ -10,6 +10,16 @@ import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
+import {
+  mergeUniqueUrls,
+  normalizeStringArray,
+  toOptionalNumber,
+  trimMultilineToNull,
+  trimToNull,
+  sanitizeEmail,
+  sanitizePhone,
+  sanitizeTelegram,
+} from "@/shared/lib/safety";
 
 /* ================= CONFIG ================= */
 
@@ -226,7 +236,7 @@ export const ActorProfilePage = () => {
           "/api/files/upload",
           fd
         );
-        uploaded.push(...urls);
+        uploaded.push(...mergeUniqueUrls([], urls, { maxItems: 20 }));
       }
 
       setForm((prev) =>
@@ -235,11 +245,11 @@ export const ActorProfilePage = () => {
               ...prev,
               photoUrls:
                 type === "photo"
-                  ? [...prev.photoUrls, ...uploaded]
+                  ? mergeUniqueUrls(prev.photoUrls, uploaded, { maxItems: 20 })
                   : prev.photoUrls,
               videoUrls:
                 type === "video"
-                  ? [...prev.videoUrls, ...uploaded]
+                  ? mergeUniqueUrls(prev.videoUrls, uploaded, { maxItems: 12 })
                   : prev.videoUrls,
             }
           : prev
@@ -309,7 +319,7 @@ export const ActorProfilePage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-          <div className="glass-object mx-auto max-w-7xl mt-8 rounded-[44px] overflow-visible">
+          <div className="glass-object mx-auto mt-6 max-w-7xl overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
           <InlineNav
             profileMenu={[
               {
@@ -319,7 +329,7 @@ export const ActorProfilePage = () => {
               },
             ]}
           />
-          <header className="glass-object-soft px-8 py-6 border-b border-white/50">
+          <header className="glass-object-soft border-b border-white/50 px-4 py-5 sm:px-6 md:px-8 md:py-6">
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div>
                 <div className="text-xs text-slate-500">Личный кабинет</div>
@@ -340,7 +350,7 @@ export const ActorProfilePage = () => {
             </div>
           </header>
 
-          <section className="px-8 py-8 space-y-6">
+          <section className="space-y-6 px-4 py-6 sm:px-6 md:px-8 md:py-8">
             {error && (
               <div className="rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
                 {error}
@@ -385,11 +395,11 @@ export const ActorProfilePage = () => {
                   }
                 />
 
-                <div className="flex items-center justify-end gap-3 flex-wrap">
+                <div className="flex flex-wrap items-center justify-end gap-3">
                   <button
                     onClick={saveProfile}
                     disabled={saving}
-                    className="rounded-xl px-6 py-3 bg-slate-900 text-white min-w-44 disabled:opacity-60"
+                    className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white disabled:opacity-60 sm:min-w-44 sm:w-auto"
                   >
                     {saving ? "Сохраняем..." : "Сохранить изменения"}
                   </button>
@@ -904,57 +914,64 @@ const emptyForm = (): ActorProfileForm => ({
 
 const mapToForm = (p: ActorProfile): ActorProfileForm => ({
   published: Boolean(p.published),
-  firstName: p.firstName ?? "",
-  lastName: p.lastName ?? "",
-  description: p.description ?? "",
-  city: p.city ?? "",
+  firstName: trimToNull(p.firstName, 80) ?? "",
+  lastName: trimToNull(p.lastName, 80) ?? "",
+  description: trimMultilineToNull(p.description, 4000) ?? "",
+  city: trimToNull(p.city, 120) ?? "",
   gender: p.gender ?? "",
   age: p.age ?? "",
   ethnicity: normalizeEthnicityFromApi(p.ethnicity),
   minRate: p.minRate ?? "",
   rateUnit: p.rateUnit ?? "PER_DAY",
-  contactTelegram: p.contactTelegram ?? "",
-  contactPhone: p.contactPhone ?? "",
-  contactEmail: p.contactEmail ?? "",
-  contactWhatsapp: p.contactWhatsapp ?? "",
-  contactInstagram: p.contactInstagram ?? "",
+  contactTelegram: sanitizeTelegram(p.contactTelegram) ?? "",
+  contactPhone: sanitizePhone(p.contactPhone) ?? "",
+  contactEmail: sanitizeEmail(p.contactEmail) ?? "",
+  contactWhatsapp: sanitizePhone(p.contactWhatsapp) ?? "",
+  contactInstagram: trimToNull(p.contactInstagram, 100) ?? "",
   heightCm: p.heightCm ?? "",
   weightKg: p.weightKg ?? "",
-  bodyType: p.bodyType ?? "",
-  hairColor: p.hairColor ?? "",
-  eyeColor: p.eyeColor ?? "",
+  bodyType: trimToNull(p.bodyType, 40) ?? "",
+  hairColor: trimToNull(p.hairColor, 40) ?? "",
+  eyeColor: trimToNull(p.eyeColor, 40) ?? "",
   playingAgeMin: p.playingAgeMin ?? "",
   playingAgeMax: p.playingAgeMax ?? "",
-  skills: p.skills ?? [],
+  skills: normalizeStringArray(p.skills, { maxItems: 20, maxItemLength: 80 }),
   introVideoUrl: p.introVideoUrl ?? "",
   monologueVideoUrl: p.monologueVideoUrl ?? "",
   selfTapeVideoUrl: p.selfTapeVideoUrl ?? "",
-  photoUrls: p.photoUrls ?? [],
-  videoUrls: p.videoUrls ?? [],
+  photoUrls: mergeUniqueUrls([], p.photoUrls ?? [], { maxItems: 20 }),
+  videoUrls: mergeUniqueUrls([], p.videoUrls ?? [], { maxItems: 12 }),
 });
 
 const normalize = (f: ActorProfileForm) => ({
-  ...f,
-  published: f.published,
-  age: f.age || null,
-  ethnicity: f.ethnicity || null,
-  minRate: f.minRate || null,
-  contactTelegram: f.contactTelegram || null,
-  contactPhone: f.contactPhone || null,
-  contactEmail: f.contactEmail || null,
-  contactWhatsapp: f.contactWhatsapp || null,
-  contactInstagram: f.contactInstagram || null,
-  heightCm: f.heightCm || null,
-  weightKg: f.weightKg || null,
-  bodyType: f.bodyType || null,
-  hairColor: f.hairColor || null,
-  eyeColor: f.eyeColor || null,
-  playingAgeMin: f.playingAgeMin || null,
-  playingAgeMax: f.playingAgeMax || null,
-  skills: f.skills,
-  introVideoUrl: f.introVideoUrl || null,
-  monologueVideoUrl: f.monologueVideoUrl || null,
-  selfTapeVideoUrl: f.selfTapeVideoUrl || null,
+  published: Boolean(f.published),
+  firstName: trimToNull(f.firstName, 80),
+  lastName: trimToNull(f.lastName, 80),
+  description: trimMultilineToNull(f.description, 4000),
+  city: trimToNull(f.city, 120),
+  gender: f.gender || null,
+  age: toOptionalNumber(f.age, { min: 18, max: 80, integer: true }),
+  ethnicity: trimToNull(f.ethnicity, 40),
+  minRate: toOptionalNumber(f.minRate, { min: 0, max: 100000000 }),
+  rateUnit: trimToNull(f.rateUnit, 40),
+  contactTelegram: sanitizeTelegram(f.contactTelegram),
+  contactPhone: sanitizePhone(f.contactPhone),
+  contactEmail: sanitizeEmail(f.contactEmail),
+  contactWhatsapp: sanitizePhone(f.contactWhatsapp),
+  contactInstagram: trimToNull(f.contactInstagram, 100),
+  heightCm: toOptionalNumber(f.heightCm, { min: 100, max: 240, integer: true }),
+  weightKg: toOptionalNumber(f.weightKg, { min: 30, max: 250, integer: true }),
+  bodyType: trimToNull(f.bodyType, 40),
+  hairColor: trimToNull(f.hairColor, 40),
+  eyeColor: trimToNull(f.eyeColor, 40),
+  playingAgeMin: toOptionalNumber(f.playingAgeMin, { min: 8, max: 80, integer: true }),
+  playingAgeMax: toOptionalNumber(f.playingAgeMax, { min: 8, max: 80, integer: true }),
+  skills: normalizeStringArray(f.skills, { maxItems: 20, maxItemLength: 80 }),
+  introVideoUrl: trimToNull(f.introVideoUrl, 1500),
+  monologueVideoUrl: trimToNull(f.monologueVideoUrl, 1500),
+  selfTapeVideoUrl: trimToNull(f.selfTapeVideoUrl, 1500),
+  photoUrls: mergeUniqueUrls([], f.photoUrls, { maxItems: 20 }),
+  videoUrls: mergeUniqueUrls([], f.videoUrls, { maxItems: 12 }),
 });
 
 const normalizeEthnicityFromApi = (value?: string | null) => {

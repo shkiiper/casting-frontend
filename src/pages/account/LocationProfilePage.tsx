@@ -10,6 +10,15 @@ import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
+import {
+  mergeUniqueUrls,
+  sanitizeEmail,
+  sanitizePhone,
+  sanitizeTelegram,
+  toOptionalNumber,
+  trimMultilineToNull,
+  trimToNull,
+} from "@/shared/lib/safety";
 
 /* ================= CONFIG ================= */
 
@@ -145,7 +154,7 @@ export const LocationProfilePage = () => {
 
       setForm((prev) =>
         prev
-          ? { ...prev, photoUrls: [...prev.photoUrls, ...urls] }
+          ? { ...prev, photoUrls: mergeUniqueUrls(prev.photoUrls, urls, { maxItems: 20 }) }
           : prev
       );
     } catch (e: unknown) {
@@ -221,7 +230,7 @@ export const LocationProfilePage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-          <div className="glass-object mx-auto max-w-7xl mt-8 rounded-[44px] overflow-visible">
+          <div className="glass-object mx-auto mt-6 max-w-7xl overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
         <InlineNav
           profileMenu={[
             {
@@ -231,7 +240,7 @@ export const LocationProfilePage = () => {
             },
           ]}
         />
-        <header className="glass-object-soft px-8 py-6 border-b border-white/50 flex justify-between items-center gap-3">
+        <header className="glass-object-soft flex flex-wrap items-center justify-between gap-3 border-b border-white/50 px-4 py-5 sm:px-6 md:px-8 md:py-6">
           <h1 className="text-2xl font-bold">Профиль локации</h1>
 
           <div className="flex items-center gap-3">
@@ -244,7 +253,7 @@ export const LocationProfilePage = () => {
           </div>
         </header>
 
-        <section className="px-8 py-8 space-y-6">
+        <section className="space-y-6 px-4 py-6 sm:px-6 md:px-8 md:py-8">
           {error && (
             <div className="rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
               {error}
@@ -272,11 +281,11 @@ export const LocationProfilePage = () => {
                 }
               />
 
-              <div className="flex gap-3">
+              <div className="flex flex-wrap gap-3">
                 <button
                   onClick={saveProfile}
                   disabled={saving}
-                  className="rounded-xl px-6 py-3 bg-slate-900 text-white"
+                  className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto"
                 >
                   {saving ? "Сохраняем..." : "Сохранить"}
                 </button>
@@ -340,7 +349,7 @@ const MediaSection = ({
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mt-3">
+      <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
         {urls.map((url) => (
           <div key={url} className="relative group">
             <img
@@ -369,7 +378,7 @@ const EditForm = ({
   form: LocationProfileForm;
   setForm: (v: LocationProfileForm) => void;
 }) => (
-  <div className="grid md:grid-cols-2 gap-6">
+  <div className="grid gap-6 md:grid-cols-2">
     <Input
       placeholder="Название локации"
       value={form.locationName}
@@ -504,29 +513,40 @@ const emptyForm = (): LocationProfileForm => ({
 
 const mapToForm = (p: LocationProfile): LocationProfileForm => ({
   published: Boolean(p.published),
-  locationName: p.locationName ?? "",
-  description: p.description ?? "",
-  city: p.city ?? "",
+  locationName: trimToNull(p.locationName, 120) ?? "",
+  description: trimMultilineToNull(p.description, 4000) ?? "",
+  city: trimToNull(p.city, 120) ?? "",
   rentPrice: p.rentPrice ?? "",
-  address: p.address ?? "",
-  extraConditions: p.extraConditions ?? "",
-  contactPhone: p.contactPhone ?? "",
-  contactEmail: p.contactEmail ?? "",
-  contactTelegram: p.contactTelegram ?? "",
+  address: trimToNull(p.address, 200) ?? "",
+  extraConditions: trimMultilineToNull(p.extraConditions, 2000) ?? "",
+  contactPhone: sanitizePhone(p.contactPhone) ?? "",
+  contactEmail: sanitizeEmail(p.contactEmail) ?? "",
+  contactTelegram: sanitizeTelegram(p.contactTelegram) ?? "",
   floor: p.floor ?? "",
   hasToilet:
     p.hasToilet === true ? "YES" : p.hasToilet === false ? "NO" : "",
   availableFrom: p.availableFrom ?? "",
   availableTo: p.availableTo ?? "",
-  photoUrls: p.photoUrls ?? [],
+  photoUrls: mergeUniqueUrls([], p.photoUrls ?? [], { maxItems: 20 }),
 });
 
 const normalize = (f: LocationProfileForm) => ({
-  ...f,
   published: f.published,
-  rentPrice: f.rentPrice || null,
+  locationName: trimToNull(f.locationName, 120),
+  description: trimMultilineToNull(f.description, 4000),
+  city: trimToNull(f.city, 120),
+  rentPrice: toOptionalNumber(f.rentPrice, { min: 0, max: 100000000 }),
+  address: trimToNull(f.address, 200),
+  extraConditions: trimMultilineToNull(f.extraConditions, 2000),
+  contactPhone: sanitizePhone(f.contactPhone),
+  contactEmail: sanitizeEmail(f.contactEmail),
+  contactTelegram: sanitizeTelegram(f.contactTelegram),
+  floor: toOptionalNumber(f.floor, { min: 0, max: 300, integer: true }),
   hasToilet:
     f.hasToilet === "YES" ? true : f.hasToilet === "NO" ? false : null,
+  availableFrom: trimToNull(f.availableFrom, 20),
+  availableTo: trimToNull(f.availableTo, 20),
+  photoUrls: mergeUniqueUrls([], f.photoUrls, { maxItems: 20 }),
 });
 
 const mergeLocationResponseWithForm = (

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createProfilePremiumPayment, getExternalIdFromInit } from "@/api/payments";
 import { formatPremiumDate, formatSom, type ProfilePremiumInfo } from "@/shared/lib/profilePremium";
+import { sanitizeHttpUrl, sanitizeInternalPath } from "@/shared/lib/safety";
 
 type ProfilePremiumPanelProps = {
   premium: ProfilePremiumInfo;
@@ -20,20 +21,22 @@ export const ProfilePremiumPanel = ({
   const [submitting, setSubmitting] = useState(false);
 
   const handlePurchase = async () => {
+    const safeReturnTo = sanitizeInternalPath(returnTo, "/account");
     try {
       setSubmitting(true);
       const payment = await createProfilePremiumPayment(premium.paymentEndpoint);
       const externalId = getExternalIdFromInit(payment);
+      const safePaymentUrl = sanitizeHttpUrl(payment.paymentUrl);
 
-      if (!externalId) {
+      if (!externalId || !safePaymentUrl) {
         onError?.("Не удалось получить идентификатор платежа");
         return;
       }
 
       const params = new URLSearchParams({
         externalId,
-        paymentUrl: payment.paymentUrl,
-        returnTo,
+        paymentUrl: safePaymentUrl,
+        returnTo: safeReturnTo,
         title,
       });
       navigate(`/payments/status?${params.toString()}`);

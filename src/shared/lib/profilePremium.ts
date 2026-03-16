@@ -60,6 +60,7 @@ export const extractProfilePremiumInfo = (profile: unknown): ProfilePremiumInfo 
     readBoolean(source, [
       "canBuyPremium",
       "canPurchasePremium",
+      "premiumPurchaseAvailable",
       "premiumCanBePurchased",
       "premiumAvailableForPurchase",
     ]) ??
@@ -68,6 +69,7 @@ export const extractProfilePremiumInfo = (profile: unknown): ProfilePremiumInfo 
   const paymentEndpoint =
     readString(source, [
       "premiumPurchaseEndpoint",
+      "premiumCheckoutEndpoint",
       "premiumPaymentEndpoint",
       "buyPremiumEndpoint",
       "purchasePremiumEndpoint",

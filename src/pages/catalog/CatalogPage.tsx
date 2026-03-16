@@ -252,7 +252,11 @@ export const CatalogPage = () => {
           CREATOR: 1,
           LOCATION: 2,
         };
-        merged.sort((x, y) => order[x.type] - order[y.type]);
+        merged.sort((x, y) => {
+          const premiumDelta = Number(Boolean(y.premiumActive)) - Number(Boolean(x.premiumActive));
+          if (premiumDelta !== 0) return premiumDelta;
+          return order[x.type] - order[y.type];
+        });
 
         const actorsMeta = a.status === 'fulfilled' ? a.value.data : null;
         const creatorsMeta = c.status === 'fulfilled' ? c.value.data : null;
@@ -354,11 +358,11 @@ export const CatalogPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10 pt-10 pb-16">
         <Container>
-          <div className="glass-object mx-auto max-w-7xl rounded-[44px] overflow-visible">
+          <div className="glass-object mx-auto max-w-7xl overflow-visible rounded-[30px] sm:rounded-[36px] lg:rounded-[44px]">
             <InlineNav active={navActive} />
 
             {/* HEADER каталога */}
-            <header className="glass-object-soft flex flex-col md:flex-row md:items-end md:justify-between gap-6 px-8 pt-8 pb-6 border-b border-white/50">
+            <header className="glass-object-soft flex flex-col gap-6 border-b border-white/50 px-4 pb-6 pt-6 sm:px-6 md:flex-row md:items-end md:justify-between md:px-8 md:pt-8">
               <div>
                 <div className="text-sm text-slate-500">Onset / каталог</div>
                 <h1 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">
@@ -370,7 +374,7 @@ export const CatalogPage = () => {
               </div>
             </header>
 
-            <div className="px-8 pb-10 pt-8">
+            <div className="px-4 pb-8 pt-6 sm:px-6 md:px-8 md:pb-10 md:pt-8">
               {/* FILTERS */}
               <div className={`${glassPanelClass} p-4`}>
                 <div className="grid gap-3 lg:grid-cols-12">
@@ -698,7 +702,7 @@ export const CatalogPage = () => {
                   </div>
                 ) : (
                   <>
-                    <div className="flex items-center justify-between text-sm text-slate-600">
+                    <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
                       <span>
                         Показано:{' '}
                         <span className="font-semibold text-slate-900">
@@ -717,7 +721,7 @@ export const CatalogPage = () => {
                       </span>
                     </div>
 
-                    <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                       {filtered.map((p) => {
                         const name = buildName(p);
                         const subtitle =
@@ -741,9 +745,21 @@ export const CatalogPage = () => {
                                   state: { profilePreview: p },
                                 })
                               }
-                              className="glass-object text-left rounded-[28px] p-6 transition-shadow hover:shadow-[0_14px_32px_rgba(15,23,42,0.14)]"
+                              className={[
+                                "glass-object text-left rounded-[28px] p-4 transition-shadow sm:p-5",
+                                p.premiumActive
+                                  ? "border border-amber-300/80 bg-[linear-gradient(180deg,rgba(255,251,235,0.96)_0%,rgba(255,255,255,0.92)_100%)] shadow-[0_18px_42px_rgba(217,119,6,0.18)] hover:shadow-[0_18px_42px_rgba(217,119,6,0.24)]"
+                                  : "hover:shadow-[0_14px_32px_rgba(15,23,42,0.14)]",
+                              ].join(" ")}
                             >
-                              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-white/50 bg-slate-100/80">
+                              <div
+                                className={[
+                                  "relative aspect-[3/4] overflow-hidden rounded-2xl bg-slate-100/80",
+                                  p.premiumActive
+                                    ? "border border-amber-200/90"
+                                    : "border border-white/50",
+                                ].join(" ")}
+                              >
                                 {(() => {
                                   const photo = getPreviewPhoto(p);
                                   const src = resolveMediaUrl(photo);
@@ -765,7 +781,7 @@ export const CatalogPage = () => {
                                   {badge}
                                 </div>
                                 {p.premiumActive ? (
-                                  <div className="absolute top-3 right-3 rounded-full bg-amber-400/95 px-3 py-1 text-xs font-semibold text-slate-900 shadow-sm">
+                                  <div className="absolute right-3 top-3 rounded-full bg-amber-400/95 px-3 py-1 text-xs font-semibold text-slate-900 shadow-sm">
                                     Premium
                                   </div>
                                 ) : null}
@@ -782,12 +798,21 @@ export const CatalogPage = () => {
                                   '—'}
                               </div>
 
-                              <div className="mt-6">
-                                <div className="rounded-xl px-4 py-3 font-semibold bg-slate-900 text-white text-center">
+                              <div className="mt-5">
+                                <div
+                                  className={[
+                                    "rounded-xl px-4 py-3 text-center font-semibold",
+                                    p.premiumActive
+                                      ? "bg-amber-500 text-slate-950"
+                                      : "bg-slate-900 text-white",
+                                  ].join(" ")}
+                                >
                                   Открыть профиль
                                 </div>
                                 <div className="mt-2 text-xs text-slate-500 text-center">
-                                  Контакты доступны в профиле по подписке
+                                  {p.premiumActive
+                                    ? "Профиль продвигается и выделен в каталоге"
+                                    : "Контакты доступны в профиле по подписке"}
                                 </div>
                               </div>
                             </button>
@@ -797,7 +822,7 @@ export const CatalogPage = () => {
                     </div>
 
                     {/* PAGINATION */}
-                    <div className="mt-10 flex items-center justify-center gap-3">
+                    <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
                       <button
                         type="button"
                         onClick={() => setPage((p) => Math.max(0, p - 1))}

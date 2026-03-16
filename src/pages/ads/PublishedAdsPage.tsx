@@ -189,10 +189,10 @@ export const PublishedAdsPage = () => {
       <div className="relative z-10">
         <Container>
         <div className="mx-auto max-w-7xl mt-10">
-          <div className="glass-object rounded-[36px] overflow-visible">
+          <div className="glass-object overflow-visible rounded-[28px] sm:rounded-[36px]">
             <InlineNav active="ads" />
 
-            <header className="glass-object-soft px-8 py-7 border-b border-white/50 flex flex-wrap items-center justify-between gap-4">
+            <header className="glass-object-soft flex flex-wrap items-center justify-between gap-4 border-b border-white/50 px-4 py-5 sm:px-6 md:px-8 md:py-7">
               <div>
                 <div className="text-xs tracking-wide text-slate-500 uppercase">
                   Объявления
@@ -207,7 +207,7 @@ export const PublishedAdsPage = () => {
               </div>
             </header>
 
-            <section className="px-8 py-8">
+            <section className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
               {error && (
                 <div className="bg-red-50 text-red-700 px-4 py-3 rounded-xl text-sm mb-6">
                   {error}
@@ -219,7 +219,7 @@ export const PublishedAdsPage = () => {
                 </div>
               )}
 
-              <div className="grid lg:grid-cols-[0.8fr_1.6fr] gap-6">
+              <div className="grid gap-6 lg:grid-cols-[0.8fr_1.6fr]">
                 <aside className="space-y-4">
                   <div className="glass-object-soft rounded-2xl p-5">
                     <div className="text-xs text-slate-500 uppercase tracking-wide">

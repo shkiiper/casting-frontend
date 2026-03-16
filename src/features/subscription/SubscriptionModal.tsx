@@ -6,6 +6,12 @@ import {
 } from "../../api/subscriptions";
 import type { CustomerPlanResponse } from "../../types/subscription";
 import type { PaymentInitResponse } from "../../types/payment";
+import {
+  clamp,
+  getApiErrorMessage,
+  sanitizeHttpUrl,
+  toOptionalNumber,
+} from "@/shared/lib/safety";
 import "./SubscriptionModal.css";
 
 type Mode = "SUBSCRIPTION" | "BOOSTERS";
@@ -48,13 +54,14 @@ export function SubscriptionModal({
 
     getCustomerPlans()
       .then((list) => {
-        setPlans(list);
-        const active = list.find((p) => p.active);
-        setSelectedPlanId(active?.id ?? (list[0]?.id ?? null));
+        const normalizedPlans = Array.isArray(list) ? list.filter((item) => item?.id) : [];
+        setPlans(normalizedPlans);
+        const active = normalizedPlans.find((p) => p.active);
+        setSelectedPlanId(active?.id ?? (normalizedPlans[0]?.id ?? null));
       })
-      .catch((e) => {
-        console.error(e);
-        setError("Не удалось загрузить планы");
+      .catch((error) => {
+        console.error(error);
+        setError(getApiErrorMessage(error, "Не удалось загрузить планы"));
       })
       .finally(() => setLoadingPlans(false));
   }, [open]);
@@ -62,7 +69,7 @@ export function SubscriptionModal({
   if (!open) return null;
 
   const pay = async () => {
-    if (!selectedPlanId) {
+    if (!selectedPlanId || !selectedPlan) {
       setError("Выберите план");
       return;
     }
@@ -78,8 +85,13 @@ export function SubscriptionModal({
       } else {
         resp = await initCustomerBoosterPayment({
           planId: selectedPlanId,
-          boosterCount: boosterCount < 1 ? 1 : boosterCount,
+          boosterCount: clamp(boosterCount, 1, 100),
         });
+      }
+
+      if (!sanitizeHttpUrl(resp.paymentUrl)) {
+        setError("Платежный сервис вернул некорректную ссылку оплаты");
+        return;
       }
 
       onBeforeRedirectToPay?.(resp);
@@ -89,9 +101,9 @@ export function SubscriptionModal({
       } else {
         window.location.href = resp.paymentUrl;
       }
-    } catch (e: any) {
-      console.error(e);
-      setError(e?.response?.data?.message || "Ошибка инициализации платежа");
+    } catch (error) {
+      console.error(error);
+      setError(getApiErrorMessage(error, "Ошибка инициализации платежа"));
     } finally {
       setLoadingPay(false);
     }
@@ -124,7 +136,11 @@ export function SubscriptionModal({
                 <select
                   className="submodal-select"
                   value={selectedPlanId ?? ""}
-                  onChange={(e) => setSelectedPlanId(Number(e.target.value))}
+                  onChange={(e) =>
+                    setSelectedPlanId(
+                      toOptionalNumber(e.target.value, { min: 1, integer: true })
+                    )
+                  }
                 >
                   {plans.map((p) => (
                     <option key={p.id} value={p.id}>
@@ -161,7 +177,19 @@ export function SubscriptionModal({
                     min={1}
                     max={100}
                     value={boosterCount}
-                    onChange={(e) => setBoosterCount(Number(e.target.value))}
+                    onChange={(e) =>
+                      setBoosterCount(
+                        clamp(
+                          toOptionalNumber(e.target.value, {
+                            min: 1,
+                            max: 100,
+                            integer: true,
+                          }) ?? 1,
+                          1,
+                          100
+                        )
+                      )
+                    }
                   />
                 </label>
               )}
