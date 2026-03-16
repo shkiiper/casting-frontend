@@ -115,7 +115,7 @@ export const InlineNav = ({
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:px-6 md:px-8 md:py-5">
-      <div className="flex flex-wrap items-center justify-between gap-4 md:gap-6">
+      <div className="flex items-center justify-between gap-4 md:gap-6">
         <Link to="/" className="flex items-center gap-3">
           <img src={logo} alt="onset" className="h-9 w-9 rounded-xl" />
           <div className="leading-tight">
@@ -136,19 +136,10 @@ export const InlineNav = ({
         </nav>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setMobileNavOpen((value) => !value)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 lg:hidden"
-            aria-label="Открыть навигацию"
-            aria-expanded={mobileNavOpen}
-          >
-            <span className="text-lg leading-none">{mobileNavOpen ? "✕" : "☰"}</span>
-          </button>
           {!isAuthed ? (
             <Link
               to="/login"
-              className="text-sm font-semibold text-slate-600 hover:text-slate-900"
+              className="hidden text-sm font-semibold text-slate-600 hover:text-slate-900 lg:inline-flex"
             >
               Войти/Регистрация
             </Link>
@@ -209,6 +200,15 @@ export const InlineNav = ({
               </div>
             )
           )}
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen((value) => !value)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 lg:hidden"
+            aria-label="Открыть навигацию"
+            aria-expanded={mobileNavOpen}
+          >
+            <span className="text-lg leading-none">{mobileNavOpen ? "✕" : "☰"}</span>
+          </button>
         </div>
       </div>
 
@@ -258,6 +258,11 @@ export const InlineNav = ({
                   Админка
                 </Link>
               )
+            ) : null}
+            {!isAuthed ? (
+              <Link to="/login" className="pt-2 font-semibold text-slate-900">
+                Войти / Регистрация
+              </Link>
             ) : null}
           </nav>
         </div>

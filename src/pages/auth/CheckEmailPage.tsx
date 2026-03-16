@@ -63,6 +63,7 @@ export function CheckEmailPage() {
       const maybeAuth = res as { token?: string | null; role?: string };
       if (maybeAuth.token) {
         localStorage.setItem("token", maybeAuth.token);
+        localStorage.setItem("accessToken", maybeAuth.token);
         loginStore(maybeAuth.token);
         if (maybeAuth.role) {
           localStorage.setItem("role", maybeAuth.role);

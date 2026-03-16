@@ -82,6 +82,7 @@ export const LoginPage = () => {
 
         // 1) кладём в localStorage
         localStorage.setItem("token", resp.token);
+        localStorage.setItem("accessToken", resp.token);
         if (resp.role) {
           localStorage.setItem("role", resp.role);
           localStorage.setItem(
@@ -257,7 +258,7 @@ export const LoginPage = () => {
             </div>
 
             {mode === "LOGIN" && (
-              <div style={{ marginTop: 10, display: "flex", gap: 10 }}>
+              <div className="auth-extra-actions">
                 <button
                   type="button"
                   className="auth-secondary-button"
