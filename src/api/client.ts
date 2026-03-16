@@ -8,7 +8,7 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   (window as WindowWithApiBase).__API_BASE_URL__ ||
-  "http://localhost:8080";
+  "/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
