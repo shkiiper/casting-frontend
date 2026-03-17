@@ -29,7 +29,8 @@ export function CheckEmailPage() {
   const locationState = (location.state as { email?: string } | null) ?? null;
   const loginStore = useAuthStore((s) => s.login);
 
-  const initialEmail = locationState?.email ?? "";
+  const initialEmail =
+    locationState?.email ?? localStorage.getItem("pendingVerificationEmail") ?? "";
 
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
@@ -59,6 +60,7 @@ export function CheckEmailPage() {
         email: normalizedEmail,
         code: normalizedCode,
       });
+      localStorage.removeItem("pendingVerificationEmail");
 
       const maybeAuth = res as { token?: string | null; role?: string };
       if (maybeAuth.token) {
@@ -100,6 +102,7 @@ export function CheckEmailPage() {
         return;
       }
       const res = await resendVerification({ email: normalizedEmail });
+      localStorage.setItem("pendingVerificationEmail", normalizedEmail);
       setMsg(res.message || "Письмо отправлено");
     } catch (error: unknown) {
       console.error(error);
@@ -119,15 +122,10 @@ export function CheckEmailPage() {
         </p>
 
         <form className="check-form" onSubmit={onVerify}>
-          <label className="check-label">
-            Email
-            <input
-              className="check-input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-            />
-          </label>
+          <div className="check-email-box">
+            <div className="check-email-label">Код отправлен на email</div>
+            <div className="check-email-value">{email || "Email не указан"}</div>
+          </div>
 
           <label className="check-label">
             Код подтверждения
@@ -139,6 +137,7 @@ export function CheckEmailPage() {
               }
               placeholder="123456"
               inputMode="numeric"
+              autoFocus
             />
           </label>
 

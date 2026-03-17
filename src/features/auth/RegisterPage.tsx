@@ -47,6 +47,7 @@ export function RegisterPage() {
         role,
       });
 
+      localStorage.setItem("pendingVerificationEmail", normalizedEmail);
       setRegisteredEmail(normalizedEmail);
       setAgreementAccepted(false);
       setAgreementOpen(true);

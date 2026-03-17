@@ -128,7 +128,11 @@ export const LoginPage = () => {
           return;
         }
         const res = await resendVerification({ email: normalizedEmail });
-        setInfo(res.message || "Письмо отправлено");
+        localStorage.setItem("pendingVerificationEmail", normalizedEmail);
+        setInfo(res.message || "Код отправлен");
+        navigate("/auth/check-email", {
+          state: { email: normalizedEmail },
+        });
         return;
       }
 
