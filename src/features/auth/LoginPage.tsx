@@ -4,6 +4,7 @@ import {
   login as apiLogin,
   resendVerification,
   forgotPassword,
+  verifyEmail,
 } from "../../api/auth";
 import api from "../../api/client";
 import { useAuthStore } from "../../entities/user/model/authStore";
@@ -47,6 +48,7 @@ export const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
   const [info, setInfo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,8 +59,15 @@ export const LoginPage = () => {
 
   const canSubmit = useMemo(() => {
     if (mode === "LOGIN") return Boolean(sanitizeEmail(email) && trimToNull(password, 200));
+    if (mode === "RESEND") {
+      const normalizedCode = verificationCode.trim();
+      return Boolean(
+        sanitizeEmail(email) &&
+          (normalizedCode.length === 0 || normalizedCode.length >= 6)
+      );
+    }
     return Boolean(sanitizeEmail(email));
-  }, [mode, email, password]);
+  }, [mode, email, password, verificationCode]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -127,12 +136,41 @@ export const LoginPage = () => {
           setError("Введите корректный email");
           return;
         }
+        const normalizedCode = trimToNull(verificationCode, 6);
+
+        if (normalizedCode && normalizedCode.length >= 6) {
+          const res = await verifyEmail({
+            email: normalizedEmail,
+            code: normalizedCode,
+          });
+          localStorage.removeItem("pendingVerificationEmail");
+
+          const maybeAuth = res as { token?: string | null; role?: string };
+          if (maybeAuth.token) {
+            localStorage.setItem("token", maybeAuth.token);
+            localStorage.setItem("accessToken", maybeAuth.token);
+            loginStore(maybeAuth.token);
+            if (maybeAuth.role) {
+              localStorage.setItem("role", maybeAuth.role);
+              localStorage.setItem(
+                "account_name",
+                maybeAuth.role === "CUSTOMER" ? "Заказчик" : maybeAuth.role
+              );
+            }
+            navigate(resolveRedirectPath(maybeAuth.role), { replace: true });
+            return;
+          }
+
+          setInfo(
+            (res as { message?: string }).message || "Email подтверждён. Теперь войдите."
+          );
+          setTimeout(() => navigate("/login"), 600);
+          return;
+        }
+
         const res = await resendVerification({ email: normalizedEmail });
         localStorage.setItem("pendingVerificationEmail", normalizedEmail);
-        setInfo(res.message || "Код отправлен");
-        navigate("/auth/check-email", {
-          state: { email: normalizedEmail },
-        });
+        setInfo(res.message || "Код отправлен. Введите его в поле ниже.");
         return;
       }
 
@@ -211,6 +249,22 @@ export const LoginPage = () => {
               </div>
             )}
 
+            {mode === "RESEND" && (
+              <div className="auth-field">
+                <label className="auth-field-label">код подтверждения</label>
+                <input
+                  className="auth-input"
+                  type="text"
+                  value={verificationCode}
+                  onChange={(e) =>
+                    setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  placeholder="Введите код из письма"
+                  inputMode="numeric"
+                />
+              </div>
+            )}
+
             {info && (
               <div style={{ marginTop: 4, fontSize: 13, color: "#067647" }}>
                 {info}
@@ -255,7 +309,9 @@ export const LoginPage = () => {
                     {loading
                       ? "Отправляем..."
                       : mode === "RESEND"
-                      ? "Отправить письмо"
+                      ? verificationCode.trim().length >= 6
+                        ? "Подтвердить код"
+                        : "Отправить код"
                       : "Отправить ссылку"}
                   </button>
                 </>
