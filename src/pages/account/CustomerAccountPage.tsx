@@ -18,6 +18,7 @@ import { resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
 import {
   getApiErrorMessage,
   sanitizeEmail,
+  sanitizeHttpUrl,
   sanitizePhone,
   sanitizeTelegram,
   trimMultilineToNull,
