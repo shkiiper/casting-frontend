@@ -268,7 +268,7 @@ export const PublishedAdsPage = () => {
                     </div>
                   </div>
 
-                  <div className="glass-object-soft hidden rounded-2xl p-5 lg:block">
+                  <div className="glass-object-soft hidden rounded-2xl p-5 xl:block">
                     <div className="text-xs text-slate-500 uppercase tracking-wide">
                       Как это работает
                     </div>
@@ -279,7 +279,7 @@ export const PublishedAdsPage = () => {
                     </div>
                   </div>
 
-                  <div className="glass-object-soft hidden rounded-2xl p-5 lg:block">
+                  <div className="glass-object-soft hidden rounded-2xl p-5 xl:block">
                     <div className="text-xs text-slate-500 uppercase tracking-wide">
                       Для заказчиков
                     </div>

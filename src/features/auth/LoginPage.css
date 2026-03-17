@@ -303,6 +303,13 @@
   }
 }
 
+@media (max-width: 900px) {
+  .auth-note,
+  .auth-card-right {
+    display: none;
+  }
+}
+
 @media (max-width: 640px) {
   .auth-root {
     padding: 20px 14px;
@@ -333,10 +340,5 @@
   .auth-card-header {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .auth-note,
-  .auth-card-right {
-    display: none;
   }
 }
