@@ -8,6 +8,7 @@ import {
 import api from "../../api/client";
 import { useAuthStore } from "../../entities/user/model/authStore";
 import { getApiErrorMessage, sanitizeEmail, trimToNull } from "@/shared/lib/safety";
+import { CenterToast } from "@/shared/ui/CenterToast";
 import "./LoginPage.css";
 
 type Mode = "LOGIN" | "RESEND" | "FORGOT";
@@ -328,6 +329,7 @@ export const LoginPage = () => {
           className="auth-octopus-login"
         />
       </div>
+      {error && <CenterToast message={error} variant="error" />}
     </div>
   );
 };

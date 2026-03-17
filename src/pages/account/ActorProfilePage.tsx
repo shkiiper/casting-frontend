@@ -410,6 +410,7 @@ export const ActorProfilePage = () => {
           </div>
         </Container>
       </div>
+      {error && <CenterToast message={error} variant="error" />}
       {saveNotice && <CenterToast message={saveNotice} />}
     </div>
   );

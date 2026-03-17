@@ -1,17 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  getCustomerPlans,
-  initCustomerBoosterPayment,
-  initCustomerSubscriptionPayment,
-} from "../../api/subscriptions";
+import { getCustomerPlans } from "../../api/subscriptions";
 import type { CustomerPlanResponse } from "../../types/subscription";
-import type { PaymentInitResponse } from "../../types/payment";
-import {
-  clamp,
-  getApiErrorMessage,
-  sanitizeHttpUrl,
-  toOptionalNumber,
-} from "@/shared/lib/safety";
+import { getApiErrorMessage, toOptionalNumber } from "@/shared/lib/safety";
+import { PAYMENTS_LOCKED_MESSAGE } from "@/shared/lib/payments";
+import { CenterToast } from "@/shared/ui/CenterToast";
 import "./SubscriptionModal.css";
 
 type Mode = "SUBSCRIPTION" | "BOOSTERS";
@@ -20,8 +12,6 @@ interface Props {
   open: boolean;
   mode: Mode;
   onClose: () => void;
-  onBeforeRedirectToPay?: (resp: PaymentInitResponse) => void;
-  onPaymentCreated?: (resp: PaymentInitResponse) => void;
   onSuccess?: () => void;
 }
 
@@ -29,8 +19,6 @@ export function SubscriptionModal({
   open,
   mode,
   onClose,
-  onBeforeRedirectToPay,
-  onPaymentCreated,
   onSuccess,
 }: Props) {
   const [plans, setPlans] = useState<CustomerPlanResponse[]>([]);
@@ -38,8 +26,8 @@ export function SubscriptionModal({
   const [boosterCount, setBoosterCount] = useState<number>(1);
 
   const [loadingPlans, setLoadingPlans] = useState(false);
-  const [loadingPay, setLoadingPay] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const selectedPlan = useMemo(
     () => plans.find((p) => p.id === selectedPlanId) ?? null,
@@ -74,39 +62,10 @@ export function SubscriptionModal({
       return;
     }
 
+    setNotice(PAYMENTS_LOCKED_MESSAGE);
+    window.setTimeout(() => setNotice(null), 2600);
     setError(null);
-    setLoadingPay(true);
-
-    try {
-      let resp: PaymentInitResponse;
-
-      if (mode === "SUBSCRIPTION") {
-        resp = await initCustomerSubscriptionPayment({ planId: selectedPlanId });
-      } else {
-        resp = await initCustomerBoosterPayment({
-          planId: selectedPlanId,
-          boosterCount: clamp(boosterCount, 1, 100),
-        });
-      }
-
-      if (!sanitizeHttpUrl(resp.paymentUrl)) {
-        setError("Платежный сервис вернул некорректную ссылку оплаты");
-        return;
-      }
-
-      onBeforeRedirectToPay?.(resp);
-      onSuccess?.();
-      if (onPaymentCreated) {
-        onPaymentCreated(resp);
-      } else {
-        window.location.href = resp.paymentUrl;
-      }
-    } catch (error) {
-      console.error(error);
-      setError(getApiErrorMessage(error, "Ошибка инициализации платежа"));
-    } finally {
-      setLoadingPay(false);
-    }
+    onSuccess?.();
   };
 
   return (
@@ -201,21 +160,21 @@ export function SubscriptionModal({
               <button
                 className="submodal-secondary"
                 onClick={onClose}
-                disabled={loadingPay}
               >
                 Отмена
               </button>
               <button
                 className="submodal-primary"
                 onClick={pay}
-                disabled={loadingPay || loadingPlans || !selectedPlanId}
+                disabled={loadingPlans || !selectedPlanId}
               >
-                {loadingPay ? "Переходим к оплате..." : "Оплатить"}
+                Оплатить
               </button>
             </div>
           </>
         )}
       </div>
+      {notice && <CenterToast message={notice} variant="info" />}
     </div>
   );
 }

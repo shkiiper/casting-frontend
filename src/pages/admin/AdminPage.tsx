@@ -331,18 +331,19 @@ export const AdminPage = () => {
                     <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
                       Новый тариф
                     </div>
-                    <h2 className="mt-2 text-2xl font-bold text-slate-900">Создать план</h2>
+                    <h2 className="mt-2 text-2xl font-bold text-slate-900">Создать тариф</h2>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Заполните базовую стоимость подписки, бустера и размещения объявления.
-                      Новый тариф появится справа в списке и его можно будет сразу редактировать.
+                      Сначала задайте базовые параметры тарифа, затем отдельно настройте
+                      бустер, объявления и premium-профиль. Все блоки заполняются независимо и
+                      собраны в одной форме только для сохранения на backend.
                     </p>
                   </div>
 
                   <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
                     <div className="font-medium text-slate-900">Подсказка</div>
                     <div className="mt-2">
-                      Если меняете экономику продукта, сначала создайте новый тариф, а старый
-                      оставьте активным до завершения перехода.
+                      Базовый тариф, бустер, размещение объявлений и premium-профиль вынесены в
+                      отдельные секции, чтобы их было проще читать и редактировать.
                     </div>
                   </div>
 
@@ -351,8 +352,9 @@ export const AdminPage = () => {
                       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                         <div className="text-sm font-semibold text-slate-900">Параметры нового тарифа</div>
                         <div className="mt-1 text-sm text-slate-500">
-                          Сначала задайте название и статус, затем заполните стоимость подписки,
-                          бустера и размещения объявлений.
+                          Основной тариф, бустер, объявления и premium теперь разделены на
+                          отдельные широкие блоки. Так проще видеть введённые значения во время
+                          редактирования.
                         </div>
                       </div>
 
@@ -372,26 +374,36 @@ export const AdminPage = () => {
 
                       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                         <div className="text-sm font-semibold text-slate-900">Черновой summary</div>
-                        <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-600">
-                          <SummaryChip
-                            label="Подписка"
-                            value={`${formatNumber(newPlan.pricePerPeriod)} сом / ${newPlan.periodDays} дн.`}
+                        <div className="mt-3 space-y-3 text-xs text-slate-600">
+                          <SummarySection
+                            title="Базовый тариф"
+                            items={[
+                              {
+                                label: "Подписка",
+                                value: `${formatNumber(newPlan.pricePerPeriod)} сом / ${newPlan.periodDays} дн.`,
+                              },
+                              {
+                                label: "Контакты",
+                                value: `${formatNumber(newPlan.baseContactLimit)}`,
+                              },
+                            ]}
                           />
-                          <SummaryChip
-                            label="Контакты"
-                            value={`${formatNumber(newPlan.baseContactLimit)}`}
-                          />
-                          <SummaryChip
-                            label="Бустер"
-                            value={`${formatNumber(newPlan.boosterPrice)} сом за ${formatNumber(newPlan.boosterContacts)}`}
-                          />
-                          <SummaryChip
-                            label="Объявление"
-                            value={`${formatNumber(newPlan.castingPostPrice)} сом / ${newPlan.castingPostDays} дн.`}
-                          />
-                          <SummaryChip
-                            label="Premium профиль"
-                            value={`${formatNumber(newPlan.premiumProfilePrice)} сом / ${newPlan.premiumProfileDays} дн.`}
+                          <SummarySection
+                            title="Дополнительно"
+                            items={[
+                              {
+                                label: "Бустер",
+                                value: `${formatNumber(newPlan.boosterPrice)} сом за ${formatNumber(newPlan.boosterContacts)}`,
+                              },
+                              {
+                                label: "Объявление",
+                                value: `${formatNumber(newPlan.castingPostPrice)} сом / ${newPlan.castingPostDays} дн.`,
+                              },
+                              {
+                                label: "Premium профиль",
+                                value: `${formatNumber(newPlan.premiumProfilePrice)} сом / ${newPlan.premiumProfileDays} дн.`,
+                              },
+                            ]}
                           />
                         </div>
                       </div>
@@ -605,6 +617,25 @@ const SummaryChip = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
+const SummarySection = ({
+  title,
+  items,
+}: {
+  title: string;
+  items: Array<{ label: string; value: string }>;
+}) => (
+  <div className="rounded-2xl border border-slate-200 bg-white/80 p-3">
+    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+      {title}
+    </div>
+    <div className="mt-2 flex flex-wrap gap-2">
+      {items.map((item) => (
+        <SummaryChip key={item.label} label={item.label} value={item.value} />
+      ))}
+    </div>
+  </div>
+);
+
 const PlanFields = ({
   plan,
   onChange,
@@ -627,8 +658,12 @@ const PlanFields = ({
       />
     </div>
 
-    <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
-      <FieldGroup title="Подписка" description="Базовая стоимость и срок действия">
+    <div className="space-y-4">
+      <FieldGroup
+        title="Базовый тариф"
+        description="Основные условия подписки. Это самостоятельный блок с ценой, сроком и лимитом контактов."
+        fieldsLayoutClassName="grid gap-4 md:grid-cols-3"
+      >
         <Field
           label="Цена периода"
           type="number"
@@ -652,7 +687,11 @@ const PlanFields = ({
         />
       </FieldGroup>
 
-      <FieldGroup title="Бустер" description="Дополнительные контакты для заказчика">
+      <FieldGroup
+        title="Бустер"
+        description="Отдельный продукт для докупки контактов. Не смешан с базовым тарифом."
+        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+      >
         <Field
           label="Цена бустера"
           type="number"
@@ -669,7 +708,11 @@ const PlanFields = ({
         />
       </FieldGroup>
 
-      <FieldGroup title="Объявления" description="Стоимость и длительность размещения">
+      <FieldGroup
+        title="Объявления"
+        description="Отдельная настройка стоимости публикации и срока размещения."
+        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+      >
         <Field
           label="Цена объявления"
           type="number"
@@ -688,7 +731,8 @@ const PlanFields = ({
 
       <FieldGroup
         title="Premium профиль"
-        description="Цена и срок визуального выделения performer-профиля"
+        description="Отдельная настройка visual upgrade для performer-профиля."
+        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
       >
         <Field
           label="Цена premium"
@@ -713,15 +757,21 @@ const FieldGroup = ({
   title,
   description,
   children,
+  fieldsLayoutClassName = "space-y-3",
 }: {
   title: string;
   description: string;
   children: ReactNode;
+  fieldsLayoutClassName?: string;
 }) => (
-  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-    <div className="font-semibold text-slate-900">{title}</div>
-    <div className="mt-1 text-xs leading-5 text-slate-500">{description}</div>
-    <div className="mt-4 space-y-3">{children}</div>
+  <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-5 shadow-sm">
+    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+      <div className="min-w-0">
+        <div className="text-lg font-semibold text-slate-900">{title}</div>
+        <div className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">{description}</div>
+      </div>
+    </div>
+    <div className={["mt-5", fieldsLayoutClassName].join(" ")}>{children}</div>
   </div>
 );
 
@@ -779,7 +829,7 @@ const Field = ({
   placeholder?: string;
 }) => (
   <label className="block">
-    <div className="mb-1 text-xs text-slate-500">{label}</div>
+    <div className="mb-2 text-sm font-medium text-slate-700">{label}</div>
     <div className="relative">
       <input
         type={type}
@@ -787,12 +837,12 @@ const Field = ({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={[
-          "w-full min-w-0 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 [appearance:textfield]",
+          "w-full min-w-0 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3.5 text-base font-medium text-slate-900 shadow-sm outline-none transition [appearance:textfield] placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-200/70",
           suffix ? "pr-20" : "",
         ].join(" ")}
       />
       {suffix ? (
-        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 whitespace-nowrap text-xs font-medium text-slate-400">
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 whitespace-nowrap text-sm font-semibold text-slate-400">
           {suffix}
         </span>
       ) : null}

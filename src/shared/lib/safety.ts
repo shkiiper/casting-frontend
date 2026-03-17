@@ -114,10 +114,69 @@ export const sanitizeInternalPath = (value: unknown, fallback = "/account") => {
   return trimmed;
 };
 
+const extractStringList = (value: unknown): string[] => {
+  if (typeof value === "string") {
+    return value.trim() ? [value.trim()] : [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => extractStringList(item));
+  }
+
+  if (isNonEmptyObject(value)) {
+    return Object.values(value).flatMap((item) => extractStringList(item));
+  }
+
+  return [];
+};
+
 export const getApiErrorMessage = (error: unknown, fallback: string) => {
-  const message =
-    (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
-  return typeof message === "string" && message.trim() ? message.trim() : fallback;
+  const response = (error as { response?: { status?: number; data?: unknown } })?.response;
+  const requestUrl = (error as { config?: { url?: string } })?.config?.url || "";
+  const responseData = response?.data;
+
+  const payloadMessage =
+    (isNonEmptyObject(responseData) &&
+      [
+        responseData.message,
+        responseData.error,
+        responseData.detail,
+        responseData.title,
+      ].flatMap((item) => extractStringList(item))[0]) ||
+    extractStringList(
+      isNonEmptyObject(responseData) ? responseData.errors : responseData
+    )[0] ||
+    extractStringList(
+      isNonEmptyObject(responseData) ? responseData.fieldErrors : null
+    )[0] ||
+    "";
+
+  const normalizedMessage = payloadMessage.toLowerCase();
+  const fallbackMessage = (error as { message?: string })?.message?.toLowerCase() || "";
+
+  if (!response && /network error|failed to fetch|load failed/i.test(fallbackMessage)) {
+    return "Нет связи с сервером. Проверьте интернет и попробуйте ещё раз.";
+  }
+
+  if (
+    (response?.status === 401 || response?.status === 403) &&
+    (requestUrl.includes("/api/auth/login") ||
+      /bad credentials|invalid credentials|unauthorized|forbidden|wrong password|invalid password/i.test(
+        normalizedMessage
+      ))
+  ) {
+    return "Неверный email или пароль.";
+  }
+
+  if (/not verified|email not verified|user is disabled/i.test(normalizedMessage)) {
+    return "Email не подтвержден. Подтвердите почту или запросите письмо повторно.";
+  }
+
+  if (payloadMessage.trim()) {
+    return payloadMessage.trim();
+  }
+
+  return fallback;
 };
 
 export const isNonEmptyObject = (value: unknown): value is UnknownRecord =>

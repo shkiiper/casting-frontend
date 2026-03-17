@@ -4,6 +4,7 @@ import { register as apiRegister } from "../../api/auth";
 import type { RegisterRequest } from "../../types/auth";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { getApiErrorMessage, sanitizeEmail, sanitizePhone, trimToNull } from "@/shared/lib/safety";
+import { CenterToast } from "@/shared/ui/CenterToast";
 import "./RegisterPage.css";
 
 export function RegisterPage() {
@@ -222,6 +223,7 @@ export function RegisterPage() {
           </div>
         </div>
       )}
+      {error && <CenterToast message={error} variant="error" />}
     </div>
   );
 }

@@ -1,20 +1,15 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import api from "@/api/client";
-import { createCastingPayment, getExternalIdFromInit } from "@/api/payments";
 import { Container } from "@/shared/ui/Container";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { CenterToast } from "@/shared/ui/CenterToast";
 import type { PageResponse } from "@/types/common";
-import {
-  getApiErrorMessage,
-  sanitizeHttpUrl,
-  sanitizeInternalPath,
-  trimMultilineToNull,
-  trimToNull,
-} from "@/shared/lib/safety";
+import { trimMultilineToNull, trimToNull } from "@/shared/lib/safety";
+import { PAYMENTS_LOCKED_MESSAGE } from "@/shared/lib/payments";
 
 type CastingResponse = {
   id: number;
@@ -45,7 +40,6 @@ const emptyForm = (): CreateCastingForm => ({
 });
 
 export const AdsPage = () => {
-  const navigate = useNavigate();
   const [list, setList] = useState<CastingResponse[]>([]);
   const [form, setForm] = useState<CreateCastingForm>(emptyForm());
   const [loading, setLoading] = useState(true);
@@ -53,6 +47,7 @@ export const AdsPage = () => {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [payOpen, setPayOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const totalPrice = form.days * CASTING_DAY_PRICE;
 
@@ -98,36 +93,12 @@ export const AdsPage = () => {
   };
 
   const startPayment = async () => {
-    try {
-      setSaving(true);
-      setError(null);
-
-      const payment = await createCastingPayment({
-        title: trimToNull(form.title, 120) ?? "",
-        description: trimMultilineToNull(form.description, 4000) ?? "",
-        city: trimToNull(form.city, 120),
-        projectType: trimToNull(form.projectType, 120),
-        days: form.days,
-      });
-      const externalId = getExternalIdFromInit(payment);
-      const paymentUrl = sanitizeHttpUrl(payment.paymentUrl);
-      if (!externalId || !paymentUrl) {
-        setError("Не удалось получить идентификатор платежа");
-        return;
-      }
-      setPayOpen(false);
-      const params = new URLSearchParams({
-        externalId,
-        paymentUrl,
-        returnTo: sanitizeInternalPath("/ads/manage", "/ads/manage"),
-        title: "Оплата размещения объявления",
-      });
-      navigate(`/payments/status?${params.toString()}`);
-    } catch (error) {
-      setError(getApiErrorMessage(error, "Ошибка создания платежа за объявление"));
-    } finally {
-      setSaving(false);
-    }
+    setSaving(true);
+    setError(null);
+    setPayOpen(false);
+    setNotice(PAYMENTS_LOCKED_MESSAGE);
+    window.setTimeout(() => setNotice(null), 2600);
+    setSaving(false);
   };
 
   const deleteCasting = async (id: number) => {
@@ -295,6 +266,7 @@ export const AdsPage = () => {
         onClose={() => setPayOpen(false)}
         onConfirm={startPayment}
       />
+      {notice && <CenterToast message={notice} variant="info" />}
     </div>
   );
 };

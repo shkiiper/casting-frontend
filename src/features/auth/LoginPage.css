@@ -334,4 +334,9 @@
     flex-direction: column;
     align-items: stretch;
   }
+
+  .auth-note,
+  .auth-card-right {
+    display: none;
+  }
 }

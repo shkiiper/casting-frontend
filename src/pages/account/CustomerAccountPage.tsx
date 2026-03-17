@@ -486,6 +486,7 @@ export const CustomerAccountPage = () => {
           navigate(`/payments/status?${params.toString()}`);
         }}
       />
+      {error && <CenterToast message={error} variant="error" />}
       {saveNotice && <CenterToast message={saveNotice} />}
     </div>
   );

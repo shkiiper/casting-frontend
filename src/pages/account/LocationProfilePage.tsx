@@ -296,6 +296,7 @@ export const LocationProfilePage = () => {
           </div>
         </Container>
       </div>
+      {error && <CenterToast message={error} variant="error" />}
       {saveNotice && <CenterToast message={saveNotice} />}
     </div>
   );
