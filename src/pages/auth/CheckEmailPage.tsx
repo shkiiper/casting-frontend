@@ -32,7 +32,7 @@ export function CheckEmailPage() {
   const initialEmail =
     locationState?.email ?? localStorage.getItem("pendingVerificationEmail") ?? "";
 
-  const [email, setEmail] = useState(initialEmail);
+  const [email] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);

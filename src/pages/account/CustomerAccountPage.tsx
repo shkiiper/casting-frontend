@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "@/api/client";
-import { getExternalIdFromInit } from "@/api/payments";
 import { getSubscriptionInfo, getViewedContacts } from "@/api/customer";
 import { Container } from "@/shared/ui/Container";
 import { Input } from "@/shared/ui/Input";
@@ -19,7 +18,6 @@ import { resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
 import {
   getApiErrorMessage,
   sanitizeEmail,
-  sanitizeHttpUrl,
   sanitizePhone,
   sanitizeTelegram,
   trimMultilineToNull,
@@ -462,29 +460,7 @@ export const CustomerAccountPage = () => {
         open={modalOpen}
         mode={modalMode}
         onClose={() => setModalOpen(false)}
-        onPaymentCreated={(resp) => {
-          const externalId = getExternalIdFromInit(resp);
-          const paymentUrl = sanitizeHttpUrl(resp.paymentUrl);
-          if (!externalId) {
-            setError("Не удалось получить идентификатор платежа");
-            return;
-          }
-          if (!paymentUrl) {
-            setError("Платежный сервис вернул некорректную ссылку оплаты");
-            return;
-          }
-          const params = new URLSearchParams({
-            externalId,
-            paymentUrl,
-            returnTo: "/account",
-            title:
-              modalMode === "BOOSTERS"
-                ? "Оплата бустеров"
-                : "Оплата подписки",
-          });
-          setModalOpen(false);
-          navigate(`/payments/status?${params.toString()}`);
-        }}
+        onSuccess={() => setModalOpen(false)}
       />
       {error && <CenterToast message={error} variant="error" />}
       {saveNotice && <CenterToast message={saveNotice} />}

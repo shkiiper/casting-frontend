@@ -5,9 +5,17 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 
 type ProfilePremiumPanelProps = {
   premium: ProfilePremiumInfo;
+  returnTo?: string;
+  title?: string;
+  onError?: (message: string) => void;
 };
 
-export const ProfilePremiumPanel = ({ premium }: ProfilePremiumPanelProps) => {
+export const ProfilePremiumPanel = ({
+  premium,
+  returnTo: _returnTo,
+  title: _title,
+  onError: _onError,
+}: ProfilePremiumPanelProps) => {
   const [notice, setNotice] = useState<string | null>(null);
 
   const handlePurchase = async () => {

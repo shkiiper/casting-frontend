@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCustomerPlans } from "../../api/subscriptions";
 import type { CustomerPlanResponse } from "../../types/subscription";
-import { getApiErrorMessage, toOptionalNumber } from "@/shared/lib/safety";
+import { clamp, getApiErrorMessage, toOptionalNumber } from "@/shared/lib/safety";
 import { PAYMENTS_LOCKED_MESSAGE } from "@/shared/lib/payments";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import "./SubscriptionModal.css";
@@ -12,6 +12,8 @@ interface Props {
   open: boolean;
   mode: Mode;
   onClose: () => void;
+  onBeforeRedirectToPay?: unknown;
+  onPaymentCreated?: unknown;
   onSuccess?: () => void;
 }
 
@@ -19,6 +21,8 @@ export function SubscriptionModal({
   open,
   mode,
   onClose,
+  onBeforeRedirectToPay: _onBeforeRedirectToPay,
+  onPaymentCreated: _onPaymentCreated,
   onSuccess,
 }: Props) {
   const [plans, setPlans] = useState<CustomerPlanResponse[]>([]);
