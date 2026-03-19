@@ -365,15 +365,17 @@ export const ActorProfilePage = () => {
     try {
       setPublishSaving(true);
       setError(null);
-      const payload = normalize(nextForm);
       const res =
         mode === "EMPTY"
-          ? await api.post<ActorProfile>("/api/profile/actor", payload)
-          : await api.patch<ActorProfile>("/api/profile/actor", payload);
+          ? await api.post<ActorProfile>("/api/profile/actor", normalize(nextForm))
+          : await api.patch<ActorProfile>("/api/profile/actor/visibility", null, {
+              params: { published: next },
+            });
 
       setProfileData(res.data);
       setForm(mapToForm(res.data));
       setMode("VIEW");
+      window.dispatchEvent(new Event("profile-updated"));
       setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
       window.setTimeout(() => setSaveNotice(null), 2200);
     } catch (e: unknown) {

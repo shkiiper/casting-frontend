@@ -343,15 +343,17 @@ export const CreatorProfilePage = () => {
     try {
       setPublishSaving(true);
       setError(null);
-      const payload = normalize(nextForm);
       const res =
         hasProfile
-          ? await api.patch<CreatorProfile>("/api/profile/creator", payload)
-          : await api.post<CreatorProfile>("/api/profile/creator", payload);
+          ? await api.patch<CreatorProfile>("/api/profile/creator/visibility", null, {
+              params: { published: next },
+            })
+          : await api.post<CreatorProfile>("/api/profile/creator", normalize(nextForm));
 
       setProfileData(res.data);
       setForm(mapToForm(res.data));
       setHasProfile(true);
+      window.dispatchEvent(new Event("profile-updated"));
       setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
       window.setTimeout(() => setSaveNotice(null), 2200);
     } catch (error: unknown) {

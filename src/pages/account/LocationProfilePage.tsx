@@ -245,17 +245,19 @@ export const LocationProfilePage = () => {
     try {
       setPublishSaving(true);
       setError(null);
-      const payload = normalize(nextForm);
       const res =
         mode === "EMPTY"
-          ? await api.post<LocationProfile>("/api/profile/location", payload)
-          : await api.patch<LocationProfile>("/api/profile/location", payload);
+          ? await api.post<LocationProfile>("/api/profile/location", normalize(nextForm))
+          : await api.patch<LocationProfile>("/api/profile/location/visibility", null, {
+              params: { published: next },
+            });
 
       const merged = mergeLocationResponseWithForm(res.data, nextForm);
       setProfileData(merged);
       persistLocationFallback(merged);
       setForm(mapToForm(merged));
       setMode("VIEW");
+      window.dispatchEvent(new Event("profile-updated"));
       setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
       window.setTimeout(() => setSaveNotice(null), 2200);
     } catch (e: unknown) {
