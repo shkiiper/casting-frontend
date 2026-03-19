@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom";
-import logo from "@/assets/onset-logo.svg";
 import { resolveMediaUrl, useProfileAvatar } from "@/shared/ui/useProfileAvatar";
 
 export const Header = () => {
@@ -18,7 +17,7 @@ export const Header = () => {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-black/5">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-3">
-          <img src={logo} alt="onset" className="w-9 h-9 rounded-xl" />
+          <img src="/logo.jpeg" alt="onset" className="w-9 h-9 rounded-xl object-cover" />
           <span className="text-sm font-semibold tracking-[0.12em] text-slate-700">
             ONSET
           </span>

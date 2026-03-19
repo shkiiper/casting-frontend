@@ -1,6 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import logo from "@/assets/onset-logo.svg";
 import { resolveMediaUrl, useProfileAvatar } from "@/shared/ui/useProfileAvatar";
 
 type ActiveKey =
@@ -117,7 +116,7 @@ export const InlineNav = ({
     <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:px-6 md:px-8 md:py-5">
       <div className="flex items-center justify-between gap-4 md:gap-6">
         <Link to="/" className="flex items-center gap-3">
-          <img src={logo} alt="onset" className="h-9 w-9 rounded-xl" />
+          <img src="/logo.jpeg" alt="onset" className="h-9 w-9 rounded-xl object-cover" />
           <div className="leading-tight">
             <div className="text-[11px] uppercase tracking-[0.22em] text-slate-500">
               Casting
