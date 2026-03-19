@@ -64,11 +64,10 @@ export const ProfilePremiumPanel = ({
             <button
               type="button"
               onClick={() => void handlePurchase()}
-              disabled={!premium.canPurchase}
               className={[
                 "rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors",
                 !premium.canPurchase
-                  ? "cursor-not-allowed bg-slate-200 text-slate-500"
+                  ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
                   : "bg-slate-900 text-white hover:bg-slate-800",
               ].join(" ")}
             >

@@ -38,12 +38,15 @@ type PublicProfile = {
   bodyType?: string | null;
   hairColor?: string | null;
   eyeColor?: string | null;
+  gameAgeFrom?: number | null;
+  gameAgeTo?: number | null;
   playingAgeMin?: number | null;
   playingAgeMax?: number | null;
   unionMembership?: string | null;
   hasDriverLicense?: boolean | null;
   contactInstagram?: string | null;
   skills?: string[] | null;
+  skillsJson?: string[] | string | null;
   bio?: string | null;
   experienceText?: string | null;
   experienceLevel?: string | null;
@@ -74,6 +77,25 @@ const genderLabel: Record<string, string> = {
   FEMALE: "Женский",
   OTHER: "Другое",
 };
+
+const appearanceValueLabels: Record<string, string> = {
+  Athletic: "Спортивное",
+  Slim: "Худощавое",
+  Average: "Среднее",
+  "Plus-size": "Плотное",
+  Other: "Другое",
+  Black: "Черный",
+  Brown: "Каштановый",
+  Blonde: "Русый",
+  Red: "Рыжий",
+  Gray: "Седой",
+  Blue: "Голубой",
+  Green: "Зеленый",
+  Hazel: "Ореховый",
+};
+
+const localizeAppearanceValue = (value?: string | null) =>
+  value ? appearanceValueLabels[value] || value : null;
 
 const parseExperienceBundle = (raw?: string | null) => {
   if (!raw) {
@@ -145,6 +167,26 @@ const toStringArray = (value: unknown): string[] => {
   return [];
 };
 
+const parseSkillsValue = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((x) => String(x).trim()).filter(Boolean);
+  }
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map((x) => String(x).trim()).filter(Boolean);
+      }
+    } catch {
+      return value
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
+};
+
 const pickString = (
   source: Record<string, unknown>,
   keys: string[]
@@ -198,7 +240,11 @@ const normalizeProfile = (profile: PublicProfile): PublicProfile => ({
   ...profile,
   photoUrls: Array.isArray(profile.photoUrls) ? profile.photoUrls : [],
   videoUrls: Array.isArray(profile.videoUrls) ? profile.videoUrls : [],
-  skills: Array.isArray(profile.skills) ? profile.skills : [],
+  skills: parseSkillsValue(profile.skillsJson).length
+    ? parseSkillsValue(profile.skillsJson)
+    : Array.isArray(profile.skills)
+    ? profile.skills
+    : [],
   projectFormats: Array.isArray(profile.projectFormats) ? profile.projectFormats : [],
   caseHighlights: Array.isArray(profile.caseHighlights) ? profile.caseHighlights : [],
 });
@@ -382,41 +428,33 @@ export const ProfileDetailsPage = () => {
     setVideoModalUrl(resolved);
   };
 
-  const description =
-    profile?.description?.trim() ||
-    profile?.bio?.trim() ||
-    "Описание пока не заполнено.";
+  const description = profile?.description?.trim() || profile?.bio?.trim() || "";
   const shortDescription =
     description.length > 260 ? `${description.slice(0, 260)}...` : description;
 
   const appearanceRows = [
-    { label: "Тип профиля", value: profileTypeLabel[profile?.type ?? "ACTOR"] },
-    { label: "Тип деятельности", value: profile?.activityType || "Не указан" },
-    { label: "Возраст", value: profile?.age ? `${profile.age} лет` : "Не указан" },
+    { label: "Тип профиля", value: profile ? profileTypeLabel[profile.type] : null },
+    { label: "Тип деятельности", value: profile?.activityType || null },
+    { label: "Возраст", value: profile?.age ? `${profile.age} лет` : null },
     {
       label: "Пол",
-      value:
-        (profile?.gender && genderLabel[profile.gender]) ||
-        profile?.gender ||
-        "Не указан",
+      value: (profile?.gender && genderLabel[profile.gender]) || profile?.gender || null,
     },
-    { label: "Рост", value: profile?.heightCm ? `${profile.heightCm} см` : "Не указан" },
-    { label: "Вес", value: profile?.weightKg ? `${profile.weightKg} кг` : "Не указан" },
-    { label: "Телосложение", value: profile?.bodyType || "Не указано" },
-    { label: "Цвет волос", value: profile?.hairColor || "Не указан" },
-    { label: "Цвет глаз", value: profile?.eyeColor || "Не указан" },
+    { label: "Рост", value: profile?.heightCm ? `${profile.heightCm} см` : null },
+    { label: "Вес", value: profile?.weightKg ? `${profile.weightKg} кг` : null },
+    { label: "Телосложение", value: localizeAppearanceValue(profile?.bodyType) },
+    { label: "Цвет волос", value: localizeAppearanceValue(profile?.hairColor) },
+    { label: "Цвет глаз", value: localizeAppearanceValue(profile?.eyeColor) },
     {
       label: "Ставка",
-      value: profile?.minRate ? `${profile.minRate} ${profile.rateUnit || "сом"}` : "Не указана",
+      value: profile?.minRate ? `${profile.minRate} ${profile.rateUnit || "сом"}` : null,
     },
-  ];
+  ].filter((row): row is { label: string; value: string } => Boolean(row.value));
 
+  const gameAgeFrom = profile?.gameAgeFrom ?? profile?.playingAgeMin ?? null;
+  const gameAgeTo = profile?.gameAgeTo ?? profile?.playingAgeMax ?? null;
   const playingAge =
-    profile?.playingAgeMin && profile?.playingAgeMax
-      ? `${profile.playingAgeMin}-${profile.playingAgeMax}`
-      : profile?.age && profile.age > 0
-      ? `${Math.max(18, profile.age - 8)}-${profile.age + 8}`
-      : "—";
+    gameAgeFrom && gameAgeTo ? `${gameAgeFrom}-${gameAgeTo}` : null;
 
   const remainingContacts = subscription?.remainingContacts ?? 0;
   const contactsUnlocked = Boolean(
@@ -439,14 +477,7 @@ export const ProfileDetailsPage = () => {
     }
   };
 
-  const skills =
-    profile?.skills && profile.skills.length > 0
-      ? profile.skills
-      : [
-          profile?.activityType || "Актерское мастерство",
-          profile?.type === "ACTOR" ? "Кастинг" : "Продакшн",
-          profile?.city || "Мобильность",
-        ];
+  const skills = profile?.skills?.filter(Boolean) ?? [];
   const creatorExperience = deriveCreatorExperience(profile);
   const creatorSkills = creatorExperience.skills.length
     ? creatorExperience.skills
@@ -549,8 +580,8 @@ export const ProfileDetailsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid gap-3 lg:grid-cols-[1.05fr_1fr]">
-                    <div className="relative rounded-xl overflow-hidden border border-black/10 bg-slate-200 aspect-[4/5]">
+                  <div className="grid gap-3 lg:grid-cols-[0.82fr_1fr]">
+                    <div className="relative rounded-xl overflow-hidden border border-black/10 bg-slate-200 aspect-[4/5] max-h-[640px]">
                       {galleryPhotos[0] ? (
                         <button
                           type="button"
@@ -613,49 +644,41 @@ export const ProfileDetailsPage = () => {
                   <div className="mt-8 grid gap-8 xl:mt-10 xl:grid-cols-[1fr_340px]">
                     <div>
                       <h2 className="text-2xl md:text-3xl font-bold leading-tight">{name}</h2>
-                      <p className="text-lg md:text-xl mt-2 text-slate-700">
-                        {profile.city || "Город не указан"}
-                      </p>
-                      <p className="text-base md:text-lg mt-2 text-slate-700">
-                        {(profile.gender && genderLabel[profile.gender]) ||
-                          profile.gender ||
-                          "Пол не указан"}
-                      </p>
+                      {profile.city ? (
+                        <p className="text-lg md:text-xl mt-2 text-slate-700">
+                          {profile.city}
+                        </p>
+                      ) : null}
+                      {(profile.gender && genderLabel[profile.gender]) || profile.gender ? (
+                        <p className="text-base md:text-lg mt-2 text-slate-700">
+                          {(profile.gender && genderLabel[profile.gender]) || profile.gender}
+                        </p>
+                      ) : null}
 
-                      <div
-                        className={[
-                          "mt-6 inline-block rounded-2xl px-5 py-4",
-                          premium.active
-                            ? "border border-amber-200 bg-amber-50/80"
-                            : "border border-black/10 bg-slate-50",
-                        ].join(" ")}
-                      >
-                        <div className="text-lg font-semibold">Опытный</div>
-                        <div className="text-slate-600 mt-1 text-sm">
-                          Профессионал с подтвержденным опытом
-                        </div>
-                      </div>
+                      {description ? (
+                        <>
+                          <div className="mt-8 text-[15px] leading-7 text-slate-800">
+                            {bioExpanded ? description : shortDescription}
+                          </div>
+                          {description.length > 260 && (
+                            <button
+                              type="button"
+                              onClick={() => setBioExpanded((v) => !v)}
+                              className="mt-2 text-slate-700 text-sm font-medium hover:underline"
+                            >
+                              {bioExpanded ? "Свернуть" : "Показать больше"}
+                            </button>
+                          )}
+                        </>
+                      ) : null}
 
-                      <div className="mt-8 text-[15px] leading-7 text-slate-800">
-                        {bioExpanded ? description : shortDescription}
-                      </div>
-                      {description.length > 260 && (
-                        <button
-                          type="button"
-                          onClick={() => setBioExpanded((v) => !v)}
-                          className="mt-2 text-slate-700 text-sm font-medium hover:underline"
-                        >
-                          {bioExpanded ? "Свернуть" : "Показать больше"}
-                        </button>
-                      )}
-
-                      {profile.type === "ACTOR" && (
+                      {profile.type === "ACTOR" && appearanceRows.length > 0 && (
                         <>
                           <SectionTitle title="Внешность" />
                           <AppearancePassport
                             rows={appearanceRows}
                             playingAge={playingAge}
-                            ethnicity="Белый / Европейская внешность"
+                            ethnicity={profile.ethnicity || null}
                           />
                         </>
                       )}
@@ -729,59 +752,32 @@ export const ProfileDetailsPage = () => {
                         </section>
                       ) : (
                         <>
-                          <SectionTitle title="Опыт и проекты" />
-                          <div className="mt-4 space-y-0 border border-black/10 rounded-2xl overflow-hidden bg-white">
-                            <ExperienceRow
-                              leftTitle={profile.activityType || "Кино"}
-                              leftSubtitle={profileTypeLabel[profile.type]}
-                              rightTitle={name}
-                              rightSubtitle={profile.city || "Город"}
-                            />
-                            <ExperienceRow
-                              leftTitle="Театр"
-                              leftSubtitle="Главная роль"
-                              rightTitle="Независимый проект"
-                              rightSubtitle={profile.city || "Город"}
-                            />
-                            <ExperienceRow
-                              leftTitle="Реклама"
-                              leftSubtitle="Второстепенная роль"
-                              rightTitle="Цифровая кампания"
-                              rightSubtitle={profile.city || "Город"}
-                            />
-                          </div>
+                          {profile.experienceText?.trim() ? (
+                            <>
+                              <SectionTitle title="Опыт" />
+                              <div className="mt-4 rounded-2xl border border-black/10 bg-white p-5 text-[15px] leading-7 text-slate-800">
+                                {profile.experienceText}
+                              </div>
+                            </>
+                          ) : null}
 
-                          <SectionTitle title="Навыки" />
-                          <div className="mt-4 flex flex-wrap gap-3">
-                            {skills.map((skill, index) => (
-                              <span
-                                key={`${skill}-${index}`}
-                                className="px-4 py-2 rounded-full bg-white border border-black/10 text-sm"
-                              >
-                                {skill}
-                              </span>
-                            ))}
-                          </div>
+                          {skills.length > 0 ? (
+                            <>
+                              <SectionTitle title="Навыки" />
+                              <div className="mt-4 flex flex-wrap gap-3">
+                                {skills.map((skill, index) => (
+                                  <span
+                                    key={`${skill}-${index}`}
+                                    className="px-4 py-2 rounded-full bg-white border border-black/10 text-sm"
+                                  >
+                                    {skill}
+                                  </span>
+                                ))}
+                              </div>
+                            </>
+                          ) : null}
                         </>
                       )}
-
-                      <SectionTitle title="Образование и обучение" />
-                      <div className="mt-4 border border-black/10 rounded-2xl overflow-hidden bg-white">
-                        <EducationRow
-                          year="2024"
-                          school="In The Moment Acting Studio"
-                          course="Мастер-класс"
-                          teacher="Laurel Vouvray"
-                          city={profile.city || "Austin"}
-                        />
-                        <EducationRow
-                          year="2014"
-                          school="New York Conservatory"
-                          course="Актерское мастерство для кино и ТВ"
-                          teacher="Richard Omar"
-                          city="Нью-Йорк"
-                        />
-                      </div>
                     </div>
 
                     <aside className="space-y-6">
@@ -906,8 +902,8 @@ const AppearancePassport = ({
   ethnicity,
 }: {
   rows: Array<{ label: string; value: string }>;
-  playingAge: string;
-  ethnicity: string;
+  playingAge: string | null;
+  ethnicity: string | null;
 }) => (
   <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-4 md:p-6">
     <div className="flex flex-wrap items-end justify-between gap-3 pb-4 border-b border-slate-200">
@@ -922,24 +918,30 @@ const AppearancePassport = ({
       <div className="text-xs text-slate-500">Публичные данные профиля</div>
     </div>
 
-    <div className="mt-4 grid sm:grid-cols-2 gap-3">
-      <div className="rounded-2xl border border-black/10 bg-black/[0.03] backdrop-blur-sm px-4 py-4">
-        <div className="text-[11px] uppercase tracking-[0.14em] text-slate-600">
-          Игровой возраст
-        </div>
-        <div className="mt-2 text-3xl md:text-[34px] leading-none font-semibold text-slate-900">
-          {playingAge}
-        </div>
+    {playingAge || ethnicity ? (
+      <div className="mt-4 grid sm:grid-cols-2 gap-3">
+        {playingAge ? (
+          <div className="rounded-2xl border border-black/10 bg-black/[0.03] backdrop-blur-sm px-4 py-4">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-slate-600">
+              Игровой возраст
+            </div>
+            <div className="mt-2 text-3xl md:text-[34px] leading-none font-semibold text-slate-900">
+              {playingAge}
+            </div>
+          </div>
+        ) : null}
+        {ethnicity ? (
+          <div className="rounded-2xl border border-black/10 bg-black/[0.03] backdrop-blur-sm px-4 py-4">
+            <div className="text-[11px] uppercase tracking-[0.14em] text-slate-600">
+              Этничность
+            </div>
+            <div className="mt-2 text-base md:text-lg font-medium text-slate-900 leading-tight">
+              {ethnicity}
+            </div>
+          </div>
+        ) : null}
       </div>
-      <div className="rounded-2xl border border-black/10 bg-black/[0.03] backdrop-blur-sm px-4 py-4">
-        <div className="text-[11px] uppercase tracking-[0.14em] text-slate-600">
-          Этничность
-        </div>
-        <div className="mt-2 text-base md:text-lg font-medium text-slate-900 leading-tight">
-          {ethnicity}
-        </div>
-      </div>
-    </div>
+    ) : null}
 
     <div className="mt-4">
       <div className="text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">
@@ -1184,53 +1186,4 @@ const SidebarBlock = ({
     <h4 className="text-xl font-bold mb-3">{title}</h4>
     <div>{children}</div>
   </section>
-);
-
-const ExperienceRow = ({
-  leftTitle,
-  leftSubtitle,
-  rightTitle,
-  rightSubtitle,
-}: {
-  leftTitle: string;
-  leftSubtitle: string;
-  rightTitle: string;
-  rightSubtitle: string;
-}) => (
-  <div className="grid md:grid-cols-2 gap-4 p-4 border-b border-black/10 last:border-b-0">
-    <div>
-      <div className="text-lg font-semibold">{leftTitle}</div>
-      <div className="text-sm text-slate-700">{leftSubtitle}</div>
-    </div>
-    <div>
-      <div className="text-lg">{rightTitle}</div>
-      <div className="text-sm text-slate-700">{rightSubtitle}</div>
-    </div>
-  </div>
-);
-
-const EducationRow = ({
-  year,
-  school,
-  course,
-  teacher,
-  city,
-}: {
-  year: string;
-  school: string;
-  course: string;
-  teacher: string;
-  city: string;
-}) => (
-  <div className="grid gap-3 border-b border-black/10 p-4 last:border-b-0 md:grid-cols-[120px_1fr_1fr] md:gap-4">
-    <div className="text-sm text-slate-500">{year}</div>
-    <div>
-      <div className="text-lg font-semibold">{school}</div>
-      <div className="text-sm text-slate-700">{course}</div>
-    </div>
-    <div>
-      <div className="text-lg">{teacher}</div>
-      <div className="text-sm text-slate-700">{city}</div>
-    </div>
-  </div>
 );

@@ -11,6 +11,7 @@ import { InlineNav } from "@/shared/ui/InlineNav";
 import { CenterToast } from "@/shared/ui/CenterToast";
 
 type UserRoleFilter = "ALL" | "ACTOR" | "CREATOR" | "LOCATION_OWNER" | "CUSTOMER";
+type VisibilityFilter = "ALL" | "VISIBLE" | "HIDDEN";
 type SortBy = "createdAt" | "updatedAt" | "id" | "email" | "role";
 type SortDir = "asc" | "desc";
 
@@ -28,6 +29,7 @@ export const AdminUsersPage = () => {
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRoleFilter>("ALL");
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("ALL");
   const [sortBy, setSortBy] = useState<SortBy>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
 
@@ -51,6 +53,7 @@ export const AdminUsersPage = () => {
         page,
         size: PAGE_SIZE,
         role: roleFilter === "ALL" ? undefined : roleFilter,
+        visibility: visibilityFilter,
         query: search.trim() || undefined,
         sortBy,
         sortDir,
@@ -73,7 +76,7 @@ export const AdminUsersPage = () => {
   useEffect(() => {
     if (!isAdmin) return;
     void loadUsers();
-  }, [isAdmin, page, roleFilter, sortBy, sortDir]);
+  }, [isAdmin, page, roleFilter, visibilityFilter, sortBy, sortDir]);
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
@@ -191,7 +194,7 @@ export const AdminUsersPage = () => {
 
           <div className="rounded-[28px] border border-black/10 bg-white p-4 shadow-sm">
             <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_220px_180px]">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_190px_220px_180px]">
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -214,6 +217,18 @@ export const AdminUsersPage = () => {
                   <option value="CREATOR">Креаторы</option>
                   <option value="LOCATION_OWNER">Владельцы локаций</option>
                   <option value="CUSTOMER">Кастомеры</option>
+                </select>
+                <select
+                  value={visibilityFilter}
+                  onChange={(e) => {
+                    setVisibilityFilter(e.target.value as VisibilityFilter);
+                    setPage(0);
+                  }}
+                  className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm bg-white"
+                >
+                  <option value="ALL">Все профили</option>
+                  <option value="VISIBLE">Только видимые</option>
+                  <option value="HIDDEN">Только скрытые</option>
                 </select>
                 <select
                   value={sortBy}
@@ -249,7 +264,7 @@ export const AdminUsersPage = () => {
           <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <div className="min-w-[980px]">
-                <div className="grid grid-cols-[110px_180px_minmax(260px,1fr)_220px_240px] gap-4 border-b border-black/10 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_240px] gap-4 border-b border-black/10 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <div>ID</div>
                   <div>Роль</div>
                   <div>Имя / email</div>
@@ -266,7 +281,7 @@ export const AdminUsersPage = () => {
                     {items.map((user) => (
                       <div
                         key={user.id}
-                        className="grid grid-cols-[110px_180px_minmax(260px,1fr)_220px_240px] gap-4 px-5 py-4 text-sm items-center"
+                        className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_240px] gap-4 px-5 py-4 text-sm items-center"
                       >
                         <div className="font-semibold">#{user.id}</div>
                         <div>{roleLabel(user.role)}</div>
@@ -278,6 +293,16 @@ export const AdminUsersPage = () => {
                         </div>
                         <div className="text-xs">
                           <div>{Boolean(user.active) ? "Активен" : "Неактивен"}</div>
+                          {typeof user.published === "boolean" ? (
+                            <div
+                              className={[
+                                "mt-1",
+                                user.published ? "text-blue-700" : "text-slate-500",
+                              ].join(" ")}
+                            >
+                              {user.published ? "Виден в каталоге" : "Скрыт из каталога"}
+                            </div>
+                          ) : null}
                           <div className={user.banned ? "mt-1 text-red-600" : "mt-1 text-emerald-700"}>
                             {user.banned ? "Забанен" : "Не забанен"}
                           </div>
@@ -400,6 +425,16 @@ const UserDrawer = ({
           <Row label="О себе" value={user.description || "—"} />
           <Row label="Контакты" value={contacts} />
           <Row label="Прайс" value={price} />
+          <Row
+            label="Видимость"
+            value={
+              typeof user.published === "boolean"
+                ? user.published
+                  ? "Виден в каталоге"
+                  : "Скрыт из каталога"
+                : "—"
+            }
+          />
           <Row label="Статус" value={Boolean(user.active) ? "Активен" : "Неактивен"} />
           <Row label="Бан" value={user.banned ? "Забанен" : "Не забанен"} />
           <Row label="Создан" value={user.createdAt || "—"} />

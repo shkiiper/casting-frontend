@@ -11,6 +11,17 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
+  PHOTO_TYPES,
+  VIDEO_ACCEPT,
+  PHOTO_UPLOAD_HINT,
+  VIDEO_UPLOAD_HINT,
+  isAllowedPhotoFile,
+  isAllowedVideoFile,
+  preparePhotoFile,
+  assertVideoSize,
+  getUploadErrorMessage,
+} from "@/shared/lib/uploads";
+import {
   mergeUniqueUrls,
   normalizeStringArray,
   toOptionalNumber,
@@ -64,6 +75,12 @@ type ActorProfile = {
   bodyType?: string | null;
   hairColor?: string | null;
   eyeColor?: string | null;
+  mainPhotoUrl?: string | null;
+  bio?: string | null;
+  experienceText?: string | null;
+  gameAgeFrom?: number | null;
+  gameAgeTo?: number | null;
+  skillsJson?: string[] | string | null;
   playingAgeMin?: number | null;
   playingAgeMax?: number | null;
   skills?: string[] | null;
@@ -96,13 +113,16 @@ type ActorProfileForm = {
   contactEmail: string;
   contactWhatsapp: string;
   contactInstagram: string;
+  mainPhotoUrl: string;
+  bio: string;
+  experienceText: string;
   heightCm: number | "";
   weightKg: number | "";
   bodyType: string;
   hairColor: string;
   eyeColor: string;
-  playingAgeMin: number | "";
-  playingAgeMax: number | "";
+  gameAgeFrom: number | "";
+  gameAgeTo: number | "";
   skills: string[];
   introVideoUrl: string;
   monologueVideoUrl: string;
@@ -115,17 +135,6 @@ type Mode = "LOADING" | "EMPTY" | "VIEW";
 
 /* ================= CONSTS ================= */
 
-const PHOTO_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-];
-const PHOTO_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
-const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov"];
-const VIDEO_ACCEPT = [...VIDEO_TYPES, ...VIDEO_EXTENSIONS].join(",");
 const GENDER_OPTIONS: Array<{ label: string; value: Gender }> = [
   { label: "Мужской", value: "MALE" },
   { label: "Женский", value: "FEMALE" },
@@ -145,16 +154,29 @@ const RATE_UNIT_OPTIONS: Array<{ label: string; value: string }> = [
   { label: "За час", value: "PER_HOUR" },
   { label: "За проект", value: "PER_PROJECT" },
 ];
-const BODY_TYPE_OPTIONS = ["Athletic", "Slim", "Average", "Plus-size", "Other"];
-const HAIR_COLOR_OPTIONS = [
-  "Black",
-  "Brown",
-  "Blonde",
-  "Red",
-  "Gray",
-  "Other",
+const BODY_TYPE_OPTIONS = [
+  "Спортивное",
+  "Худощавое",
+  "Среднее",
+  "Плотное",
+  "Другое",
 ];
-const EYE_COLOR_OPTIONS = ["Brown", "Blue", "Green", "Gray", "Hazel", "Other"];
+const HAIR_COLOR_OPTIONS = [
+  "Черный",
+  "Каштановый",
+  "Русый",
+  "Рыжий",
+  "Седой",
+  "Другое",
+];
+const EYE_COLOR_OPTIONS = [
+  "Карий",
+  "Голубой",
+  "Зеленый",
+  "Серый",
+  "Ореховый",
+  "Другое",
+];
 const SKILL_OPTIONS = [
   "Импровизация",
   "Сценический бой",
@@ -168,23 +190,17 @@ const SKILL_OPTIONS = [
   "Пластика",
   "Игра на гитаре",
   "Плавание",
+  "Верховая езда",
+  "Фехтование",
+  "Акробатика",
+  "Йога",
+  "Озвучка",
+  "Работа перед хромакеем",
+  "Вождение авто",
+  "Работа с детьми",
+  "Работа с животными",
+  "Модельная походка",
 ];
-
-const isAllowedVideoFile = (file: File) => {
-  const lowerName = file.name.toLowerCase();
-  return (
-    VIDEO_TYPES.includes(file.type) ||
-    VIDEO_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
-  );
-};
-
-const isAllowedPhotoFile = (file: File) => {
-  const lowerName = file.name.toLowerCase();
-  return (
-    PHOTO_TYPES.includes(file.type) ||
-    PHOTO_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
-  );
-};
 
 const getErrorStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
@@ -197,6 +213,7 @@ export const ActorProfilePage = () => {
   const [profileData, setProfileData] = useState<ActorProfile | null>(null);
   const [mode, setMode] = useState<Mode>("LOADING");
   const [saving, setSaving] = useState(false);
+  const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
@@ -230,8 +247,12 @@ export const ActorProfilePage = () => {
 
       // Загружаем по одному файлу: так стабильнее при серверных лимитах батча.
       for (const file of files) {
+        const preparedFile =
+          type === "photo"
+            ? await preparePhotoFile(file)
+            : (assertVideoSize(file), file);
         const fd = new FormData();
-        fd.append("files", file);
+        fd.append("files", preparedFile);
         const { data: urls } = await api.post<string[]>(
           "/api/files/upload",
           fd
@@ -243,6 +264,10 @@ export const ActorProfilePage = () => {
         prev
           ? {
               ...prev,
+              mainPhotoUrl:
+                type === "photo"
+                  ? prev.mainPhotoUrl || uploaded[0] || prev.mainPhotoUrl
+                  : prev.mainPhotoUrl,
               photoUrls:
                 type === "photo"
                   ? mergeUniqueUrls(prev.photoUrls, uploaded, { maxItems: 20 })
@@ -256,7 +281,7 @@ export const ActorProfilePage = () => {
       );
     } catch (e: unknown) {
       if (getErrorStatus(e) !== 401) {
-        setError("Ошибка загрузки файлов");
+        setError(getUploadErrorMessage(e, type));
       }
     }
   };
@@ -304,6 +329,36 @@ export const ActorProfilePage = () => {
 
   const premium = extractProfilePremiumInfo(profileData);
 
+  const savePublished = async (next: boolean) => {
+    if (!form) return;
+
+    const nextForm = { ...form, published: next };
+    setForm(nextForm);
+
+    try {
+      setPublishSaving(true);
+      setError(null);
+      const payload = normalize(nextForm);
+      const res =
+        mode === "EMPTY"
+          ? await api.post<ActorProfile>("/api/profile/actor", payload)
+          : await api.patch<ActorProfile>("/api/profile/actor", payload);
+
+      setProfileData(res.data);
+      setForm(mapToForm(res.data));
+      setMode("VIEW");
+      setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
+      window.setTimeout(() => setSaveNotice(null), 2200);
+    } catch (e: unknown) {
+      setForm(form);
+      if (getErrorStatus(e) !== 401) {
+        setError("Не удалось обновить видимость профиля");
+      }
+    } finally {
+      setPublishSaving(false);
+    }
+  };
+
   /* ---------- RENDER ---------- */
 
   if (mode === "LOADING") {
@@ -343,7 +398,8 @@ export const ActorProfilePage = () => {
                 <div className="self-start md:self-center">
                   <HeaderPublishSwitch
                     checked={form.published}
-                    onChange={(next) => setForm({ ...form, published: next })}
+                    onChange={(next) => void savePublished(next)}
+                    disabled={publishSaving}
                   />
                 </div>
               )}
@@ -372,10 +428,22 @@ export const ActorProfilePage = () => {
                   title="Фотографии"
                   urls={form.photoUrls}
                   accept={PHOTO_TYPES.join(",")}
+                  hint={PHOTO_UPLOAD_HINT}
+                  mainUrl={form.mainPhotoUrl}
                   onAdd={(files) => uploadFiles(files, "photo")}
+                  onSetMain={(url) =>
+                    setForm({
+                      ...form,
+                      mainPhotoUrl: url,
+                    })
+                  }
                   onRemove={(url) =>
                     setForm({
                       ...form,
+                      mainPhotoUrl:
+                        form.mainPhotoUrl === url
+                          ? form.photoUrls.find((u) => u !== url) || ""
+                          : form.mainPhotoUrl,
                       photoUrls: form.photoUrls.filter((u) => u !== url),
                     })
                   }
@@ -385,6 +453,7 @@ export const ActorProfilePage = () => {
                   title="Видео"
                   urls={form.videoUrls}
                   accept={VIDEO_ACCEPT}
+                  hint={VIDEO_UPLOAD_HINT}
                   isVideo
                   onAdd={(files) => uploadFiles(files, "video")}
                   onRemove={(url) =>
@@ -422,15 +491,21 @@ const MediaSection = ({
   title,
   urls,
   accept,
+  hint,
   isVideo,
+  mainUrl,
   onAdd,
+  onSetMain,
   onRemove,
 }: {
   title: string;
   urls: string[];
   accept: string;
+  hint?: string;
   isVideo?: boolean;
+  mainUrl?: string;
   onAdd: (files: File[]) => void;
+  onSetMain?: (url: string) => void;
   onRemove: (url: string) => void;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -438,6 +513,7 @@ const MediaSection = ({
   return (
     <div className="glass-object-soft rounded-2xl p-5">
       <h3 className="font-semibold mb-3">{title}</h3>
+      {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"
@@ -493,7 +569,22 @@ const MediaSection = ({
               />
             )}
 
+            {!isVideo && onSetMain ? (
+              <button
+                type="button"
+                onClick={() => onSetMain(url)}
+                className={[
+                  "absolute left-1 bottom-1 rounded-full px-2 py-1 text-[11px]",
+                  mainUrl === url
+                    ? "bg-slate-900 text-white"
+                    : "bg-white/90 text-slate-700",
+                ].join(" ")}
+              >
+                {mainUrl === url ? "Главное фото" : "Сделать главным"}
+              </button>
+            ) : null}
             <button
+              type="button"
               onClick={() => onRemove(url)}
               className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100"
             >
@@ -543,6 +634,22 @@ const EditForm = ({
             placeholder="Город"
             value={form.city}
             onChange={(value) => setForm({ ...form, city: value })}
+          />
+        </div>
+        <div className="md:col-span-2">
+          <FieldLabel>О себе</FieldLabel>
+          <Textarea
+            placeholder="Коротко о себе, типажах и задачах, в которых вы сильны"
+            value={form.bio}
+            onChange={(e) => setForm({ ...form, bio: e.target.value })}
+          />
+        </div>
+        <div className="md:col-span-2">
+          <FieldLabel>Опыт</FieldLabel>
+          <Textarea
+            placeholder="Фильмы, реклама, театр, сериалы, съемочный опыт"
+            value={form.experienceText}
+            onChange={(e) => setForm({ ...form, experienceText: e.target.value })}
           />
         </div>
       </div>
@@ -705,11 +812,11 @@ const EditForm = ({
           <FieldLabel>Игровой возраст: от</FieldLabel>
           <select
             className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
-            value={form.playingAgeMin === "" ? "" : String(form.playingAgeMin)}
+            value={form.gameAgeFrom === "" ? "" : String(form.gameAgeFrom)}
             onChange={(e) =>
               setForm({
                 ...form,
-                playingAgeMin: e.target.value ? Number(e.target.value) : "",
+                gameAgeFrom: e.target.value ? Number(e.target.value) : "",
               })
             }
           >
@@ -726,11 +833,11 @@ const EditForm = ({
           <FieldLabel>Игровой возраст: до</FieldLabel>
           <select
             className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
-            value={form.playingAgeMax === "" ? "" : String(form.playingAgeMax)}
+            value={form.gameAgeTo === "" ? "" : String(form.gameAgeTo)}
             onChange={(e) =>
               setForm({
                 ...form,
-                playingAgeMax: e.target.value ? Number(e.target.value) : "",
+                gameAgeTo: e.target.value ? Number(e.target.value) : "",
               })
             }
           >
@@ -898,13 +1005,16 @@ const emptyForm = (): ActorProfileForm => ({
   contactEmail: "",
   contactWhatsapp: "",
   contactInstagram: "",
+  mainPhotoUrl: "",
+  bio: "",
+  experienceText: "",
   heightCm: "",
   weightKg: "",
   bodyType: "",
   hairColor: "",
   eyeColor: "",
-  playingAgeMin: "",
-  playingAgeMax: "",
+  gameAgeFrom: "",
+  gameAgeTo: "",
   skills: [],
   introVideoUrl: "",
   monologueVideoUrl: "",
@@ -912,6 +1022,17 @@ const emptyForm = (): ActorProfileForm => ({
   photoUrls: [],
   videoUrls: [],
 });
+
+const parseSkillsFromApi = (value: string[] | string | null | undefined) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string") return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [value];
+  } catch {
+    return [value];
+  }
+};
 
 const mapToForm = (p: ActorProfile): ActorProfileForm => ({
   published: Boolean(p.published),
@@ -929,14 +1050,20 @@ const mapToForm = (p: ActorProfile): ActorProfileForm => ({
   contactEmail: sanitizeEmail(p.contactEmail) ?? "",
   contactWhatsapp: sanitizePhone(p.contactWhatsapp) ?? "",
   contactInstagram: trimToNull(p.contactInstagram, 100) ?? "",
+  mainPhotoUrl: trimToNull(p.mainPhotoUrl ?? p.photoUrls?.[0], 1500) ?? "",
+  bio: trimMultilineToNull(p.bio, 4000) ?? "",
+  experienceText: trimMultilineToNull(p.experienceText, 4000) ?? "",
   heightCm: p.heightCm ?? "",
   weightKg: p.weightKg ?? "",
   bodyType: trimToNull(p.bodyType, 40) ?? "",
   hairColor: trimToNull(p.hairColor, 40) ?? "",
   eyeColor: trimToNull(p.eyeColor, 40) ?? "",
-  playingAgeMin: p.playingAgeMin ?? "",
-  playingAgeMax: p.playingAgeMax ?? "",
-  skills: normalizeStringArray(p.skills, { maxItems: 20, maxItemLength: 80 }),
+  gameAgeFrom: p.gameAgeFrom ?? p.playingAgeMin ?? "",
+  gameAgeTo: p.gameAgeTo ?? p.playingAgeMax ?? "",
+  skills: normalizeStringArray(
+    parseSkillsFromApi(p.skillsJson).length ? parseSkillsFromApi(p.skillsJson) : p.skills,
+    { maxItems: 20, maxItemLength: 80 }
+  ),
   introVideoUrl: p.introVideoUrl ?? "",
   monologueVideoUrl: p.monologueVideoUrl ?? "",
   selfTapeVideoUrl: p.selfTapeVideoUrl ?? "",
@@ -960,13 +1087,19 @@ const normalize = (f: ActorProfileForm) => ({
   contactEmail: sanitizeEmail(f.contactEmail),
   contactWhatsapp: sanitizePhone(f.contactWhatsapp),
   contactInstagram: trimToNull(f.contactInstagram, 100),
+  mainPhotoUrl: trimToNull(f.mainPhotoUrl || f.photoUrls[0], 1500),
+  bio: trimMultilineToNull(f.bio, 4000),
+  experienceText: trimMultilineToNull(f.experienceText, 4000),
   heightCm: toOptionalNumber(f.heightCm, { min: 100, max: 240, integer: true }),
   weightKg: toOptionalNumber(f.weightKg, { min: 30, max: 250, integer: true }),
   bodyType: trimToNull(f.bodyType, 40),
   hairColor: trimToNull(f.hairColor, 40),
   eyeColor: trimToNull(f.eyeColor, 40),
-  playingAgeMin: toOptionalNumber(f.playingAgeMin, { min: 8, max: 80, integer: true }),
-  playingAgeMax: toOptionalNumber(f.playingAgeMax, { min: 8, max: 80, integer: true }),
+  gameAgeFrom: toOptionalNumber(f.gameAgeFrom, { min: 8, max: 80, integer: true }),
+  gameAgeTo: toOptionalNumber(f.gameAgeTo, { min: 8, max: 80, integer: true }),
+  playingAgeMin: toOptionalNumber(f.gameAgeFrom, { min: 8, max: 80, integer: true }),
+  playingAgeMax: toOptionalNumber(f.gameAgeTo, { min: 8, max: 80, integer: true }),
+  skillsJson: normalizeStringArray(f.skills, { maxItems: 20, maxItemLength: 80 }),
   skills: normalizeStringArray(f.skills, { maxItems: 20, maxItemLength: 80 }),
   introVideoUrl: trimToNull(f.introVideoUrl, 1500),
   monologueVideoUrl: trimToNull(f.monologueVideoUrl, 1500),

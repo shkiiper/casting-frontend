@@ -1,12 +1,48 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { verifyEmail } from "../../api/auth";
+import { login as apiLogin, verifyEmail } from "../../api/auth";
+import { useAuthStore } from "../../entities/user/model/authStore";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import "./VerifyEmailPage.css";
+
+type UserRole =
+  | "CUSTOMER"
+  | "ACTOR"
+  | "CREATOR"
+  | "LOCATION_OWNER"
+  | "LOCATION"
+  | "ADMIN";
+
+const resolveRedirectPath = (role?: string) => {
+  const normalized = (role ?? "").toUpperCase();
+  if (normalized === "CUSTOMER") return "/customer";
+  if (normalized === "CREATOR") return "/creator";
+  if (normalized === "ACTOR") return "/actor";
+  if (normalized === "LOCATION_OWNER" || normalized === "LOCATION") return "/location";
+  if (normalized === "ADMIN") return "/admin";
+  return "/account";
+};
+
+const persistAuth = (
+  token: string,
+  role: string | undefined,
+  loginStore: (token: string) => void
+) => {
+  localStorage.setItem("token", token);
+  localStorage.setItem("accessToken", token);
+  loginStore(token);
+  if (role) {
+    localStorage.setItem("role", role);
+    localStorage.setItem("account_name", role === "CUSTOMER" ? "Заказчик" : role);
+  }
+  localStorage.removeItem("pendingVerificationEmail");
+  sessionStorage.removeItem("pendingVerificationPassword");
+};
 
 export function VerifyEmailPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const loginStore = useAuthStore((s) => s.login);
   const email = params.get("email");
   const code = params.get("code");
   const hasParams = Boolean(email && code);
@@ -22,9 +58,27 @@ export function VerifyEmailPage() {
     if (!email || !code) return;
 
     verifyEmail({ email, code })
-      .then((res) => {
+      .then(async (res) => {
+        const maybeAuth = res as { token?: string | null; role?: string; message?: string };
+        if (maybeAuth.token) {
+          persistAuth(maybeAuth.token, maybeAuth.role, loginStore);
+          navigate(resolveRedirectPath(maybeAuth.role as UserRole), { replace: true });
+          return;
+        }
+
+        const pendingPassword = sessionStorage.getItem("pendingVerificationPassword");
+        if (email && pendingPassword) {
+          const auth = await apiLogin({ email, password: pendingPassword });
+          if (auth?.token) {
+            persistAuth(auth.token, auth.role, loginStore);
+            navigate(resolveRedirectPath(auth.role as UserRole), { replace: true });
+            return;
+          }
+        }
+
         setStatus("success");
-        setMessage(("message" in res && res.message) || "Email verified");
+        localStorage.removeItem("pendingVerificationEmail");
+        setMessage(maybeAuth.message || "Email verified");
       })
       .catch((e: unknown) => {
         console.error(e);

@@ -14,7 +14,7 @@ export function RegisterPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  const [role, setRole] = useState<RegisterRequest["role"]>("CUSTOMER");
+  const [role, setRole] = useState<RegisterRequest["role"]>("ACTOR");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +48,7 @@ export function RegisterPage() {
       });
 
       localStorage.setItem("pendingVerificationEmail", normalizedEmail);
+      sessionStorage.setItem("pendingVerificationPassword", normalizedPassword);
       setRegisteredEmail(normalizedEmail);
       setAgreementAccepted(false);
       setAgreementOpen(true);
@@ -116,16 +117,31 @@ export function RegisterPage() {
 
             <div className="auth-field">
               <label className="auth-field-label">роль</label>
-              <select
-                className="auth-input"
-                value={role}
-                onChange={(e) => setRole(e.target.value as RegisterRequest["role"])}
-              >
-                <option value="CUSTOMER">Клиент</option>
-                <option value="ACTOR">Актёр</option>
-                <option value="CREATOR">Креатор</option>
-                <option value="LOCATION_OWNER">Владелец локации</option>
-              </select>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {[
+                  { value: "ACTOR", label: "Актёр" },
+                  { value: "CUSTOMER", label: "Заказчик" },
+                  { value: "CREATOR", label: "Креатор" },
+                  { value: "LOCATION_OWNER", label: "Владелец локации" },
+                ].map((option) => {
+                  const selected = role === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setRole(option.value as RegisterRequest["role"])}
+                      className={[
+                        "rounded-[28px] border px-5 py-4 text-left transition-colors",
+                        selected
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-400",
+                      ].join(" ")}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {error && <div className="auth-error">{error}</div>}

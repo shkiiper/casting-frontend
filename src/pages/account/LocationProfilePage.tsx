@@ -11,6 +11,13 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
+  PHOTO_TYPES,
+  PHOTO_UPLOAD_HINT,
+  isAllowedPhotoFile,
+  preparePhotoFile,
+  getUploadErrorMessage,
+} from "@/shared/lib/uploads";
+import {
   mergeUniqueUrls,
   sanitizeEmail,
   sanitizePhone,
@@ -86,23 +93,6 @@ type Mode = "LOADING" | "EMPTY" | "VIEW";
 
 /* ================= CONSTS ================= */
 
-const PHOTO_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-];
-const PHOTO_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
-
-const isAllowedPhotoFile = (file: File) => {
-  const lowerName = file.name.toLowerCase();
-  return (
-    PHOTO_TYPES.includes(file.type) ||
-    PHOTO_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
-  );
-};
-
 const getErrorStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
 
@@ -114,6 +104,7 @@ export const LocationProfilePage = () => {
   const [profileData, setProfileData] = useState<LocationProfile | null>(null);
   const [mode, setMode] = useState<Mode>("LOADING");
   const [saving, setSaving] = useState(false);
+  const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
@@ -143,23 +134,27 @@ export const LocationProfilePage = () => {
   /* ---------- UPLOAD ---------- */
 
   const uploadPhotos = async (files: File[]) => {
-    const fd = new FormData();
-    files.forEach((f) => fd.append("files", f));
-
     try {
-      const { data: urls } = await api.post<string[]>(
-        "/api/files/upload",
-        fd
-      );
+      const uploaded: string[] = [];
+      for (const file of files) {
+        const preparedFile = await preparePhotoFile(file);
+        const fd = new FormData();
+        fd.append("files", preparedFile);
+        const { data: urls } = await api.post<string[]>("/api/files/upload", fd);
+        uploaded.push(...mergeUniqueUrls([], urls, { maxItems: 20 }));
+      }
 
       setForm((prev) =>
         prev
-          ? { ...prev, photoUrls: mergeUniqueUrls(prev.photoUrls, urls, { maxItems: 20 }) }
+          ? {
+              ...prev,
+              photoUrls: mergeUniqueUrls(prev.photoUrls, uploaded, { maxItems: 20 }),
+            }
           : prev
       );
     } catch (e: unknown) {
       if (getErrorStatus(e) !== 401) {
-        setError("Ошибка загрузки фотографий");
+        setError(getUploadErrorMessage(e, "photo"));
       }
     }
   };
@@ -215,6 +210,37 @@ export const LocationProfilePage = () => {
 
   const premium = extractProfilePremiumInfo(profileData);
 
+  const savePublished = async (next: boolean) => {
+    if (!form) return;
+    const nextForm = { ...form, published: next };
+    setForm(nextForm);
+
+    try {
+      setPublishSaving(true);
+      setError(null);
+      const payload = normalize(nextForm);
+      const res =
+        mode === "EMPTY"
+          ? await api.post<LocationProfile>("/api/profile/location", payload)
+          : await api.patch<LocationProfile>("/api/profile/location", payload);
+
+      const merged = mergeLocationResponseWithForm(res.data, nextForm);
+      setProfileData(merged);
+      persistLocationFallback(merged);
+      setForm(mapToForm(merged));
+      setMode("VIEW");
+      setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
+      window.setTimeout(() => setSaveNotice(null), 2200);
+    } catch (e: unknown) {
+      setForm(form);
+      if (getErrorStatus(e) !== 401) {
+        setError("Не удалось обновить видимость профиля");
+      }
+    } finally {
+      setPublishSaving(false);
+    }
+  };
+
   /* ---------- RENDER ---------- */
 
   if (mode === "LOADING") {
@@ -247,7 +273,8 @@ export const LocationProfilePage = () => {
             {form && (
               <HeaderPublishSwitch
                 checked={form.published}
-                onChange={(next) => setForm({ ...form, published: next })}
+                onChange={(next) => void savePublished(next)}
+                disabled={publishSaving}
               />
             )}
           </div>
@@ -272,6 +299,7 @@ export const LocationProfilePage = () => {
 
               <MediaSection
                 urls={form.photoUrls}
+                hint={PHOTO_UPLOAD_HINT}
                 onAdd={uploadPhotos}
                 onRemove={(url) =>
                   setForm({
@@ -306,10 +334,12 @@ export const LocationProfilePage = () => {
 
 const MediaSection = ({
   urls,
+  hint,
   onAdd,
   onRemove,
 }: {
   urls: string[];
+  hint?: string;
   onAdd: (files: File[]) => void;
   onRemove: (url: string) => void;
 }) => {
@@ -318,6 +348,7 @@ const MediaSection = ({
   return (
     <div>
       <h3 className="font-semibold mb-2">Фотографии</h3>
+      {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"

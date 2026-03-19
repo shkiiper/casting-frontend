@@ -538,7 +538,7 @@ export const CatalogPage = () => {
                               }));
                               setPage(0);
                             }}
-                            placeholder="Например, ASIAN"
+                            placeholder="Например, Европеоидная"
                             className={glassInputClass}
                           />
                         </div>

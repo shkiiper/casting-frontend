@@ -1,6 +1,6 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { resendVerification, verifyEmail } from "../../api/auth";
+import { login as apiLogin, resendVerification, verifyEmail } from "../../api/auth";
 import { useAuthStore } from "../../entities/user/model/authStore";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { getApiErrorMessage, sanitizeEmail, trimToNull } from "@/shared/lib/safety";
@@ -21,6 +21,22 @@ const resolveRedirectPath = (role?: string) => {
   if (normalized === "ACTOR") return "/actor";
   if (normalized === "LOCATION_OWNER" || normalized === "LOCATION") return "/location";
   return "/account";
+};
+
+const persistAuth = (
+  token: string,
+  role: string | undefined,
+  loginStore: (token: string) => void
+) => {
+  localStorage.setItem("token", token);
+  localStorage.setItem("accessToken", token);
+  loginStore(token);
+  if (role) {
+    localStorage.setItem("role", role);
+    localStorage.setItem("account_name", role === "CUSTOMER" ? "Заказчик" : role);
+  }
+  localStorage.removeItem("pendingVerificationEmail");
+  sessionStorage.removeItem("pendingVerificationPassword");
 };
 
 export function CheckEmailPage() {
@@ -60,29 +76,32 @@ export function CheckEmailPage() {
         email: normalizedEmail,
         code: normalizedCode,
       });
-      localStorage.removeItem("pendingVerificationEmail");
 
       const maybeAuth = res as { token?: string | null; role?: string };
       if (maybeAuth.token) {
-        localStorage.setItem("token", maybeAuth.token);
-        localStorage.setItem("accessToken", maybeAuth.token);
-        loginStore(maybeAuth.token);
-        if (maybeAuth.role) {
-          localStorage.setItem("role", maybeAuth.role);
-          localStorage.setItem(
-            "account_name",
-            maybeAuth.role === "CUSTOMER" ? "Заказчик" : maybeAuth.role
-          );
-        }
+        persistAuth(maybeAuth.token, maybeAuth.role, loginStore);
         navigate(resolveRedirectPath(maybeAuth.role as UserRole), {
           replace: true,
         });
         return;
       }
 
-      setMsg(
-        (res as { message?: string }).message || "Email подтверждён. Теперь войдите."
-      );
+      const pendingPassword = sessionStorage.getItem("pendingVerificationPassword");
+      if (pendingPassword) {
+        const auth = await apiLogin({
+          email: normalizedEmail,
+          password: pendingPassword,
+        });
+
+        if (auth?.token) {
+          persistAuth(auth.token, auth.role, loginStore);
+          navigate(resolveRedirectPath(auth.role as UserRole), { replace: true });
+          return;
+        }
+      }
+
+      localStorage.removeItem("pendingVerificationEmail");
+      setMsg((res as { message?: string }).message || "Email подтверждён. Теперь войдите.");
       setTimeout(() => navigate("/login"), 600);
     } catch (error: unknown) {
       setError(getApiErrorMessage(error, "Неверный код или код истёк"));

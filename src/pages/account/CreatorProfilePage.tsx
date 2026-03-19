@@ -13,6 +13,17 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
+  PHOTO_TYPES,
+  VIDEO_ACCEPT,
+  PHOTO_UPLOAD_HINT,
+  VIDEO_UPLOAD_HINT,
+  isAllowedPhotoFile,
+  isAllowedVideoFile,
+  preparePhotoFile,
+  assertVideoSize,
+  getUploadErrorMessage,
+} from "@/shared/lib/uploads";
+import {
   mergeUniqueUrls,
   sanitizeEmail,
   sanitizeHttpUrl,
@@ -98,19 +109,6 @@ type PageState = "LOADING" | "READY";
 
 /* ================= CONSTS ================= */
 
-const PHOTO_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/heic",
-  "image/heif",
-];
-const PHOTO_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"];
-
-const VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
-const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov"];
-const VIDEO_ACCEPT = [...VIDEO_TYPES, ...VIDEO_EXTENSIONS].join(",");
-
 const RATE_UNIT_OPTIONS: Array<{ label: string; value: string }> = [
   { label: "За час", value: "PER_HOUR" },
   { label: "За день", value: "PER_DAY" },
@@ -189,22 +187,6 @@ const CASE_HIGHLIGHT_OPTIONS = [
 const getErrorStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
 
-const isAllowedVideoFile = (file: File) => {
-  const lowerName = file.name.toLowerCase();
-  return (
-    VIDEO_TYPES.includes(file.type) ||
-    VIDEO_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
-  );
-};
-
-const isAllowedPhotoFile = (file: File) => {
-  const lowerName = file.name.toLowerCase();
-  return (
-    PHOTO_TYPES.includes(file.type) ||
-    PHOTO_EXTENSIONS.some((ext) => lowerName.endsWith(ext))
-  );
-};
-
 /* ================= PAGE ================= */
 
 export const CreatorProfilePage = () => {
@@ -215,6 +197,7 @@ export const CreatorProfilePage = () => {
   const [pageState, setPageState] = useState<PageState>("LOADING");
   const [hasProfile, setHasProfile] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
 
@@ -244,8 +227,12 @@ export const CreatorProfilePage = () => {
       const uploaded: string[] = [];
 
       for (const file of files) {
+        const preparedFile =
+          type === "photo"
+            ? await preparePhotoFile(file)
+            : (assertVideoSize(file), file);
         const fd = new FormData();
-        fd.append("files", file);
+        fd.append("files", preparedFile);
         const { data: urls } = await api.post<string[]>("/api/files/upload", fd);
         uploaded.push(...mergeUniqueUrls([], urls, { maxItems: 20 }));
       }
@@ -274,7 +261,7 @@ export const CreatorProfilePage = () => {
       });
     } catch (error: unknown) {
       if (getErrorStatus(error) !== 401) {
-        setError("Ошибка загрузки файлов");
+        setError(getUploadErrorMessage(error, type));
       }
     }
   };
@@ -321,6 +308,35 @@ export const CreatorProfilePage = () => {
 
   const premium = extractProfilePremiumInfo(profileData);
 
+  const savePublished = async (next: boolean) => {
+    if (!form) return;
+    const nextForm = { ...form, published: next };
+    setForm(nextForm);
+
+    try {
+      setPublishSaving(true);
+      setError(null);
+      const payload = normalize(nextForm);
+      const res =
+        hasProfile
+          ? await api.patch<CreatorProfile>("/api/profile/creator", payload)
+          : await api.post<CreatorProfile>("/api/profile/creator", payload);
+
+      setProfileData(res.data);
+      setForm(mapToForm(res.data));
+      setHasProfile(true);
+      setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
+      window.setTimeout(() => setSaveNotice(null), 2200);
+    } catch (error: unknown) {
+      setForm(form);
+      if (getErrorStatus(error) !== 401) {
+        setError("Не удалось обновить видимость профиля");
+      }
+    } finally {
+      setPublishSaving(false);
+    }
+  };
+
   if (pageState === "LOADING") {
     return (
       <div className="min-h-screen grid place-items-center text-slate-500">
@@ -357,7 +373,8 @@ export const CreatorProfilePage = () => {
                 <div className="self-start md:self-center">
                   <HeaderPublishSwitch
                     checked={form.published}
-                    onChange={(next) => setForm({ ...form, published: next })}
+                    onChange={(next) => void savePublished(next)}
+                    disabled={publishSaving}
                   />
                 </div>
               )}
@@ -386,6 +403,7 @@ export const CreatorProfilePage = () => {
                   title="Фотографии"
                   urls={form.photoUrls}
                   accept={PHOTO_TYPES.join(",")}
+                  hint={PHOTO_UPLOAD_HINT}
                   onAdd={(files) => uploadFiles(files, "photo")}
                   onRemove={(url) =>
                     setForm((prev) => {
@@ -407,6 +425,7 @@ export const CreatorProfilePage = () => {
                   title="Видео"
                   urls={form.videoUrls}
                   accept={VIDEO_ACCEPT}
+                  hint={VIDEO_UPLOAD_HINT}
                   isVideo
                   onAdd={(files) => uploadFiles(files, "video")}
                   onRemove={(url) =>
@@ -455,6 +474,7 @@ const MediaSection = ({
   title,
   urls,
   accept,
+  hint,
   isVideo,
   onAdd,
   onRemove,
@@ -462,6 +482,7 @@ const MediaSection = ({
   title: string;
   urls: string[];
   accept: string;
+  hint?: string;
   isVideo?: boolean;
   onAdd: (files: File[]) => void;
   onRemove: (url: string) => void;
@@ -471,6 +492,7 @@ const MediaSection = ({
   return (
     <div className="glass-object-soft rounded-2xl p-5">
       <h3 className="font-semibold mb-3">{title}</h3>
+      {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"

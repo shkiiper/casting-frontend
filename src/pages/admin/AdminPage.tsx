@@ -1,14 +1,23 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
-  createAdminPlan,
+  createAdminPlanBasics,
   deleteAdminPlan,
   getCatalogRoleCounts,
   getAdminPlans,
   getAdminStats,
+  updateAdminPlan,
+  updateAdminPlanBasics,
+  updateAdminPlanBooster,
+  updateAdminPlanCasting,
+  updateAdminPlanPremium,
   type RoleCounts,
   type AdminPlan,
   type AdminPlanPayload,
+  type AdminPlanBasicsPayload,
+  type AdminPlanBoosterPayload,
+  type AdminPlanCastingPayload,
+  type AdminPlanPremiumPayload,
   type AdminStatsResponse,
 } from "@/api/admin";
 import { InlineNav } from "@/shared/ui/InlineNav";
@@ -82,6 +91,8 @@ export const AdminPage = () => {
 
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | "new" | null>(null);
+  const [expandedPlanId, setExpandedPlanId] = useState<number | null>(null);
+  const [planDrafts, setPlanDrafts] = useState<Record<number, AdminPlan>>({});
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [openPlanMenuId, setOpenPlanMenuId] = useState<number | null>(null);
@@ -170,9 +181,11 @@ export const AdminPage = () => {
     try {
       setSavingId("new");
       setError(null);
-      const created = await createAdminPlan(newPlan);
+      const created = await createAdminPlanBasics(toBasicsPayload(newPlan));
       setPlans((prev) => [created, ...prev]);
       setNewPlan(emptyPlan);
+      setExpandedPlanId(created.id);
+      setPlanDrafts((prev) => ({ ...prev, [created.id]: created }));
       showToast("План создан");
     } catch {
       setError("Не удалось создать план");
@@ -190,6 +203,53 @@ export const AdminPage = () => {
       showToast("План удален");
     } catch {
       setError("Не удалось удалить план");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const updatePlanDraft = (id: number, next: AdminPlan) => {
+    setPlanDrafts((prev) => ({ ...prev, [id]: next }));
+  };
+
+  const onSavePlan = async (id: number, payload: AdminPlanPayload, sectionLabel = "Тариф") => {
+    try {
+      setSavingId(id);
+      setError(null);
+      const updated = await updateAdminPlan(id, payload);
+      setPlans((prev) => prev.map((plan) => (plan.id === id ? updated : plan)));
+      setPlanDrafts((prev) => ({ ...prev, [id]: updated }));
+      showToast(`${sectionLabel} сохранен`);
+    } catch {
+      setError(`Не удалось сохранить: ${sectionLabel.toLowerCase()}`);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const onSavePlanSection = async (
+    id: number,
+    section: PlanSectionKey,
+    plan: AdminPlanPayload | AdminPlan
+  ) => {
+    try {
+      setSavingId(id);
+      setError(null);
+
+      const updated =
+        section === "base"
+          ? await updateAdminPlanBasics(id, toBasicsPayload(plan))
+          : section === "booster"
+          ? await updateAdminPlanBooster(id, toBoosterPayload(plan))
+          : section === "casting"
+          ? await updateAdminPlanCasting(id, toCastingPayload(plan))
+          : await updateAdminPlanPremium(id, toPremiumPayload(plan));
+
+      setPlans((prev) => prev.map((item) => (item.id === id ? updated : item)));
+      setPlanDrafts((prev) => ({ ...prev, [id]: updated }));
+      showToast(`${sectionLabelMap[section]} сохранен`);
+    } catch {
+      setError(`Не удалось сохранить: ${sectionLabelMap[section].toLowerCase()}`);
     } finally {
       setSavingId(null);
     }
@@ -484,6 +544,22 @@ export const AdminPage = () => {
                                 type="button"
                                 onClick={() => {
                                   setOpenPlanMenuId(null);
+                                  setExpandedPlanId((current) =>
+                                    current === plan.id ? null : plan.id
+                                  );
+                                  setPlanDrafts((prev) => ({
+                                    ...prev,
+                                    [plan.id]: prev[plan.id] ?? plan,
+                                  }));
+                                }}
+                                className="w-full rounded-xl px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-50"
+                              >
+                                {expandedPlanId === plan.id ? "Скрыть редактирование" : "Редактировать"}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setOpenPlanMenuId(null);
                                   void onDeletePlan(plan.id);
                                 }}
                                 disabled={savingId === plan.id}
@@ -518,6 +594,35 @@ export const AdminPage = () => {
                           value={`${formatNumber(plan.premiumProfilePrice)} сом / ${plan.premiumProfileDays} дн.`}
                         />
                       </div>
+
+                      {expandedPlanId === plan.id ? (
+                        <div className="mt-5 border-t border-slate-200 pt-5">
+                          <PlanFields
+                            plan={planDrafts[plan.id] ?? plan}
+                            onChange={(next) => updatePlanDraft(plan.id, next as AdminPlan)}
+                            onSaveSection={(section, currentPlan) =>
+                              void onSavePlanSection(plan.id, section, currentPlan)
+                            }
+                            saving={savingId === plan.id}
+                          />
+                          <div className="mt-4 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void onSavePlan(
+                                  plan.id,
+                                  toAdminPlanPayload(planDrafts[plan.id] ?? plan),
+                                  "Тариф"
+                                )
+                              }
+                              disabled={savingId === plan.id}
+                              className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                            >
+                              {savingId === plan.id ? "Сохраняем..." : "Сохранить весь тариф"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                   {plans.length === 0 && (
@@ -636,12 +741,70 @@ const SummarySection = ({
   </div>
 );
 
+type PlanSectionKey = "base" | "booster" | "casting" | "premium";
+
+const sectionLabelMap: Record<PlanSectionKey, string> = {
+  base: "Базовый тариф",
+  booster: "Бустер",
+  casting: "Объявления",
+  premium: "Premium",
+};
+
+const toAdminPlanPayload = (plan: AdminPlan | AdminPlanPayload): AdminPlanPayload => ({
+  name: plan.name,
+  pricePerPeriod: plan.pricePerPeriod,
+  periodDays: plan.periodDays,
+  baseContactLimit: plan.baseContactLimit,
+  boosterPrice: plan.boosterPrice,
+  boosterContacts: plan.boosterContacts,
+  castingPostPrice: plan.castingPostPrice,
+  castingPostDays: plan.castingPostDays,
+  premiumProfilePrice: plan.premiumProfilePrice,
+  premiumProfileDays: plan.premiumProfileDays,
+  active: plan.active,
+});
+
+const toBasicsPayload = (
+  plan: AdminPlan | AdminPlanPayload
+): AdminPlanBasicsPayload => ({
+  name: plan.name,
+  pricePerPeriod: plan.pricePerPeriod,
+  periodDays: plan.periodDays,
+  baseContactLimit: plan.baseContactLimit,
+  active: plan.active,
+});
+
+const toBoosterPayload = (
+  plan: AdminPlan | AdminPlanPayload
+): AdminPlanBoosterPayload => ({
+  boosterPrice: plan.boosterPrice,
+  boosterContacts: plan.boosterContacts,
+});
+
+const toCastingPayload = (
+  plan: AdminPlan | AdminPlanPayload
+): AdminPlanCastingPayload => ({
+  castingPostPrice: plan.castingPostPrice,
+  castingPostDays: plan.castingPostDays,
+});
+
+const toPremiumPayload = (
+  plan: AdminPlan | AdminPlanPayload
+): AdminPlanPremiumPayload => ({
+  premiumProfilePrice: plan.premiumProfilePrice,
+  premiumProfileDays: plan.premiumProfileDays,
+});
+
 const PlanFields = ({
   plan,
   onChange,
+  onSaveSection,
+  saving = false,
 }: {
   plan: AdminPlanPayload | AdminPlan;
   onChange: (next: AdminPlanPayload | AdminPlan) => void;
+  onSaveSection?: (section: PlanSectionKey, plan: AdminPlanPayload | AdminPlan) => void;
+  saving?: boolean;
 }) => (
   <div className="space-y-4">
     <div className="grid gap-4 md:grid-cols-2">
@@ -663,6 +826,18 @@ const PlanFields = ({
         title="Базовый тариф"
         description="Основные условия подписки. Это самостоятельный блок с ценой, сроком и лимитом контактов."
         fieldsLayoutClassName="grid gap-4 md:grid-cols-3"
+        action={
+          onSaveSection ? (
+            <button
+              type="button"
+              onClick={() => onSaveSection("base", plan)}
+              disabled={saving}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+            >
+              Сохранить блок
+            </button>
+          ) : null
+        }
       >
         <Field
           label="Цена периода"
@@ -691,6 +866,18 @@ const PlanFields = ({
         title="Бустер"
         description="Отдельный продукт для докупки контактов. Не смешан с базовым тарифом."
         fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+        action={
+          onSaveSection ? (
+            <button
+              type="button"
+              onClick={() => onSaveSection("booster", plan)}
+              disabled={saving}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+            >
+              Сохранить блок
+            </button>
+          ) : null
+        }
       >
         <Field
           label="Цена бустера"
@@ -712,6 +899,18 @@ const PlanFields = ({
         title="Объявления"
         description="Отдельная настройка стоимости публикации и срока размещения."
         fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+        action={
+          onSaveSection ? (
+            <button
+              type="button"
+              onClick={() => onSaveSection("casting", plan)}
+              disabled={saving}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+            >
+              Сохранить блок
+            </button>
+          ) : null
+        }
       >
         <Field
           label="Цена объявления"
@@ -733,6 +932,18 @@ const PlanFields = ({
         title="Premium профиль"
         description="Отдельная настройка visual upgrade для performer-профиля."
         fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+        action={
+          onSaveSection ? (
+            <button
+              type="button"
+              onClick={() => onSaveSection("premium", plan)}
+              disabled={saving}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+            >
+              Сохранить блок
+            </button>
+          ) : null
+        }
       >
         <Field
           label="Цена premium"
@@ -756,11 +967,13 @@ const PlanFields = ({
 const FieldGroup = ({
   title,
   description,
+  action,
   children,
   fieldsLayoutClassName = "space-y-3",
 }: {
   title: string;
   description: string;
+  action?: ReactNode;
   children: ReactNode;
   fieldsLayoutClassName?: string;
 }) => (
@@ -770,6 +983,7 @@ const FieldGroup = ({
         <div className="text-lg font-semibold text-slate-900">{title}</div>
         <div className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">{description}</div>
       </div>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
     <div className={["mt-5", fieldsLayoutClassName].join(" ")}>{children}</div>
   </div>

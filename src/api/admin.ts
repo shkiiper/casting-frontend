@@ -46,6 +46,26 @@ export type AdminPlan = {
 
 export type AdminPlanPayload = Omit<AdminPlan, "id">;
 
+export type AdminPlanBasicsPayload = Pick<
+  AdminPlanPayload,
+  "name" | "pricePerPeriod" | "periodDays" | "baseContactLimit" | "active"
+>;
+
+export type AdminPlanBoosterPayload = Pick<
+  AdminPlanPayload,
+  "boosterPrice" | "boosterContacts"
+>;
+
+export type AdminPlanCastingPayload = Pick<
+  AdminPlanPayload,
+  "castingPostPrice" | "castingPostDays"
+>;
+
+export type AdminPlanPremiumPayload = Pick<
+  AdminPlanPayload,
+  "premiumProfilePrice" | "premiumProfileDays"
+>;
+
 export async function getAdminStats() {
   const { data } = await api.get<AdminStatsResponse>("/api/admin/stats");
   return data;
@@ -61,8 +81,45 @@ export async function createAdminPlan(payload: AdminPlanPayload) {
   return data;
 }
 
+export async function createAdminPlanBasics(payload: AdminPlanBasicsPayload) {
+  const { data } = await api.post<AdminPlan>("/api/admin/plans/basics", payload);
+  return data;
+}
+
 export async function updateAdminPlan(id: number, payload: AdminPlanPayload) {
   const { data } = await api.put<AdminPlan>(`/api/admin/plans/${id}`, payload);
+  return data;
+}
+
+export async function updateAdminPlanBasics(
+  id: number,
+  payload: AdminPlanBasicsPayload
+) {
+  const { data } = await api.put<AdminPlan>(`/api/admin/plans/${id}/basics`, payload);
+  return data;
+}
+
+export async function updateAdminPlanBooster(
+  id: number,
+  payload: AdminPlanBoosterPayload
+) {
+  const { data } = await api.put<AdminPlan>(`/api/admin/plans/${id}/booster`, payload);
+  return data;
+}
+
+export async function updateAdminPlanCasting(
+  id: number,
+  payload: AdminPlanCastingPayload
+) {
+  const { data } = await api.put<AdminPlan>(`/api/admin/plans/${id}/casting`, payload);
+  return data;
+}
+
+export async function updateAdminPlanPremium(
+  id: number,
+  payload: AdminPlanPremiumPayload
+) {
+  const { data } = await api.put<AdminPlan>(`/api/admin/plans/${id}/premium`, payload);
   return data;
 }
 
@@ -201,6 +258,7 @@ export type AdminUser = {
   contactWhatsapp?: string | null;
   minRate?: number | null;
   rateUnit?: string | null;
+  published?: boolean | null;
   active?: boolean;
   banned?: boolean;
   createdAt?: string | null;
@@ -211,6 +269,7 @@ export type AdminUsersQuery = {
   page: number;
   size: number;
   role?: string;
+  visibility?: "ALL" | "VISIBLE" | "HIDDEN";
   query?: string;
   sortBy?: string;
   sortDir?: "asc" | "desc";
@@ -237,10 +296,17 @@ const sortUsers = (
   });
 };
 
-const filterUsers = (users: AdminUser[], role?: string, query?: string) => {
+const filterUsers = (
+  users: AdminUser[],
+  role?: string,
+  query?: string,
+  visibility?: "ALL" | "VISIBLE" | "HIDDEN"
+) => {
   const normalizedQuery = query?.trim().toLowerCase();
   return users.filter((user) => {
     if (role && user.role !== role) return false;
+    if (visibility === "VISIBLE" && user.published !== true) return false;
+    if (visibility === "HIDDEN" && user.published !== false) return false;
     if (!normalizedQuery) return true;
     const haystack = [
       user.id,
@@ -307,6 +373,7 @@ const performerToAdminUser = (profile: AdminPerformerProfile): AdminUser => ({
   contactWhatsapp: profile.contactWhatsapp ?? null,
   minRate: profile.minRate ?? profile.rentPrice ?? null,
   rateUnit: profile.rateUnit ?? profile.rentPriceUnit ?? null,
+  published: profile.published ?? null,
   active: true,
   banned: false,
 });
@@ -334,7 +401,7 @@ export async function getAdminUsers(params: AdminUsersQuery) {
         }
       );
       if (Array.isArray(data)) {
-        const filtered = filterUsers(data, params.role, params.query);
+        const filtered = filterUsers(data, params.role, params.query, params.visibility);
         const sorted = sortUsers(
           filtered,
           params.sortBy ?? "createdAt",
@@ -343,7 +410,7 @@ export async function getAdminUsers(params: AdminUsersQuery) {
         return paginateUsers(sorted, params.page, params.size);
       }
       if (data && Array.isArray(data.content)) {
-        const filtered = filterUsers(data.content, params.role, params.query);
+        const filtered = filterUsers(data.content, params.role, params.query, params.visibility);
         const sorted = sortUsers(
           filtered,
           params.sortBy ?? "createdAt",
@@ -377,6 +444,7 @@ export async function getAdminUsers(params: AdminUsersQuery) {
       contactTelegram: user.contactTelegram ?? null,
       minRate: user.minRate ?? null,
       rateUnit: user.rateUnit ?? null,
+      published: null,
       active: true,
       banned: false,
     }));
@@ -387,7 +455,7 @@ export async function getAdminUsers(params: AdminUsersQuery) {
     });
 
     const merged = Array.from(mergedById.values());
-    const filtered = filterUsers(merged, params.role, params.query);
+    const filtered = filterUsers(merged, params.role, params.query, params.visibility);
     const sorted = sortUsers(
       filtered,
       params.sortBy ?? "createdAt",
