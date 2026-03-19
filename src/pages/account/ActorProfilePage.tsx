@@ -38,12 +38,39 @@ type WindowWithApiBase = Window & {
   __API_BASE_URL__?: string;
 };
 
-const API_BASE =
-  (window as WindowWithApiBase).__API_BASE_URL__ || "http://localhost:8080";
+const resolveApiBase = () => {
+  const configuredBase =
+    (window as WindowWithApiBase).__API_BASE_URL__?.trim().replace(/\/+$/, "") || "";
+  const runsOnLocalhost = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(
+    window.location.hostname
+  );
+  const pointsToLocalApi =
+    /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(configuredBase);
+
+  if (!configuredBase) return "";
+  if (!runsOnLocalhost && pointsToLocalApi) return "";
+  return configuredBase;
+};
+
+const API_BASE = resolveApiBase();
 
 function resolveMediaUrl(url?: string | null) {
   if (!url) return null;
-  if (url.startsWith("http")) return url;
+  if (url.startsWith("http")) {
+    try {
+      const parsed = new URL(url);
+      const isLocalMediaHost = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(parsed.hostname);
+      const runsOnLocalhost = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(
+        window.location.hostname
+      );
+      if (!runsOnLocalhost && isLocalMediaHost) {
+        return `${window.location.origin}${parsed.pathname}${parsed.search}`;
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  }
   return API_BASE + url;
 }
 
