@@ -35,6 +35,7 @@ type PublicProfile = {
   rateUnit?: string | null;
   heightCm?: number | null;
   weightKg?: number | null;
+  ethnicity?: string | null;
   bodyType?: string | null;
   hairColor?: string | null;
   eyeColor?: string | null;
