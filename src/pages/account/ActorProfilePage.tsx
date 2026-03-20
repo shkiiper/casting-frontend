@@ -235,6 +235,8 @@ const SKILL_OPTIONS = [
   "Модельная походка",
 ];
 
+const ACTOR_AUTO_SAVE_DELAY_MS = 1500;
+
 const getErrorStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
 
@@ -358,11 +360,18 @@ export const ActorProfilePage = () => {
     }, timeout);
   };
 
-  const saveProfile = async (formToSave: ActorProfileForm, successMessage = "Изменения сохранены") => {
+  const saveProfile = async (
+    formToSave: ActorProfileForm,
+    successMessage = "Изменения сохранены",
+    options?: { background?: boolean }
+  ) => {
     const requestSnapshot = JSON.stringify(normalize(formToSave));
+    const isBackgroundSave = Boolean(options?.background);
 
     try {
-      setSaving(true);
+      if (!isBackgroundSave) {
+        setSaving(true);
+      }
       setError(null);
 
       const payload = normalize(formToSave);
@@ -387,13 +396,17 @@ export const ActorProfilePage = () => {
       lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(persistedForm);
 
       setMode("VIEW");
-      showSaveNotice(successMessage);
+      if (!isBackgroundSave && successMessage) {
+        showSaveNotice(successMessage);
+      }
     } catch (e: unknown) {
       if (getErrorStatus(e) !== 401) {
         setError("Ошибка сохранения профиля");
       }
     } finally {
-      setSaving(false);
+      if (!isBackgroundSave) {
+        setSaving(false);
+      }
     }
   };
 
@@ -434,8 +447,8 @@ export const ActorProfilePage = () => {
     };
 
     const timeoutId = window.setTimeout(() => {
-      void saveProfile(formToSave);
-    }, 500);
+      void saveProfile(formToSave, "", { background: true });
+    }, ACTOR_AUTO_SAVE_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
   }, [form, saving, publishSaving, mode]);
@@ -473,6 +486,10 @@ export const ActorProfilePage = () => {
 
   const savePublished = async (next: boolean) => {
     if (!form) return;
+    if (next && !hasRequiredPhoto) {
+      revealPhotoRequirement();
+      return;
+    }
 
     const nextForm = { ...form, published: next };
     setForm(nextForm);
@@ -517,7 +534,7 @@ export const ActorProfilePage = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
+    <div className="account-page relative min-h-screen bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
