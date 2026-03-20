@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
   banAdminUser,
   deactivateAdminUser,
+  deleteAdminUser,
   getAdminUsers,
   setAdminUserProfileVisibility,
   unbanAdminUser,
@@ -186,6 +187,39 @@ export const AdminUsersPage = () => {
           ?.error;
 
       setError(message || "Не удалось изменить видимость профиля");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const onDeleteUser = async (user: AdminUser) => {
+    if (user.role === "ADMIN") {
+      setError("Администраторов нельзя удалять из этого раздела");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Удалить аккаунт пользователя #${user.id} (${userName(user)})? Это действие необратимо.`
+    );
+    if (!confirmed) return;
+
+    try {
+      setProcessingId(user.id);
+      setError(null);
+      await deleteAdminUser(user.id);
+      setItems((prev) => prev.filter((item) => item.id !== user.id));
+      setTotalElements((prev) => Math.max(0, prev - 1));
+      if (selectedUser?.id === user.id) {
+        setSelectedUser(null);
+      }
+      showToast("Аккаунт пользователя удален");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
+          ?.message ||
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
+          ?.error;
+      setError(message || "Не удалось удалить пользователя");
     } finally {
       setProcessingId(null);
     }
@@ -383,6 +417,14 @@ export const AdminUsersPage = () => {
                             className="rounded-lg px-3 py-1.5 text-xs border border-amber-300 text-amber-700 disabled:opacity-60"
                           >
                             Деактивировать
+                          </button>
+                          <button
+                            type="button"
+                            disabled={processingId === user.id}
+                            onClick={() => void onDeleteUser(user)}
+                            className="rounded-lg px-3 py-1.5 text-xs border border-red-500 bg-red-50 text-red-700 disabled:opacity-60"
+                          >
+                            Удалить
                           </button>
                         </div>
                       </div>

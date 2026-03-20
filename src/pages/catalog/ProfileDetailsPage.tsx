@@ -372,17 +372,7 @@ export const ProfileDetailsPage = () => {
           setProfile(normalizeProfile(previewProfile));
           setError(null);
         } else {
-          try {
-            const publicProfile = await loadPublicProfileById(id);
-            if (publicProfile) {
-              setProfile(publicProfile);
-              setError(null);
-            } else {
-              setError("Профиль не найден");
-            }
-          } catch {
-            setError("Не удалось загрузить профиль");
-          }
+          setError("Не удалось загрузить профиль");
         }
 
       } finally {

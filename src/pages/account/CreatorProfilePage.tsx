@@ -228,8 +228,6 @@ export const CreatorProfilePage = () => {
   const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
-  const currentFormRef = useRef<CreatorProfileForm | null>(null);
-  const lastSavedSnapshotRef = useRef<string | null>(null);
   const saveNoticeTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -239,16 +237,12 @@ export const CreatorProfilePage = () => {
         const nextForm = mapToForm(res.data);
         setProfileData(res.data);
         setForm(nextForm);
-        currentFormRef.current = nextForm;
-        lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
         setHasProfile(true);
       } catch (error: unknown) {
         const status = getErrorStatus(error);
         if (status === 404 || status === 400) {
           const nextForm = emptyForm();
           setForm(nextForm);
-          currentFormRef.current = nextForm;
-          lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
           setHasProfile(false);
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль");
@@ -258,10 +252,6 @@ export const CreatorProfilePage = () => {
       }
     })();
   }, []);
-
-  useEffect(() => {
-    currentFormRef.current = form;
-  }, [form]);
 
   useEffect(() => {
     return () => {
@@ -326,38 +316,26 @@ export const CreatorProfilePage = () => {
     }
   };
 
-  const saveProfile = async (formToSave: CreatorProfileForm) => {
-    const requestSnapshot = JSON.stringify(normalize(formToSave));
+  const saveProfile = async () => {
+    if (!form) return;
 
     try {
       setSaving(true);
       setError(null);
+      setSaveNotice(null);
 
-      const payload = normalize(formToSave);
+      const payload = normalize(form);
       const res =
         hasProfile
           ? await api.patch<CreatorProfile>("/api/profile/creator", payload)
           : await api.post<CreatorProfile>("/api/profile/creator", payload);
 
       setProfileData(res.data);
-      const serverForm = mapToForm(res.data);
-      const serverSnapshot = JSON.stringify(normalize(serverForm));
-      const currentSnapshot = currentFormRef.current
-        ? JSON.stringify(normalize(currentFormRef.current))
-        : null;
-
-      if (currentSnapshot === requestSnapshot) {
-        setForm(serverForm);
-        currentFormRef.current = serverForm;
-        lastSavedSnapshotRef.current = serverSnapshot;
-      } else {
-        lastSavedSnapshotRef.current = requestSnapshot;
-      }
-
+      setForm(mapToForm(res.data));
       setHasProfile(true);
       window.dispatchEvent(new Event("profile-updated"));
       queryClient.invalidateQueries({ queryKey: ["catalog"] });
-      showSaveNotice("Изменения сохранены");
+      showSaveNotice("Профиль успешно сохранен");
     } catch (error: unknown) {
       if (getErrorStatus(error) !== 401) {
         setError("Ошибка сохранения профиля");
@@ -366,19 +344,6 @@ export const CreatorProfilePage = () => {
       setSaving(false);
     }
   };
-
-  useEffect(() => {
-    if (!form || saving || publishSaving) return;
-
-    const currentSnapshot = JSON.stringify(normalize(form));
-    if (currentSnapshot === lastSavedSnapshotRef.current) return;
-
-    const timeoutId = window.setTimeout(() => {
-      void saveProfile(form);
-    }, 500);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [form, saving, publishSaving, hasProfile]);
 
   const logout = () => {
     localStorage.removeItem("accessToken");
@@ -409,8 +374,6 @@ export const CreatorProfilePage = () => {
       setProfileData(res.data);
       const nextFormFromServer = mapToForm(res.data);
       setForm(nextFormFromServer);
-      currentFormRef.current = nextFormFromServer;
-      lastSavedSnapshotRef.current = JSON.stringify(normalize(nextFormFromServer));
       setHasProfile(true);
       window.dispatchEvent(new Event("profile-updated"));
       showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
@@ -525,15 +488,18 @@ export const CreatorProfilePage = () => {
 
                 <div className="flex flex-wrap items-center gap-3">
                   <button
+                    onClick={saveProfile}
+                    disabled={saving}
+                    className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white disabled:opacity-60 sm:min-w-44 sm:w-auto"
+                  >
+                    {saving ? "Сохраняем..." : hasProfile ? "Сохранить изменения" : "Сохранить профиль"}
+                  </button>
+                  <button
                     onClick={() => setForm(emptyForm())}
                     className="w-full rounded-xl border px-6 py-3 text-slate-600 sm:w-auto"
                   >
                     Очистить форму
                   </button>
-
-                  <div className="text-sm text-slate-500">
-                    {saving ? "Сохраняем изменения..." : "Все изменения сохраняются автоматически"}
-                  </div>
                 </div>
               </>
             )}

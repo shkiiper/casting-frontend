@@ -490,3 +490,7 @@ export async function setAdminUserProfileVisibility(
   );
   return data;
 }
+
+export async function deleteAdminUser(userId: number) {
+  await api.delete(`/api/admin/users/${userId}`);
+}
