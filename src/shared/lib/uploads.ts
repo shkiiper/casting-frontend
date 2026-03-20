@@ -20,6 +20,9 @@ export const PHOTO_UPLOAD_HINT =
 export const VIDEO_UPLOAD_HINT =
   "Видео: MP4, WEBM, MOV до 200 МБ.";
 
+export const PROFILE_MEDIA_MODERATION_WARNING =
+  "Важно: модераторы проверяют фото и видео профилей. Загружайте только свои фото и видео. Если будут обнаружены чужие фото, случайные картинки, не относящиеся изображения или другие некорректные материалы, аккаунт будет временно деактивирован до исправления.";
+
 export const isAllowedPhotoFile = (file: File) => {
   const lowerName = file.name.toLowerCase();
   return (

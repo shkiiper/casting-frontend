@@ -7,14 +7,28 @@ import { getApiErrorMessage, sanitizeEmail, sanitizePhone, trimToNull } from "@/
 import { CenterToast } from "@/shared/ui/CenterToast";
 import "./RegisterPage.css";
 
+const REGISTRATION_DRAFT_KEY = "pendingRegistrationDraft";
+
+type RegistrationDraft = {
+  email: string;
+  phone: string;
+  password: string;
+  role: RegisterRequest["role"];
+};
+
 export function RegisterPage() {
   const navigate = useNavigate();
+  const savedDraft =
+    typeof window !== "undefined"
+      ? sessionStorage.getItem(REGISTRATION_DRAFT_KEY)
+      : null;
+  const parsedDraft: Partial<RegistrationDraft> = savedDraft ? JSON.parse(savedDraft) : {};
 
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(parsedDraft.email ?? "");
+  const [phone, setPhone] = useState(parsedDraft.phone ?? "");
+  const [password, setPassword] = useState(parsedDraft.password ?? "");
 
-  const [role, setRole] = useState<RegisterRequest["role"]>("ACTOR");
+  const [role, setRole] = useState<RegisterRequest["role"]>(parsedDraft.role ?? "ACTOR");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +39,17 @@ export function RegisterPage() {
   const canSubmit = useMemo(() => {
     return Boolean(sanitizeEmail(email) && sanitizePhone(phone) && password.trim().length >= 6);
   }, [email, phone, password]);
+
+  const persistDraft = (
+    nextDraft: RegistrationDraft = {
+      email,
+      phone,
+      password,
+      role,
+    }
+  ) => {
+    sessionStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(nextDraft));
+  };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -47,6 +72,12 @@ export function RegisterPage() {
         role,
       });
 
+      persistDraft({
+        email: normalizedEmail,
+        phone: normalizedPhone,
+        password: normalizedPassword,
+        role,
+      });
       localStorage.setItem("pendingVerificationEmail", normalizedEmail);
       sessionStorage.setItem("pendingVerificationPassword", normalizedPassword);
       setRegisteredEmail(normalizedEmail);
@@ -85,7 +116,11 @@ export function RegisterPage() {
                 className="auth-input"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setEmail(next);
+                  persistDraft({ email: next, phone, password, role });
+                }}
                 placeholder="you@example.com"
                 required
               />
@@ -97,7 +132,11 @@ export function RegisterPage() {
                 className="auth-input"
                 type="text"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setPhone(next);
+                  persistDraft({ email, phone: next, password, role });
+                }}
                 placeholder="+996..."
                 required
               />
@@ -109,7 +148,11 @@ export function RegisterPage() {
                 className="auth-input"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setPassword(next);
+                  persistDraft({ email, phone, password: next, role });
+                }}
                 placeholder="Минимум 6 символов"
                 required
               />
@@ -129,7 +172,11 @@ export function RegisterPage() {
                     <button
                       key={option.value}
                       type="button"
-                      onClick={() => setRole(option.value as RegisterRequest["role"])}
+                      onClick={() => {
+                        const nextRole = option.value as RegisterRequest["role"];
+                        setRole(nextRole);
+                        persistDraft({ email, phone, password, role: nextRole });
+                      }}
                       className={[
                         "rounded-[28px] border px-5 py-4 text-left transition-colors",
                         selected

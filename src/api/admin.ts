@@ -476,3 +476,17 @@ export async function unbanAdminUser(userId: number) {
 export async function deactivateAdminUser(userId: number) {
   await api.post(`/api/admin/users/${userId}/deactivate`);
 }
+
+export async function setAdminUserProfileVisibility(
+  userId: number,
+  published: boolean
+) {
+  const { data } = await api.post<AdminUser>(
+    `/api/admin/users/${userId}/profile/visibility`,
+    null,
+    {
+      params: { published },
+    }
+  );
+  return data;
+}

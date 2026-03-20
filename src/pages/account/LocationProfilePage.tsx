@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api/client";
 import { Container } from "@/shared/ui/Container";
@@ -13,6 +13,7 @@ import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
   PHOTO_TYPES,
   PHOTO_UPLOAD_HINT,
+  PROFILE_MEDIA_MODERATION_WARNING,
   isAllowedPhotoFile,
   preparePhotoFile,
   getUploadErrorMessage,
@@ -134,9 +135,6 @@ export const LocationProfilePage = () => {
   const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
-  const currentFormRef = useRef<LocationProfileForm | null>(null);
-  const lastSavedSnapshotRef = useRef<string | null>(null);
-  const saveNoticeTimeoutRef = useRef<number | null>(null);
 
   /* ---------- LOAD ---------- */
 
@@ -148,16 +146,12 @@ export const LocationProfilePage = () => {
         const nextForm = mapToForm(hydrated);
         setProfileData(hydrated);
         setForm(nextForm);
-        currentFormRef.current = nextForm;
-        lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
         setMode("VIEW");
       } catch (e: unknown) {
         const status = getErrorStatus(e);
         if (status === 404 || status === 400) {
           const nextForm = emptyForm();
           setForm(nextForm);
-          currentFormRef.current = nextForm;
-          lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
           setMode("EMPTY");
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль локации");
@@ -166,29 +160,6 @@ export const LocationProfilePage = () => {
       }
     })();
   }, []);
-
-  useEffect(() => {
-    currentFormRef.current = form;
-  }, [form]);
-
-  useEffect(() => {
-    return () => {
-      if (saveNoticeTimeoutRef.current) {
-        window.clearTimeout(saveNoticeTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const showSaveNotice = (message: string, timeout = 1800) => {
-    if (saveNoticeTimeoutRef.current) {
-      window.clearTimeout(saveNoticeTimeoutRef.current);
-    }
-    setSaveNotice(message);
-    saveNoticeTimeoutRef.current = window.setTimeout(() => {
-      setSaveNotice(null);
-      saveNoticeTimeoutRef.current = null;
-    }, timeout);
-  };
 
   /* ---------- UPLOAD ---------- */
 
@@ -220,14 +191,15 @@ export const LocationProfilePage = () => {
 
   /* ---------- SAVE ---------- */
 
-  const saveProfile = async (formToSave: LocationProfileForm) => {
-    const requestSnapshot = JSON.stringify(normalize(formToSave));
+  const saveProfile = async () => {
+    if (!form) return;
 
     try {
       setSaving(true);
       setError(null);
+      setSaveNotice(null);
 
-      const payload = normalize(formToSave);
+      const payload = normalize(form);
 
       const res =
         mode === "EMPTY"
@@ -240,25 +212,15 @@ export const LocationProfilePage = () => {
               payload
             );
 
-      const merged = mergeLocationResponseWithForm(res.data, formToSave);
-      const serverForm = mapToForm(merged);
-      const serverSnapshot = JSON.stringify(normalize(serverForm));
-      const currentSnapshot = currentFormRef.current
-        ? JSON.stringify(normalize(currentFormRef.current))
-        : null;
-
+      const merged = mergeLocationResponseWithForm(res.data, form);
       setProfileData(merged);
       persistLocationFallback(merged);
-      if (currentSnapshot === requestSnapshot) {
-        setForm(serverForm);
-        currentFormRef.current = serverForm;
-        lastSavedSnapshotRef.current = serverSnapshot;
-      } else {
-        lastSavedSnapshotRef.current = requestSnapshot;
-      }
+      setForm(mapToForm(merged));
       setMode("VIEW");
-      showSaveNotice("Изменения сохранены");
+      setSaveNotice("Профиль успешно сохранен");
+      window.setTimeout(() => setSaveNotice(null), 2500);
     } catch (e: unknown) {
+      setSaveNotice(null);
       if (getErrorStatus(e) !== 401) {
         setError("Ошибка сохранения профиля");
       }
@@ -266,19 +228,6 @@ export const LocationProfilePage = () => {
       setSaving(false);
     }
   };
-
-  useEffect(() => {
-    if (!form || saving || publishSaving) return;
-
-    const currentSnapshot = JSON.stringify(normalize(form));
-    if (currentSnapshot === lastSavedSnapshotRef.current) return;
-
-    const timeoutId = window.setTimeout(() => {
-      void saveProfile(form);
-    }, 500);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [form, saving, publishSaving, mode]);
 
   const logout = () => {
     localStorage.removeItem("accessToken");
@@ -311,11 +260,10 @@ export const LocationProfilePage = () => {
       setProfileData(merged);
       persistLocationFallback(merged);
       setForm(nextFormFromServer);
-      currentFormRef.current = nextFormFromServer;
-      lastSavedSnapshotRef.current = JSON.stringify(normalize(nextFormFromServer));
       setMode("VIEW");
       window.dispatchEvent(new Event("profile-updated"));
-      showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
+      setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
+      window.setTimeout(() => setSaveNotice(null), 2200);
     } catch (e: unknown) {
       setForm(form);
       if (getErrorStatus(e) !== 401) {
@@ -394,10 +342,14 @@ export const LocationProfilePage = () => {
                 }
               />
 
-              <div className="flex justify-end">
-                <div className="text-sm text-slate-500">
-                  {saving ? "Сохраняем изменения..." : "Все изменения сохраняются автоматически"}
-                </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={saveProfile}
+                  disabled={saving}
+                  className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto disabled:opacity-60"
+                >
+                  {saving ? "Сохраняем..." : "Сохранить"}
+                </button>
               </div>
             </>
           )}
@@ -430,6 +382,9 @@ const MediaSection = ({
     <div>
       <h3 className="font-semibold mb-2">Фотографии</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
+      <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        {PROFILE_MEDIA_MODERATION_WARNING}
+      </div>
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"
@@ -492,56 +447,74 @@ const EditForm = ({
   setForm: (v: LocationProfileForm) => void;
 }) => (
   <div className="grid gap-6 md:grid-cols-2">
-    <Input
-      placeholder="Название локации"
-      value={form.locationName}
-          onChange={(value) =>
-        setForm({ ...form, locationName: value })
-      }
-    />
-    <Input
-      placeholder="Город"
-      value={form.city}
-      onChange={(value) => setForm({ ...form, city: value })}
-    />
-    <Input
-      placeholder="Адрес"
-      value={form.address}
-      onChange={(value) =>
-        setForm({ ...form, address: value })
-      }
-    />
-    <Input
-      type="number"
-      placeholder="Цена аренды (сом)"
-      value={form.rentPrice}
-      onChange={(value) =>
-        setForm({
-          ...form,
-          rentPrice: value ? Number(value) : "",
-        })
-      }
-    />
-    <Textarea
-      placeholder="Описание"
-      value={form.description}
-      onChange={(e) =>
-        setForm({ ...form, description: e.target.value })
-      }
-    />
-    <Input
-      type="number"
-      placeholder="Этаж"
-      value={form.floor}
-      onChange={(value) =>
-        setForm({
-          ...form,
-          floor: value ? Number(value) : "",
-        })
-      }
-    />
     <div>
-      <div className="text-xs text-slate-500 mb-1">Наличие туалета</div>
+      <FieldLabel>Название локации</FieldLabel>
+      <Input
+        placeholder="Название локации"
+        value={form.locationName}
+        onChange={(value) =>
+          setForm({ ...form, locationName: value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Город</FieldLabel>
+      <Input
+        placeholder="Город"
+        value={form.city}
+        onChange={(value) => setForm({ ...form, city: value })}
+      />
+    </div>
+    <div>
+      <FieldLabel>Адрес</FieldLabel>
+      <Input
+        placeholder="Адрес"
+        value={form.address}
+        onChange={(value) =>
+          setForm({ ...form, address: value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Цена аренды (сом)</FieldLabel>
+      <Input
+        type="number"
+        placeholder="Цена аренды (сом)"
+        value={form.rentPrice}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            rentPrice: value ? Number(value) : "",
+          })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Описание</FieldLabel>
+      <Textarea
+        placeholder="Описание"
+        value={form.description}
+        onChange={(e) =>
+          setForm({ ...form, description: e.target.value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Этаж</FieldLabel>
+      <Input
+        type="number"
+        placeholder="Этаж"
+        value={form.floor}
+        onChange={(value) =>
+          setForm({
+            ...form,
+            floor: value ? Number(value) : "",
+          })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Наличие туалета</FieldLabel>
       <select
         className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
         value={form.hasToilet}
@@ -557,51 +530,73 @@ const EditForm = ({
         <option value="NO">Нет</option>
       </select>
     </div>
-    <Input
-      type="time"
-      placeholder="Время сдачи с"
-      value={form.availableFrom}
-      onChange={(value) =>
-        setForm({ ...form, availableFrom: value })
-      }
-    />
-    <Input
-      type="time"
-      placeholder="Время сдачи до"
-      value={form.availableTo}
-      onChange={(value) =>
-        setForm({ ...form, availableTo: value })
-      }
-    />
-    <Textarea
-      placeholder="Условия аренды"
-      value={form.extraConditions}
-      onChange={(e) =>
-        setForm({ ...form, extraConditions: e.target.value })
-      }
-    />
-    <Input
-      placeholder="Телефон"
-      value={form.contactPhone}
-      onChange={(value) =>
-        setForm({ ...form, contactPhone: value })
-      }
-    />
-    <Input
-      placeholder="Email"
-      value={form.contactEmail}
-      onChange={(value) =>
-        setForm({ ...form, contactEmail: value })
-      }
-    />
-    <Input
-      placeholder="Telegram"
-      value={form.contactTelegram}
-      onChange={(value) =>
-        setForm({ ...form, contactTelegram: value })
-      }
-    />
+    <div>
+      <FieldLabel>Время сдачи с</FieldLabel>
+      <Input
+        type="time"
+        placeholder="Время сдачи с"
+        value={form.availableFrom}
+        onChange={(value) =>
+          setForm({ ...form, availableFrom: value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Время сдачи до</FieldLabel>
+      <Input
+        type="time"
+        placeholder="Время сдачи до"
+        value={form.availableTo}
+        onChange={(value) =>
+          setForm({ ...form, availableTo: value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Условия аренды</FieldLabel>
+      <Textarea
+        placeholder="Условия аренды"
+        value={form.extraConditions}
+        onChange={(e) =>
+          setForm({ ...form, extraConditions: e.target.value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Телефон</FieldLabel>
+      <Input
+        placeholder="Телефон"
+        value={form.contactPhone}
+        onChange={(value) =>
+          setForm({ ...form, contactPhone: value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Email</FieldLabel>
+      <Input
+        placeholder="Email"
+        value={form.contactEmail}
+        onChange={(value) =>
+          setForm({ ...form, contactEmail: value })
+        }
+      />
+    </div>
+    <div>
+      <FieldLabel>Telegram</FieldLabel>
+      <Input
+        placeholder="Telegram"
+        value={form.contactTelegram}
+        onChange={(value) =>
+          setForm({ ...form, contactTelegram: value })
+        }
+      />
+    </div>
   </div>
+);
+
+const FieldLabel = ({ children }: { children: ReactNode }) => (
+  <div className="text-xs text-slate-500 mb-1">{children}</div>
 );
 
 /* ================= HELPERS ================= */

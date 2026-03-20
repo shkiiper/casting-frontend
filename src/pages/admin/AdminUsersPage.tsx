@@ -4,11 +4,13 @@ import {
   banAdminUser,
   deactivateAdminUser,
   getAdminUsers,
+  setAdminUserProfileVisibility,
   unbanAdminUser,
   type AdminUser,
 } from "@/api/admin";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { CenterToast } from "@/shared/ui/CenterToast";
+import { HeaderPublishSwitch } from "@/shared/ui/HeaderPublishSwitch";
 
 type UserRoleFilter = "ALL" | "ACTOR" | "CREATOR" | "LOCATION_OWNER" | "CUSTOMER";
 type VisibilityFilter = "ALL" | "VISIBLE" | "HIDDEN";
@@ -145,6 +147,50 @@ export const AdminUsersPage = () => {
     }
   };
 
+  const onVisibilityToggle = async (user: AdminUser, nextPublished: boolean) => {
+    if (user.role === "CUSTOMER" || user.role === "ADMIN") {
+      setError("Для этой роли нельзя менять видимость профиля");
+      return;
+    }
+
+    try {
+      setProcessingId(user.id);
+      setError(null);
+      const updatedUser = await setAdminUserProfileVisibility(user.id, nextPublished);
+
+      setItems((prev) =>
+        prev.map((item) =>
+          item.id === user.id
+            ? { ...item, published: updatedUser?.published ?? nextPublished }
+            : item
+        )
+      );
+
+      if (selectedUser?.id === user.id) {
+        setSelectedUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                published: updatedUser?.published ?? nextPublished,
+              }
+            : prev
+        );
+      }
+
+      showToast(nextPublished ? "Профиль показан в каталоге" : "Профиль скрыт из каталога");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
+          ?.message ||
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
+          ?.error;
+
+      setError(message || "Не удалось изменить видимость профиля");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const pageInfo = useMemo(
     () => ({
       from: totalElements === 0 ? 0 : page * PAGE_SIZE + 1,
@@ -264,7 +310,7 @@ export const AdminUsersPage = () => {
           <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <div className="min-w-[980px]">
-                <div className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_240px] gap-4 border-b border-black/10 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <div className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_320px] gap-4 border-b border-black/10 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <div>ID</div>
                   <div>Роль</div>
                   <div>Имя / email</div>
@@ -281,7 +327,7 @@ export const AdminUsersPage = () => {
                     {items.map((user) => (
                       <div
                         key={user.id}
-                        className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_240px] gap-4 px-5 py-4 text-sm items-center"
+                        className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_320px] gap-4 px-5 py-4 text-sm items-center"
                       >
                         <div className="font-semibold">#{user.id}</div>
                         <div>{roleLabel(user.role)}</div>
@@ -307,7 +353,14 @@ export const AdminUsersPage = () => {
                             {user.banned ? "Забанен" : "Не забанен"}
                           </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {user.role !== "CUSTOMER" && user.role !== "ADMIN" ? (
+                            <HeaderPublishSwitch
+                              checked={Boolean(user.published)}
+                              onChange={(next) => void onVisibilityToggle(user, next)}
+                              disabled={processingId === user.id}
+                            />
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => setSelectedUser(user)}

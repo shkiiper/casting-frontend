@@ -15,6 +15,7 @@ import {
   VIDEO_ACCEPT,
   PHOTO_UPLOAD_HINT,
   VIDEO_UPLOAD_HINT,
+  PROFILE_MEDIA_MODERATION_WARNING,
   isAllowedPhotoFile,
   isAllowedVideoFile,
   preparePhotoFile,
@@ -159,6 +160,7 @@ type ActorProfileForm = {
 };
 
 type Mode = "LOADING" | "EMPTY" | "VIEW";
+type ManualSaveSection = "main" | "contacts";
 
 /* ================= CONSTS ================= */
 
@@ -244,7 +246,8 @@ export const ActorProfilePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const currentFormRef = useRef<ActorProfileForm | null>(null);
-  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const lastPersistedFormRef = useRef<ActorProfileForm | null>(null);
+  const lastSavedAutoSnapshotRef = useRef<string | null>(null);
   const saveNoticeTimeoutRef = useRef<number | null>(null);
 
   /* ---------- LOAD ---------- */
@@ -257,7 +260,8 @@ export const ActorProfilePage = () => {
         setProfileData(res.data);
         setForm(nextForm);
         currentFormRef.current = nextForm;
-        lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
+        lastPersistedFormRef.current = nextForm;
+        lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(nextForm);
         setMode("VIEW");
       } catch (e: unknown) {
         const status = getErrorStatus(e);
@@ -265,7 +269,8 @@ export const ActorProfilePage = () => {
           const nextForm = emptyForm();
           setForm(nextForm);
           currentFormRef.current = nextForm;
-          lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
+          lastPersistedFormRef.current = nextForm;
+          lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(nextForm);
           setMode("EMPTY");
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль");
@@ -347,7 +352,7 @@ export const ActorProfilePage = () => {
     }, timeout);
   };
 
-  const saveProfile = async (formToSave: ActorProfileForm) => {
+  const saveProfile = async (formToSave: ActorProfileForm, successMessage = "Изменения сохранены") => {
     const requestSnapshot = JSON.stringify(normalize(formToSave));
 
     try {
@@ -363,21 +368,20 @@ export const ActorProfilePage = () => {
 
       setProfileData(res.data);
       const serverForm = mapToForm(res.data);
-      const serverSnapshot = JSON.stringify(normalize(serverForm));
       const currentSnapshot = currentFormRef.current
         ? JSON.stringify(normalize(currentFormRef.current))
         : null;
+      const persistedForm = currentSnapshot === requestSnapshot ? serverForm : formToSave;
 
       if (currentSnapshot === requestSnapshot) {
         setForm(serverForm);
         currentFormRef.current = serverForm;
-        lastSavedSnapshotRef.current = serverSnapshot;
-      } else {
-        lastSavedSnapshotRef.current = requestSnapshot;
       }
+      lastPersistedFormRef.current = persistedForm;
+      lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(persistedForm);
 
       setMode("VIEW");
-      showSaveNotice("Изменения сохранены");
+      showSaveNotice(successMessage);
     } catch (e: unknown) {
       if (getErrorStatus(e) !== 401) {
         setError("Ошибка сохранения профиля");
@@ -387,14 +391,44 @@ export const ActorProfilePage = () => {
     }
   };
 
+  const saveManualSection = async (section: ManualSaveSection) => {
+    const currentForm = currentFormRef.current;
+    if (!currentForm) return;
+
+    const persistedForm = lastPersistedFormRef.current ?? currentForm;
+    const formToSave =
+      section === "main"
+        ? {
+            ...persistedForm,
+            ...pickActorMainData(currentForm),
+            ...pickActorAutoData(currentForm),
+          }
+        : {
+            ...persistedForm,
+            ...pickActorContactsData(currentForm),
+            ...pickActorAutoData(currentForm),
+          };
+
+    await saveProfile(
+      formToSave,
+      section === "main" ? "Основные данные сохранены" : "О себе и контакты сохранены"
+    );
+  };
+
   useEffect(() => {
     if (!form || saving || publishSaving) return;
 
-    const currentSnapshot = JSON.stringify(normalize(form));
-    if (currentSnapshot === lastSavedSnapshotRef.current) return;
+    const currentAutoSnapshot = getActorAutoSnapshot(form);
+    if (currentAutoSnapshot === lastSavedAutoSnapshotRef.current) return;
+
+    const persistedForm = lastPersistedFormRef.current ?? form;
+    const formToSave = {
+      ...persistedForm,
+      ...pickActorAutoData(form),
+    };
 
     const timeoutId = window.setTimeout(() => {
-      void saveProfile(form);
+      void saveProfile(formToSave);
     }, 500);
 
     return () => window.clearTimeout(timeoutId);
@@ -431,7 +465,8 @@ export const ActorProfilePage = () => {
       const nextFormFromServer = mapToForm(res.data);
       setForm(nextFormFromServer);
       currentFormRef.current = nextFormFromServer;
-      lastSavedSnapshotRef.current = JSON.stringify(normalize(nextFormFromServer));
+      lastPersistedFormRef.current = nextFormFromServer;
+      lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(nextFormFromServer);
       setMode("VIEW");
       window.dispatchEvent(new Event("profile-updated"));
       showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
@@ -508,7 +543,13 @@ export const ActorProfilePage = () => {
                   onError={setError}
                 />
 
-                <EditForm form={form} setForm={setForm} />
+	                <EditForm
+	                  form={form}
+	                  setForm={setForm}
+	                  onSaveMain={() => void saveManualSection("main")}
+	                  onSaveContacts={() => void saveManualSection("contacts")}
+	                  saving={saving || publishSaving}
+	                />
 
 	                <MediaSection
                   title="Фотографии"
@@ -556,11 +597,6 @@ export const ActorProfilePage = () => {
                   }
                 />
 
-	                <div className="flex justify-end">
-	                  <div className="text-sm text-slate-500">
-	                    {saving ? "Сохраняем изменения..." : "Все изменения сохраняются автоматически"}
-	                  </div>
-	                </div>
 	              </>
 	            )}
           </section>
@@ -618,6 +654,9 @@ const MediaSection = ({
     <div className="glass-object-soft rounded-2xl p-5">
       <h3 className="font-semibold mb-3">{title}</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
+      <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        {PROFILE_MEDIA_MODERATION_WARNING}
+      </div>
       {!isVideo && onReorder ? (
         <p className="mb-3 text-sm text-slate-500">
           Перетаскивайте фото, чтобы менять порядок отображения в профиле.
@@ -737,9 +776,15 @@ const MediaSection = ({
 const EditForm = ({
   form,
   setForm,
+  onSaveMain,
+  onSaveContacts,
+  saving,
 }: {
   form: ActorProfileForm;
   setForm: (v: ActorProfileForm) => void;
+  onSaveMain: () => void;
+  onSaveContacts: () => void;
+  saving: boolean;
 }) => (
   <div className="space-y-5">
     <div className="glass-object-soft rounded-2xl p-5 space-y-4">
@@ -787,6 +832,16 @@ const EditForm = ({
             onChange={(e) => setForm({ ...form, experienceText: e.target.value })}
           />
         </div>
+      </div>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onSaveMain}
+          disabled={saving}
+          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm text-white disabled:opacity-60"
+        >
+          Сохранить основные данные
+        </button>
       </div>
     </div>
 
@@ -1113,6 +1168,16 @@ const EditForm = ({
           />
         </div>
       </div>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={onSaveContacts}
+          disabled={saving}
+          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm text-white disabled:opacity-60"
+        >
+          Сохранить о себе и контакты
+        </button>
+      </div>
     </div>
 
   </div>
@@ -1121,6 +1186,49 @@ const EditForm = ({
 const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <div className="text-xs text-slate-500 mb-1">{children}</div>
 );
+
+const pickActorMainData = (form: ActorProfileForm) => ({
+  firstName: form.firstName,
+  lastName: form.lastName,
+  city: form.city,
+  bio: form.bio,
+  experienceText: form.experienceText,
+});
+
+const pickActorContactsData = (form: ActorProfileForm) => ({
+  description: form.description,
+  contactTelegram: form.contactTelegram,
+  contactPhone: form.contactPhone,
+  contactEmail: form.contactEmail,
+  contactWhatsapp: form.contactWhatsapp,
+  contactInstagram: form.contactInstagram,
+});
+
+const pickActorAutoData = (form: ActorProfileForm) => ({
+  published: form.published,
+  gender: form.gender,
+  age: form.age,
+  ethnicity: form.ethnicity,
+  minRate: form.minRate,
+  rateUnit: form.rateUnit,
+  mainPhotoUrl: form.mainPhotoUrl,
+  heightCm: form.heightCm,
+  weightKg: form.weightKg,
+  bodyType: form.bodyType,
+  hairColor: form.hairColor,
+  eyeColor: form.eyeColor,
+  gameAgeFrom: form.gameAgeFrom,
+  gameAgeTo: form.gameAgeTo,
+  skills: form.skills,
+  introVideoUrl: form.introVideoUrl,
+  monologueVideoUrl: form.monologueVideoUrl,
+  selfTapeVideoUrl: form.selfTapeVideoUrl,
+  photoUrls: form.photoUrls,
+  videoUrls: form.videoUrls,
+});
+
+const getActorAutoSnapshot = (form: ActorProfileForm) =>
+  JSON.stringify(pickActorAutoData(form));
 
 /* ================= HELPERS ================= */
 

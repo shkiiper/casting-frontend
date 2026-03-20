@@ -17,6 +17,7 @@ import {
   VIDEO_ACCEPT,
   PHOTO_UPLOAD_HINT,
   VIDEO_UPLOAD_HINT,
+  PROFILE_MEDIA_MODERATION_WARNING,
   isAllowedPhotoFile,
   isAllowedVideoFile,
   preparePhotoFile,
@@ -571,6 +572,9 @@ const MediaSection = ({
     <div className="glass-object-soft rounded-2xl p-5">
       <h3 className="font-semibold mb-3">{title}</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
+      <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        {PROFILE_MEDIA_MODERATION_WARNING}
+      </div>
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"

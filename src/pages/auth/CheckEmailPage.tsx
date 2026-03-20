@@ -48,7 +48,7 @@ export function CheckEmailPage() {
   const initialEmail =
     locationState?.email ?? localStorage.getItem("pendingVerificationEmail") ?? "";
 
-  const [email] = useState(initialEmail);
+  const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -143,7 +143,16 @@ export function CheckEmailPage() {
         <form className="check-form" onSubmit={onVerify}>
           <div className="check-email-box">
             <div className="check-email-label">Код отправлен на email</div>
-            <div className="check-email-value">{email || "Email не указан"}</div>
+            <input
+              className="check-email-edit"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+            <div className="check-email-note">
+              Если ошиблись в почте, можно вернуться назад и исправить её.
+            </div>
           </div>
 
           <label className="check-label">
@@ -164,6 +173,13 @@ export function CheckEmailPage() {
           {error && <div className="check-error">{error}</div>}
 
           <div className="check-actions">
+            <button
+              type="button"
+              className="check-secondary"
+              onClick={() => navigate("/auth/register")}
+            >
+              Изменить email
+            </button>
             <button
               type="button"
               className="check-secondary"

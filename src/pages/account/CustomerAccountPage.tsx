@@ -15,6 +15,7 @@ import type {
 } from "@/types/customer";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
+import { PROFILE_MEDIA_MODERATION_WARNING } from "@/shared/lib/uploads";
 import {
   getApiErrorMessage,
   sanitizeEmail,
@@ -310,6 +311,10 @@ export const CustomerAccountPage = () => {
                             e.currentTarget.value = "";
                           }}
                         />
+                      </div>
+
+                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        {PROFILE_MEDIA_MODERATION_WARNING}
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-6">
