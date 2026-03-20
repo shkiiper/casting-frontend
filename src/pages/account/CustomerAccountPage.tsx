@@ -8,6 +8,7 @@ import { Textarea } from "@/shared/ui/Textarea";
 import { SubscriptionModal } from "@/features/subscription/SubscriptionModal";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
+import { DismissibleNotice } from "@/shared/ui/DismissibleNotice";
 import type {
   CustomerProfileResponse,
   SubscriptionInfoResponse,
@@ -107,6 +108,7 @@ export const CustomerAccountPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
+  const [showModerationWarning, setShowModerationWarning] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<
@@ -346,9 +348,12 @@ export const CustomerAccountPage = () => {
                         />
                       </div>
 
-                      <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                        {PROFILE_MEDIA_MODERATION_WARNING}
-                      </div>
+                      {showModerationWarning ? (
+                        <DismissibleNotice
+                          message={PROFILE_MEDIA_MODERATION_WARNING}
+                          onClose={() => setShowModerationWarning(false)}
+                        />
+                      ) : null}
                       {photoRequirementMessage ? (
                         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                           {photoRequirementMessage}

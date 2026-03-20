@@ -8,6 +8,7 @@ import { InlineNav } from "@/shared/ui/InlineNav";
 import { HeaderPublishSwitch } from "@/shared/ui/HeaderPublishSwitch";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
+import { DismissibleNotice } from "@/shared/ui/DismissibleNotice";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
@@ -257,6 +258,7 @@ export const ActorProfilePage = () => {
   const saveNoticeTimeoutRef = useRef<number | null>(null);
   const photoSectionRef = useRef<HTMLDivElement>(null);
   const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
+  const [showModerationWarning, setShowModerationWarning] = useState(true);
 
   /* ---------- LOAD ---------- */
 
@@ -602,6 +604,8 @@ export const ActorProfilePage = () => {
                   containerRef={photoSectionRef}
                   highlight={Boolean(photoRequirementMessage)}
                   errorMessage={photoRequirementMessage}
+                  showModerationWarning={showModerationWarning}
+                  onDismissModerationWarning={() => setShowModerationWarning(false)}
                   mainUrl={form.mainPhotoUrl}
                   onReorder={(nextUrls) =>
                     setForm({
@@ -634,6 +638,8 @@ export const ActorProfilePage = () => {
                   accept={VIDEO_ACCEPT}
                   hint={VIDEO_UPLOAD_HINT}
                   isVideo
+                  showModerationWarning={showModerationWarning}
+                  onDismissModerationWarning={() => setShowModerationWarning(false)}
                   onAdd={(files) => uploadFiles(files, "video")}
                   onRemove={(url) =>
                     setForm({
@@ -666,6 +672,8 @@ const MediaSection = ({
   containerRef,
   highlight,
   errorMessage,
+  showModerationWarning,
+  onDismissModerationWarning,
   mainUrl,
   onAdd,
   onSetMain,
@@ -680,6 +688,8 @@ const MediaSection = ({
   containerRef?: { current: HTMLDivElement | null };
   highlight?: boolean;
   errorMessage?: string | null;
+  showModerationWarning?: boolean;
+  onDismissModerationWarning?: () => void;
   mainUrl?: string;
   onAdd: (files: File[]) => void;
   onSetMain?: (url: string) => void;
@@ -712,9 +722,12 @@ const MediaSection = ({
     >
       <h3 className="font-semibold mb-3">{title}</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
-      <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        {PROFILE_MEDIA_MODERATION_WARNING}
-      </div>
+      {showModerationWarning ? (
+        <DismissibleNotice
+          message={PROFILE_MEDIA_MODERATION_WARNING}
+          onClose={() => onDismissModerationWarning?.()}
+        />
+      ) : null}
       {errorMessage ? (
         <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {errorMessage}
@@ -1173,15 +1186,6 @@ const EditForm = ({
       <h2 className="text-sm font-semibold text-slate-800">
         О себе и контакты
       </h2>
-      <div>
-        <FieldLabel>Описание</FieldLabel>
-        <Textarea
-          placeholder="Кратко о себе, опыте и амплуа"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-      </div>
-
       <div className="max-w-sm">
         <FieldLabel>Telegram</FieldLabel>
         <Input
@@ -1259,7 +1263,6 @@ const pickActorMainData = (form: ActorProfileForm) => ({
 });
 
 const pickActorContactsData = (form: ActorProfileForm) => ({
-  description: form.description,
   contactTelegram: form.contactTelegram,
   contactPhone: form.contactPhone,
   contactEmail: form.contactEmail,
@@ -1344,7 +1347,7 @@ const mapToForm = (p: ActorProfile): ActorProfileForm => ({
   published: Boolean(p.published),
   firstName: trimToNull(p.firstName, 80) ?? "",
   lastName: trimToNull(p.lastName, 80) ?? "",
-  description: trimMultilineToNull(p.description, 4000) ?? "",
+  description: trimMultilineToNull(p.description ?? p.bio, 4000) ?? "",
   city: trimToNull(p.city, 120) ?? "",
   gender: p.gender ?? "",
   age: p.age ?? "",
@@ -1381,7 +1384,7 @@ const normalize = (f: ActorProfileForm) => ({
   published: Boolean(f.published),
   firstName: trimToNull(f.firstName, 80),
   lastName: trimToNull(f.lastName, 80),
-  description: trimMultilineToNull(f.description, 4000),
+  description: trimMultilineToNull(f.bio || f.description, 4000),
   city: trimToNull(f.city, 120),
   gender: f.gender || null,
   age: toOptionalNumber(f.age, { min: 18, max: 80, integer: true }),

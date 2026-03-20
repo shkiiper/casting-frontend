@@ -29,6 +29,8 @@ type ProfilePublic = {
   city?: string | null;
   mainPhotoUrl?: string | null;
   description?: string | null;
+  bio?: string | null;
+  experienceText?: string | null;
   age?: number | null;
   gender?: string | null;
   activityType?: string | null;
@@ -306,7 +308,7 @@ export const CatalogPage = () => {
     return data.filter((p) => {
       const name = buildName(p).toLowerCase();
       const city = (p.city ?? '').toLowerCase();
-      const desc = (p.description ?? '').toLowerCase();
+      const desc = (p.description ?? p.bio ?? '').toLowerCase();
       return name.includes(s) || city.includes(s) || desc.includes(s);
     });
   }, [data, filters.search]);
@@ -790,6 +792,7 @@ export const CatalogPage = () => {
 
                               <div className="mt-4 text-sm text-slate-700 line-clamp-2 min-h-[40px]">
                                 {p.description ??
+                                  p.bio ??
                                   (p.type === 'LOCATION'
                                     ? p.locationName
                                     : p.activityType) ??

@@ -8,6 +8,7 @@ import { InlineNav } from "@/shared/ui/InlineNav";
 import { HeaderPublishSwitch } from "@/shared/ui/HeaderPublishSwitch";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
+import { DismissibleNotice } from "@/shared/ui/DismissibleNotice";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
@@ -141,6 +142,7 @@ export const LocationProfilePage = () => {
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const photoSectionRef = useRef<HTMLDivElement>(null);
   const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
+  const [showModerationWarning, setShowModerationWarning] = useState(true);
 
   /* ---------- LOAD ---------- */
 
@@ -366,6 +368,8 @@ export const LocationProfilePage = () => {
                 containerRef={photoSectionRef}
                 highlight={Boolean(photoRequirementMessage)}
                 errorMessage={photoRequirementMessage}
+                showModerationWarning={showModerationWarning}
+                onDismissModerationWarning={() => setShowModerationWarning(false)}
                 onAdd={uploadPhotos}
                 onRemove={(url) =>
                   setForm({
@@ -404,6 +408,8 @@ const MediaSection = ({
   containerRef,
   highlight,
   errorMessage,
+  showModerationWarning,
+  onDismissModerationWarning,
   onAdd,
   onRemove,
 }: {
@@ -412,6 +418,8 @@ const MediaSection = ({
   containerRef?: { current: HTMLDivElement | null };
   highlight?: boolean;
   errorMessage?: string | null;
+  showModerationWarning?: boolean;
+  onDismissModerationWarning?: () => void;
   onAdd: (files: File[]) => void;
   onRemove: (url: string) => void;
 }) => {
@@ -424,9 +432,12 @@ const MediaSection = ({
     >
       <h3 className="font-semibold mb-2">Фотографии</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
-      <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-        {PROFILE_MEDIA_MODERATION_WARNING}
-      </div>
+      {showModerationWarning ? (
+        <DismissibleNotice
+          message={PROFILE_MEDIA_MODERATION_WARNING}
+          onClose={() => onDismissModerationWarning?.()}
+        />
+      ) : null}
       {errorMessage ? (
         <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {errorMessage}
