@@ -5,7 +5,7 @@ import publicApi from "@/shared/api/publicClient";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
-import { resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
+import { pickProfilePhoto, resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
 import { getSubscriptionInfo, showContacts } from "@/api/customer";
 import type { ContactInfoResponse, SubscriptionInfoResponse } from "@/types/customer";
 import { extractProfilePremiumInfo, formatPremiumDate } from "@/shared/lib/profilePremium";
@@ -409,9 +409,10 @@ export const ProfileDetailsPage = () => {
   const photos = useMemo(() => {
     if (!profile) return [];
     const list = [...(profile.photoUrls ?? [])];
-    if (!profile.mainPhotoUrl) return list;
-    const rest = list.filter((url) => url !== profile.mainPhotoUrl);
-    list.splice(0, list.length, profile.mainPhotoUrl, ...rest);
+    const primaryPhoto = pickProfilePhoto(profile);
+    if (!primaryPhoto) return list;
+    const rest = list.filter((url) => url !== primaryPhoto);
+    list.splice(0, list.length, primaryPhoto, ...rest);
     return list;
   }, [profile]);
 

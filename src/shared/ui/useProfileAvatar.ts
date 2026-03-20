@@ -33,14 +33,20 @@ let cachedAvatarUrl: string | null = null;
 let cachedIsAuthed: boolean | null = null;
 let inflightRequest: Promise<void> | null = null;
 
-const pickAvatar = (
+export const pickProfilePhoto = (
   profile?: PerformerProfileResponse | CustomerProfileResponse | null
 ) => {
   if (!profile) return null;
-  if (profile.mainPhotoUrl) return profile.mainPhotoUrl;
+
   if ("photoUrls" in profile && Array.isArray(profile.photoUrls)) {
+    if (profile.photoUrls.length === 0) return null;
+    if (profile.mainPhotoUrl && profile.photoUrls.includes(profile.mainPhotoUrl)) {
+      return profile.mainPhotoUrl;
+    }
     return profile.photoUrls[0] || null;
   }
+
+  if (profile.mainPhotoUrl) return profile.mainPhotoUrl;
   return null;
 };
 
@@ -104,7 +110,7 @@ export function useProfileAvatar() {
       inflightRequest = api
         .get<CustomerProfileResponse | PerformerProfileResponse>(endpoint)
         .then((res) => {
-          cachedAvatarUrl = pickAvatar(res.data);
+          cachedAvatarUrl = pickProfilePhoto(res.data);
           cachedIsAuthed = true;
         })
         .catch((error: unknown) => {
@@ -156,7 +162,7 @@ export function useProfileAvatar() {
         .get<CustomerProfileResponse | PerformerProfileResponse>(endpoint)
         .then((res) => {
           cachedToken = token;
-          cachedAvatarUrl = pickAvatar(res.data);
+          cachedAvatarUrl = pickProfilePhoto(res.data);
           cachedIsAuthed = true;
           setAvatarUrl(cachedAvatarUrl);
           setIsAuthed(true);

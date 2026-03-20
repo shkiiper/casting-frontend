@@ -13,6 +13,10 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
+  REQUIRED_PROFILE_PHOTO_MESSAGE,
+  useRequiredPhotoGuard,
+} from "@/shared/lib/useRequiredPhotoGuard";
+import {
   PHOTO_TYPES,
   VIDEO_ACCEPT,
   PHOTO_UPLOAD_HINT,
@@ -229,6 +233,8 @@ export const CreatorProfilePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
   const saveNoticeTimeoutRef = useRef<number | null>(null);
+  const photoSectionRef = useRef<HTMLDivElement>(null);
+  const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -355,6 +361,26 @@ export const CreatorProfilePage = () => {
   };
 
   const premium = extractProfilePremiumInfo(profileData);
+  const hasRequiredPhoto = Boolean(form?.photoUrls.length);
+
+  const revealPhotoRequirement = () => {
+    setPhotoRequirementMessage(REQUIRED_PROFILE_PHOTO_MESSAGE);
+    window.requestAnimationFrame(() => {
+      photoSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
+
+  useEffect(() => {
+    if (hasRequiredPhoto) {
+      setPhotoRequirementMessage(null);
+    }
+  }, [hasRequiredPhoto]);
+
+  useRequiredPhotoGuard({
+    enabled: pageState !== "LOADING" && Boolean(form),
+    hasPhoto: hasRequiredPhoto,
+    onBlocked: revealPhotoRequirement,
+  });
 
   const savePublished = async (next: boolean) => {
     if (!form) return;
@@ -454,6 +480,9 @@ export const CreatorProfilePage = () => {
                   urls={form.photoUrls}
                   accept={PHOTO_TYPES.join(",")}
                   hint={PHOTO_UPLOAD_HINT}
+                  containerRef={photoSectionRef}
+                  highlight={Boolean(photoRequirementMessage)}
+                  errorMessage={photoRequirementMessage}
                   onAdd={(files) => uploadFiles(files, "photo")}
                   onRemove={(url) =>
                     setForm((prev) => {
@@ -521,6 +550,9 @@ const MediaSection = ({
   accept,
   hint,
   isVideo,
+  containerRef,
+  highlight,
+  errorMessage,
   onAdd,
   onRemove,
 }: {
@@ -529,18 +561,32 @@ const MediaSection = ({
   accept: string;
   hint?: string;
   isVideo?: boolean;
+  containerRef?: { current: HTMLDivElement | null };
+  highlight?: boolean;
+  errorMessage?: string | null;
   onAdd: (files: File[]) => void;
   onRemove: (url: string) => void;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="glass-object-soft rounded-2xl p-5">
+    <div
+      ref={containerRef}
+      className={[
+        "glass-object-soft rounded-2xl p-5",
+        highlight ? "border border-red-300 bg-red-50/60" : "",
+      ].join(" ")}
+    >
       <h3 className="font-semibold mb-3">{title}</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
       <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         {PROFILE_MEDIA_MODERATION_WARNING}
       </div>
+      {errorMessage ? (
+        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      ) : null}
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"

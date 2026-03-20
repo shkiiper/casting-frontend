@@ -17,6 +17,10 @@ import { InlineNav } from "@/shared/ui/InlineNav";
 import { resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
 import { PROFILE_MEDIA_MODERATION_WARNING } from "@/shared/lib/uploads";
 import {
+  REQUIRED_PROFILE_PHOTO_MESSAGE,
+  useRequiredPhotoGuard,
+} from "@/shared/lib/useRequiredPhotoGuard";
+import {
   getApiErrorMessage,
   sanitizeEmail,
   sanitizeHttpUrl,
@@ -87,6 +91,7 @@ const formatDateTime = (iso?: string) => {
 export const CustomerAccountPage = () => {
   const navigate = useNavigate();
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const photoSectionRef = useRef<HTMLDivElement>(null);
 
   const [form, setForm] = useState<CustomerProfileForm | null>(null);
 
@@ -101,11 +106,13 @@ export const CustomerAccountPage = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<
     "SUBSCRIPTION" | "BOOSTERS"
   >("SUBSCRIPTION");
+  const hasRequiredPhoto = Boolean(form?.mainPhotoUrl);
 
   /* ---------- LOAD ---------- */
 
@@ -129,6 +136,25 @@ export const CustomerAccountPage = () => {
       }
     })();
   }, []);
+
+  const revealPhotoRequirement = () => {
+    setPhotoRequirementMessage(REQUIRED_PROFILE_PHOTO_MESSAGE);
+    window.requestAnimationFrame(() => {
+      photoSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
+
+  useEffect(() => {
+    if (hasRequiredPhoto) {
+      setPhotoRequirementMessage(null);
+    }
+  }, [hasRequiredPhoto]);
+
+  useRequiredPhotoGuard({
+    enabled: !loading && Boolean(form),
+    hasPhoto: hasRequiredPhoto,
+    onBlocked: revealPhotoRequirement,
+  });
 
   /* ---------- UPLOAD PHOTO ---------- */
 
@@ -265,6 +291,13 @@ export const CustomerAccountPage = () => {
                 <Section title="Профиль заказчика">
                   {form && (
                     <div className="space-y-6">
+                      <div
+                        ref={photoSectionRef}
+                        className={[
+                          "space-y-4 rounded-2xl",
+                          photoRequirementMessage ? "border border-red-300 bg-red-50/60 p-4" : "",
+                        ].join(" ")}
+                      >
                       <div className="flex flex-wrap items-center gap-4">
                         <div className="w-24 h-24 rounded-2xl bg-slate-100 overflow-hidden flex items-center justify-center">
                           {form.mainPhotoUrl ? (
@@ -315,6 +348,12 @@ export const CustomerAccountPage = () => {
 
                       <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                         {PROFILE_MEDIA_MODERATION_WARNING}
+                      </div>
+                      {photoRequirementMessage ? (
+                        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                          {photoRequirementMessage}
+                        </div>
+                      ) : null}
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-6">

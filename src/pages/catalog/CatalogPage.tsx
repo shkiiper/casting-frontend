@@ -6,7 +6,7 @@ import publicApi from '@/shared/api/publicClient';
 import { Container } from '@/shared/ui/Container';
 import { InlineNav } from '@/shared/ui/InlineNav';
 import { PageOctopusDecor } from '@/shared/ui/PageOctopusDecor';
-import { resolveMediaUrl } from '@/shared/ui/useProfileAvatar';
+import { pickProfilePhoto, resolveMediaUrl } from '@/shared/ui/useProfileAvatar';
 
 type Tab = 'ALL' | 'ACTOR' | 'CREATOR' | 'LOCATION';
 type ProfileType = 'ACTOR' | 'CREATOR' | 'LOCATION';
@@ -107,9 +107,7 @@ const RENT_PRICE_OPTIONS = [
 ];
 
 function getPreviewPhoto(p: ProfilePublic) {
-  if (p.mainPhotoUrl) return p.mainPhotoUrl;
-  if (p.photoUrls?.length) return p.photoUrls[0];
-  return null;
+  return pickProfilePhoto(p);
 }
 
 function buildName(p: ProfilePublic) {

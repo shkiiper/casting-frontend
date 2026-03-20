@@ -11,6 +11,10 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
+  REQUIRED_PROFILE_PHOTO_MESSAGE,
+  useRequiredPhotoGuard,
+} from "@/shared/lib/useRequiredPhotoGuard";
+import {
   PHOTO_TYPES,
   VIDEO_ACCEPT,
   PHOTO_UPLOAD_HINT,
@@ -249,6 +253,8 @@ export const ActorProfilePage = () => {
   const lastPersistedFormRef = useRef<ActorProfileForm | null>(null);
   const lastSavedAutoSnapshotRef = useRef<string | null>(null);
   const saveNoticeTimeoutRef = useRef<number | null>(null);
+  const photoSectionRef = useRef<HTMLDivElement>(null);
+  const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
 
   /* ---------- LOAD ---------- */
 
@@ -444,6 +450,26 @@ export const ActorProfilePage = () => {
   };
 
   const premium = extractProfilePremiumInfo(profileData);
+  const hasRequiredPhoto = Boolean(form?.photoUrls.length);
+
+  const revealPhotoRequirement = () => {
+    setPhotoRequirementMessage(REQUIRED_PROFILE_PHOTO_MESSAGE);
+    window.requestAnimationFrame(() => {
+      photoSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
+
+  useEffect(() => {
+    if (hasRequiredPhoto) {
+      setPhotoRequirementMessage(null);
+    }
+  }, [hasRequiredPhoto]);
+
+  useRequiredPhotoGuard({
+    enabled: mode !== "LOADING" && Boolean(form),
+    hasPhoto: hasRequiredPhoto,
+    onBlocked: revealPhotoRequirement,
+  });
 
   const savePublished = async (next: boolean) => {
     if (!form) return;
@@ -556,6 +582,9 @@ export const ActorProfilePage = () => {
                   urls={form.photoUrls}
                   accept={PHOTO_TYPES.join(",")}
                   hint={PHOTO_UPLOAD_HINT}
+                  containerRef={photoSectionRef}
+                  highlight={Boolean(photoRequirementMessage)}
+                  errorMessage={photoRequirementMessage}
                   mainUrl={form.mainPhotoUrl}
                   onReorder={(nextUrls) =>
                     setForm({
@@ -617,6 +646,9 @@ const MediaSection = ({
   accept,
   hint,
   isVideo,
+  containerRef,
+  highlight,
+  errorMessage,
   mainUrl,
   onAdd,
   onSetMain,
@@ -628,6 +660,9 @@ const MediaSection = ({
   accept: string;
   hint?: string;
   isVideo?: boolean;
+  containerRef?: { current: HTMLDivElement | null };
+  highlight?: boolean;
+  errorMessage?: string | null;
   mainUrl?: string;
   onAdd: (files: File[]) => void;
   onSetMain?: (url: string) => void;
@@ -651,12 +686,23 @@ const MediaSection = ({
   };
 
   return (
-    <div className="glass-object-soft rounded-2xl p-5">
+    <div
+      ref={containerRef}
+      className={[
+        "glass-object-soft rounded-2xl p-5",
+        highlight ? "border border-red-300 bg-red-50/60" : "",
+      ].join(" ")}
+    >
       <h3 className="font-semibold mb-3">{title}</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
       <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         {PROFILE_MEDIA_MODERATION_WARNING}
       </div>
+      {errorMessage ? (
+        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      ) : null}
       {!isVideo && onReorder ? (
         <p className="mb-3 text-sm text-slate-500">
           Перетаскивайте фото, чтобы менять порядок отображения в профиле.

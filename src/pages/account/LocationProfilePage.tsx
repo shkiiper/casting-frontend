@@ -11,6 +11,10 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import {
+  REQUIRED_PROFILE_PHOTO_MESSAGE,
+  useRequiredPhotoGuard,
+} from "@/shared/lib/useRequiredPhotoGuard";
+import {
   PHOTO_TYPES,
   PHOTO_UPLOAD_HINT,
   PROFILE_MEDIA_MODERATION_WARNING,
@@ -135,6 +139,8 @@ export const LocationProfilePage = () => {
   const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const photoSectionRef = useRef<HTMLDivElement>(null);
+  const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
 
   /* ---------- LOAD ---------- */
 
@@ -239,6 +245,26 @@ export const LocationProfilePage = () => {
   };
 
   const premium = extractProfilePremiumInfo(profileData);
+  const hasRequiredPhoto = Boolean(form?.photoUrls.length);
+
+  const revealPhotoRequirement = () => {
+    setPhotoRequirementMessage(REQUIRED_PROFILE_PHOTO_MESSAGE);
+    window.requestAnimationFrame(() => {
+      photoSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  };
+
+  useEffect(() => {
+    if (hasRequiredPhoto) {
+      setPhotoRequirementMessage(null);
+    }
+  }, [hasRequiredPhoto]);
+
+  useRequiredPhotoGuard({
+    enabled: mode !== "LOADING" && Boolean(form),
+    hasPhoto: hasRequiredPhoto,
+    onBlocked: revealPhotoRequirement,
+  });
 
   const savePublished = async (next: boolean) => {
     if (!form) return;
@@ -333,6 +359,9 @@ export const LocationProfilePage = () => {
               <MediaSection
                 urls={form.photoUrls}
                 hint={PHOTO_UPLOAD_HINT}
+                containerRef={photoSectionRef}
+                highlight={Boolean(photoRequirementMessage)}
+                errorMessage={photoRequirementMessage}
                 onAdd={uploadPhotos}
                 onRemove={(url) =>
                   setForm({
@@ -368,23 +397,37 @@ export const LocationProfilePage = () => {
 const MediaSection = ({
   urls,
   hint,
+  containerRef,
+  highlight,
+  errorMessage,
   onAdd,
   onRemove,
 }: {
   urls: string[];
   hint?: string;
+  containerRef?: { current: HTMLDivElement | null };
+  highlight?: boolean;
+  errorMessage?: string | null;
   onAdd: (files: File[]) => void;
   onRemove: (url: string) => void;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div>
+    <div
+      ref={containerRef}
+      className={highlight ? "rounded-2xl border border-red-300 bg-red-50/60 p-4" : ""}
+    >
       <h3 className="font-semibold mb-2">Фотографии</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
       <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
         {PROFILE_MEDIA_MODERATION_WARNING}
       </div>
+      {errorMessage ? (
+        <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMessage}
+        </div>
+      ) : null}
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"
