@@ -243,6 +243,9 @@ export const ActorProfilePage = () => {
   const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const currentFormRef = useRef<ActorProfileForm | null>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const saveNoticeTimeoutRef = useRef<number | null>(null);
 
   /* ---------- LOAD ---------- */
 
@@ -250,13 +253,19 @@ export const ActorProfilePage = () => {
     (async () => {
       try {
         const res = await api.get<ActorProfile>("/api/profile/me");
+        const nextForm = mapToForm(res.data);
         setProfileData(res.data);
-        setForm(mapToForm(res.data));
+        setForm(nextForm);
+        currentFormRef.current = nextForm;
+        lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
         setMode("VIEW");
       } catch (e: unknown) {
         const status = getErrorStatus(e);
         if (status === 404 || status === 400) {
-          setForm(emptyForm());
+          const nextForm = emptyForm();
+          setForm(nextForm);
+          currentFormRef.current = nextForm;
+          lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
           setMode("EMPTY");
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль");
@@ -315,15 +324,37 @@ export const ActorProfilePage = () => {
 
   /* ---------- SAVE ---------- */
 
-  const saveProfile = async () => {
-    if (!form) return;
+  useEffect(() => {
+    currentFormRef.current = form;
+  }, [form]);
+
+  useEffect(() => {
+    return () => {
+      if (saveNoticeTimeoutRef.current) {
+        window.clearTimeout(saveNoticeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showSaveNotice = (message: string, timeout = 1800) => {
+    if (saveNoticeTimeoutRef.current) {
+      window.clearTimeout(saveNoticeTimeoutRef.current);
+    }
+    setSaveNotice(message);
+    saveNoticeTimeoutRef.current = window.setTimeout(() => {
+      setSaveNotice(null);
+      saveNoticeTimeoutRef.current = null;
+    }, timeout);
+  };
+
+  const saveProfile = async (formToSave: ActorProfileForm) => {
+    const requestSnapshot = JSON.stringify(normalize(formToSave));
 
     try {
       setSaving(true);
       setError(null);
-      setSaveNotice(null);
 
-      const payload = normalize(form);
+      const payload = normalize(formToSave);
 
       const res =
         mode === "EMPTY"
@@ -331,12 +362,23 @@ export const ActorProfilePage = () => {
           : await api.patch<ActorProfile>("/api/profile/actor", payload);
 
       setProfileData(res.data);
-      setForm(mapToForm(res.data));
+      const serverForm = mapToForm(res.data);
+      const serverSnapshot = JSON.stringify(normalize(serverForm));
+      const currentSnapshot = currentFormRef.current
+        ? JSON.stringify(normalize(currentFormRef.current))
+        : null;
+
+      if (currentSnapshot === requestSnapshot) {
+        setForm(serverForm);
+        currentFormRef.current = serverForm;
+        lastSavedSnapshotRef.current = serverSnapshot;
+      } else {
+        lastSavedSnapshotRef.current = requestSnapshot;
+      }
+
       setMode("VIEW");
-      setSaveNotice("Профиль успешно сохранен");
-      window.setTimeout(() => setSaveNotice(null), 2500);
+      showSaveNotice("Изменения сохранены");
     } catch (e: unknown) {
-      setSaveNotice(null);
       if (getErrorStatus(e) !== 401) {
         setError("Ошибка сохранения профиля");
       }
@@ -344,6 +386,19 @@ export const ActorProfilePage = () => {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!form || saving || publishSaving) return;
+
+    const currentSnapshot = JSON.stringify(normalize(form));
+    if (currentSnapshot === lastSavedSnapshotRef.current) return;
+
+    const timeoutId = window.setTimeout(() => {
+      void saveProfile(form);
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [form, saving, publishSaving, mode]);
 
   const logout = () => {
     localStorage.removeItem("accessToken");
@@ -373,11 +428,13 @@ export const ActorProfilePage = () => {
             });
 
       setProfileData(res.data);
-      setForm(mapToForm(res.data));
+      const nextFormFromServer = mapToForm(res.data);
+      setForm(nextFormFromServer);
+      currentFormRef.current = nextFormFromServer;
+      lastSavedSnapshotRef.current = JSON.stringify(normalize(nextFormFromServer));
       setMode("VIEW");
       window.dispatchEvent(new Event("profile-updated"));
-      setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
-      window.setTimeout(() => setSaveNotice(null), 2200);
+      showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
     } catch (e: unknown) {
       setForm(form);
       if (getErrorStatus(e) !== 401) {
@@ -453,12 +510,18 @@ export const ActorProfilePage = () => {
 
                 <EditForm form={form} setForm={setForm} />
 
-                <MediaSection
+	                <MediaSection
                   title="Фотографии"
                   urls={form.photoUrls}
                   accept={PHOTO_TYPES.join(",")}
                   hint={PHOTO_UPLOAD_HINT}
                   mainUrl={form.mainPhotoUrl}
+                  onReorder={(nextUrls) =>
+                    setForm({
+                      ...form,
+                      photoUrls: nextUrls,
+                    })
+                  }
                   onAdd={(files) => uploadFiles(files, "photo")}
                   onSetMain={(url) =>
                     setForm({
@@ -478,7 +541,7 @@ export const ActorProfilePage = () => {
                   }
                 />
 
-                <MediaSection
+	                <MediaSection
                   title="Видео"
                   urls={form.videoUrls}
                   accept={VIDEO_ACCEPT}
@@ -493,17 +556,13 @@ export const ActorProfilePage = () => {
                   }
                 />
 
-                <div className="flex flex-wrap items-center justify-end gap-3">
-                  <button
-                    onClick={saveProfile}
-                    disabled={saving}
-                    className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white disabled:opacity-60 sm:min-w-44 sm:w-auto"
-                  >
-                    {saving ? "Сохраняем..." : "Сохранить изменения"}
-                  </button>
-                </div>
-              </>
-            )}
+	                <div className="flex justify-end">
+	                  <div className="text-sm text-slate-500">
+	                    {saving ? "Сохраняем изменения..." : "Все изменения сохраняются автоматически"}
+	                  </div>
+	                </div>
+	              </>
+	            )}
           </section>
           </div>
         </Container>
@@ -525,6 +584,7 @@ const MediaSection = ({
   mainUrl,
   onAdd,
   onSetMain,
+  onReorder,
   onRemove,
 }: {
   title: string;
@@ -535,14 +595,34 @@ const MediaSection = ({
   mainUrl?: string;
   onAdd: (files: File[]) => void;
   onSetMain?: (url: string) => void;
+  onReorder?: (nextUrls: string[]) => void;
   onRemove: (url: string) => void;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [draggedUrl, setDraggedUrl] = useState<string | null>(null);
+
+  const moveUrl = (fromUrl: string, toUrl: string) => {
+    if (!onReorder || fromUrl === toUrl) return;
+
+    const fromIndex = urls.indexOf(fromUrl);
+    const toIndex = urls.indexOf(toUrl);
+    if (fromIndex === -1 || toIndex === -1) return;
+
+    const nextUrls = [...urls];
+    const [moved] = nextUrls.splice(fromIndex, 1);
+    nextUrls.splice(toIndex, 0, moved);
+    onReorder(nextUrls);
+  };
 
   return (
     <div className="glass-object-soft rounded-2xl p-5">
       <h3 className="font-semibold mb-3">{title}</h3>
       {hint ? <p className="mb-3 text-sm text-slate-500">{hint}</p> : null}
+      {!isVideo && onReorder ? (
+        <p className="mb-3 text-sm text-slate-500">
+          Перетаскивайте фото, чтобы менять порядок отображения в профиле.
+        </p>
+      ) : null}
 
       <div
         className="border-2 border-dashed border-white/70 rounded-xl p-4 text-center cursor-pointer bg-white/30 hover:bg-white/60"
@@ -581,7 +661,27 @@ const MediaSection = ({
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
         {urls.map((url) => (
-          <div key={url} className="relative group">
+          <div
+            key={url}
+            className={[
+              "relative group",
+              !isVideo && onReorder && draggedUrl === url ? "opacity-60" : "",
+            ].join(" ")}
+            draggable={!isVideo && Boolean(onReorder)}
+            onDragStart={() => {
+              if (!isVideo && onReorder) setDraggedUrl(url);
+            }}
+            onDragEnd={() => setDraggedUrl(null)}
+            onDragOver={(e) => {
+              if (!isVideo && onReorder) e.preventDefault();
+            }}
+            onDrop={(e) => {
+              if (isVideo || !onReorder || !draggedUrl) return;
+              e.preventDefault();
+              moveUrl(draggedUrl, url);
+              setDraggedUrl(null);
+            }}
+          >
             {isVideo ? (
               <video
                 src={resolveMediaUrl(url) ?? undefined}
@@ -597,6 +697,12 @@ const MediaSection = ({
                 className="rounded-xl object-cover aspect-square"
               />
             )}
+
+            {!isVideo && onReorder ? (
+              <div className="absolute left-1 top-1 rounded-full bg-black/70 px-2 py-1 text-[11px] text-white">
+                Перетащить
+              </div>
+            ) : null}
 
             {!isVideo && onSetMain ? (
               <button

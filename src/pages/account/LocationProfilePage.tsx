@@ -134,6 +134,9 @@ export const LocationProfilePage = () => {
   const [publishSaving, setPublishSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const currentFormRef = useRef<LocationProfileForm | null>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const saveNoticeTimeoutRef = useRef<number | null>(null);
 
   /* ---------- LOAD ---------- */
 
@@ -142,13 +145,19 @@ export const LocationProfilePage = () => {
       try {
         const res = await api.get<LocationProfile>("/api/profile/me");
         const hydrated = hydrateLocationFromFallback(res.data);
+        const nextForm = mapToForm(hydrated);
         setProfileData(hydrated);
-        setForm(mapToForm(hydrated));
+        setForm(nextForm);
+        currentFormRef.current = nextForm;
+        lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
         setMode("VIEW");
       } catch (e: unknown) {
         const status = getErrorStatus(e);
         if (status === 404 || status === 400) {
-          setForm(emptyForm());
+          const nextForm = emptyForm();
+          setForm(nextForm);
+          currentFormRef.current = nextForm;
+          lastSavedSnapshotRef.current = JSON.stringify(normalize(nextForm));
           setMode("EMPTY");
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль локации");
@@ -157,6 +166,29 @@ export const LocationProfilePage = () => {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    currentFormRef.current = form;
+  }, [form]);
+
+  useEffect(() => {
+    return () => {
+      if (saveNoticeTimeoutRef.current) {
+        window.clearTimeout(saveNoticeTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const showSaveNotice = (message: string, timeout = 1800) => {
+    if (saveNoticeTimeoutRef.current) {
+      window.clearTimeout(saveNoticeTimeoutRef.current);
+    }
+    setSaveNotice(message);
+    saveNoticeTimeoutRef.current = window.setTimeout(() => {
+      setSaveNotice(null);
+      saveNoticeTimeoutRef.current = null;
+    }, timeout);
+  };
 
   /* ---------- UPLOAD ---------- */
 
@@ -188,15 +220,14 @@ export const LocationProfilePage = () => {
 
   /* ---------- SAVE ---------- */
 
-  const saveProfile = async () => {
-    if (!form) return;
+  const saveProfile = async (formToSave: LocationProfileForm) => {
+    const requestSnapshot = JSON.stringify(normalize(formToSave));
 
     try {
       setSaving(true);
       setError(null);
-      setSaveNotice(null);
 
-      const payload = normalize(form);
+      const payload = normalize(formToSave);
 
       const res =
         mode === "EMPTY"
@@ -209,15 +240,25 @@ export const LocationProfilePage = () => {
               payload
             );
 
-      const merged = mergeLocationResponseWithForm(res.data, form);
+      const merged = mergeLocationResponseWithForm(res.data, formToSave);
+      const serverForm = mapToForm(merged);
+      const serverSnapshot = JSON.stringify(normalize(serverForm));
+      const currentSnapshot = currentFormRef.current
+        ? JSON.stringify(normalize(currentFormRef.current))
+        : null;
+
       setProfileData(merged);
       persistLocationFallback(merged);
-      setForm(mapToForm(merged));
+      if (currentSnapshot === requestSnapshot) {
+        setForm(serverForm);
+        currentFormRef.current = serverForm;
+        lastSavedSnapshotRef.current = serverSnapshot;
+      } else {
+        lastSavedSnapshotRef.current = requestSnapshot;
+      }
       setMode("VIEW");
-      setSaveNotice("Профиль успешно сохранен");
-      window.setTimeout(() => setSaveNotice(null), 2500);
+      showSaveNotice("Изменения сохранены");
     } catch (e: unknown) {
-      setSaveNotice(null);
       if (getErrorStatus(e) !== 401) {
         setError("Ошибка сохранения профиля");
       }
@@ -225,6 +266,19 @@ export const LocationProfilePage = () => {
       setSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (!form || saving || publishSaving) return;
+
+    const currentSnapshot = JSON.stringify(normalize(form));
+    if (currentSnapshot === lastSavedSnapshotRef.current) return;
+
+    const timeoutId = window.setTimeout(() => {
+      void saveProfile(form);
+    }, 500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [form, saving, publishSaving, mode]);
 
   const logout = () => {
     localStorage.removeItem("accessToken");
@@ -253,13 +307,15 @@ export const LocationProfilePage = () => {
             });
 
       const merged = mergeLocationResponseWithForm(res.data, nextForm);
+      const nextFormFromServer = mapToForm(merged);
       setProfileData(merged);
       persistLocationFallback(merged);
-      setForm(mapToForm(merged));
+      setForm(nextFormFromServer);
+      currentFormRef.current = nextFormFromServer;
+      lastSavedSnapshotRef.current = JSON.stringify(normalize(nextFormFromServer));
       setMode("VIEW");
       window.dispatchEvent(new Event("profile-updated"));
-      setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
-      window.setTimeout(() => setSaveNotice(null), 2200);
+      showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
     } catch (e: unknown) {
       setForm(form);
       if (getErrorStatus(e) !== 401) {
@@ -338,14 +394,10 @@ export const LocationProfilePage = () => {
                 }
               />
 
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={saveProfile}
-                  disabled={saving}
-                  className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto"
-                >
-                  {saving ? "Сохраняем..." : "Сохранить"}
-                </button>
+              <div className="flex justify-end">
+                <div className="text-sm text-slate-500">
+                  {saving ? "Сохраняем изменения..." : "Все изменения сохраняются автоматически"}
+                </div>
               </div>
             </>
           )}

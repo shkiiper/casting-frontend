@@ -79,6 +79,25 @@ const genderLabel: Record<string, string> = {
   OTHER: "Другое",
 };
 
+const ethnicityLabel: Record<string, string> = {
+  EUROPEAN: "Европеоидная",
+  ASIAN: "Монголоидная",
+  AFRICAN: "Негроидная",
+  MIXED: "Метис",
+  OTHER: "Другая",
+  "ЕВРОПЕОИДНАЯ": "Европеоидная",
+  "МОНГОЛОИДНАЯ": "Монголоидная",
+  "НЕГРОИДНАЯ": "Негроидная",
+  "МЕТИС": "Метис",
+  "ДРУГАЯ": "Другая",
+};
+
+const rateUnitLabel: Record<string, string> = {
+  PER_DAY: "за день",
+  PER_HOUR: "за час",
+  PER_PROJECT: "за проект",
+};
+
 const appearanceValueLabels: Record<string, string> = {
   Athletic: "Спортивное",
   Slim: "Худощавое",
@@ -97,6 +116,17 @@ const appearanceValueLabels: Record<string, string> = {
 
 const localizeAppearanceValue = (value?: string | null) =>
   value ? appearanceValueLabels[value] || value : null;
+
+const localizeEthnicity = (value?: string | null) => {
+  if (!value) return null;
+  return ethnicityLabel[value.toUpperCase()] || value;
+};
+
+const localizeRate = (amount?: number | null, unit?: string | null) => {
+  if (!amount) return null;
+  const localizedUnit = unit ? rateUnitLabel[unit] || unit : "сом";
+  return `${amount} ${localizedUnit}`;
+};
 
 const parseExperienceBundle = (raw?: string | null) => {
   if (!raw) {
@@ -389,9 +419,9 @@ export const ProfileDetailsPage = () => {
   const photos = useMemo(() => {
     if (!profile) return [];
     const list = [...(profile.photoUrls ?? [])];
-    if (profile.mainPhotoUrl && !list.includes(profile.mainPhotoUrl)) {
-      list.unshift(profile.mainPhotoUrl);
-    }
+    if (!profile.mainPhotoUrl) return list;
+    const rest = list.filter((url) => url !== profile.mainPhotoUrl);
+    list.splice(0, list.length, profile.mainPhotoUrl, ...rest);
     return list;
   }, [profile]);
 
@@ -407,12 +437,6 @@ export const ProfileDetailsPage = () => {
   const galleryPhotos = photos.slice(0, 5);
   const sidePhotos = galleryPhotos.slice(1, 5);
   const videoList = (profile?.videoUrls ?? []).slice(0, 3);
-  const videoFields = [
-    { label: "Интро-видео", url: profile?.videoUrls?.[0] ?? null },
-    { label: "Актерский монолог", url: profile?.videoUrls?.[1] ?? null },
-    { label: "Самопроба", url: profile?.videoUrls?.[2] ?? null },
-  ];
-
   const showPrev = () => {
     if (!photos.length) return;
     setActivePhoto((prev) => (prev - 1 + photos.length) % photos.length);
@@ -448,7 +472,7 @@ export const ProfileDetailsPage = () => {
     { label: "Цвет глаз", value: localizeAppearanceValue(profile?.eyeColor) },
     {
       label: "Ставка",
-      value: profile?.minRate ? `${profile.minRate} ${profile.rateUnit || "сом"}` : null,
+      value: localizeRate(profile?.minRate, profile?.rateUnit),
     },
   ].filter((row): row is { label: string; value: string } => Boolean(row.value));
 
@@ -581,8 +605,8 @@ export const ProfileDetailsPage = () => {
                     </div>
                   </div>
 
-                  <div className="grid gap-3 lg:grid-cols-[0.82fr_1fr]">
-                    <div className="relative rounded-xl overflow-hidden border border-black/10 bg-slate-200 aspect-[4/5] max-h-[640px]">
+                  <div className="grid gap-3 lg:grid-cols-[0.68fr_1fr] xl:grid-cols-[0.72fr_1fr]">
+                    <div className="relative rounded-xl overflow-hidden border border-black/10 bg-slate-200 aspect-[4/4.8] max-h-[560px]">
                       {galleryPhotos[0] ? (
                         <button
                           type="button"
@@ -679,46 +703,10 @@ export const ProfileDetailsPage = () => {
                           <AppearancePassport
                             rows={appearanceRows}
                             playingAge={playingAge}
-                            ethnicity={profile.ethnicity || null}
+                            ethnicity={localizeEthnicity(profile.ethnicity)}
                           />
                         </>
                       )}
-
-                      <SectionTitle title="Видео-визитки и актерские материалы" />
-                      <div className="mt-4 grid md:grid-cols-3 gap-3">
-                        {videoFields.map((field) => (
-                          <VideoField
-                            key={field.label}
-                            label={field.label}
-                            url={field.url}
-                            onOpen={(resolvedUrl) => {
-                              setVideoModalTitle(field.label);
-                              setVideoModalUrl(resolvedUrl);
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                        {videoList.length > 0 ? (
-                          videoList.map((video, index) => (
-                            <VideoCard
-                              key={`${video}-${index}`}
-                              title={index === 0 ? "Ваше интро-видео" : `Видеообразец ${index + 1}`}
-                              subtitle={name}
-                              year={profile.age ? String(new Date().getFullYear() - Math.max(profile.age - 20, 0)) : ""}
-                              preview={photos[index]}
-                              onOpen={() =>
-                                openVideoModal(
-                                  video,
-                                  index === 0 ? "Ваше интро-видео" : `Видеообразец ${index + 1}`
-                                )
-                              }
-                            />
-                          ))
-                        ) : (
-                          <EmptyBlock text="Видеоматериалы пока не добавлены" />
-                        )}
-                      </div>
 
                       {profile.type === "CREATOR" ? (
                         <section className="mt-10 rounded-3xl border border-slate-200 bg-white p-4 md:p-6">
@@ -779,6 +767,29 @@ export const ProfileDetailsPage = () => {
                           ) : null}
                         </>
                       )}
+
+                      <SectionTitle title="Видео" />
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                        {videoList.length > 0 ? (
+                          videoList.map((video, index) => (
+                            <VideoCard
+                              key={`${video}-${index}`}
+                              title={index === 0 ? "Видео 1" : `Видео ${index + 1}`}
+                              subtitle={name}
+                              year={profile.age ? String(new Date().getFullYear() - Math.max(profile.age - 20, 0)) : ""}
+                              preview={photos[index]}
+                              onOpen={() =>
+                                openVideoModal(
+                                  video,
+                                  index === 0 ? "Видео 1" : `Видео ${index + 1}`
+                                )
+                              }
+                            />
+                          ))
+                        ) : (
+                          <EmptyBlock text="Видеоматериалы пока не добавлены" />
+                        )}
+                      </div>
                     </div>
 
                     <aside className="space-y-6">
@@ -794,9 +805,9 @@ export const ProfileDetailsPage = () => {
                         error={contactsError}
                       />
 
-                      <SidebarBlock title="Сайты и соцсети">
+                      <SidebarBlock title="Контакты">
                         <p className="text-base">
-                          Контакты и соцсети видны только заказчику с доступными токенами.
+                          Контакты видны только заказчику с доступными токенами.
                         </p>
                       </SidebarBlock>
                     </aside>
@@ -1032,41 +1043,6 @@ const VideoCard = ({
     {year && <div className="text-sm text-slate-500">{year}</div>}
   </button>
 );
-
-const VideoField = ({
-  label,
-  url,
-  onOpen,
-}: {
-  label: string;
-  url?: string | null;
-  onOpen: (resolvedUrl: string) => void;
-}) => {
-  const resolved = resolveMediaUrl(url ?? null);
-  return (
-    <div className="rounded-xl border border-black/10 bg-white px-3 py-3">
-      <div className="text-xs uppercase tracking-[0.14em] text-slate-500 mb-2">
-        {label}
-      </div>
-      <div className="rounded-lg border border-black/10 bg-slate-50 px-3 py-2 text-sm text-slate-700 truncate">
-        {resolved ? "Видео добавлено" : "Видео не добавлено"}
-      </div>
-      <div className="mt-2">
-        {resolved ? (
-          <button
-            type="button"
-            onClick={() => onOpen(resolved)}
-            className="rounded-lg px-3 py-1.5 text-sm bg-slate-900 text-white hover:bg-slate-800 transition-colors"
-          >
-            Смотреть
-          </button>
-        ) : (
-          <span className="text-sm text-slate-400">Недоступно</span>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const ActionPanel = ({
   isAuthed,
