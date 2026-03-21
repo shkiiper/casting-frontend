@@ -1,6 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api/client";
+import { useSession } from "@/entities/user/model/authStore";
+import {
+  buildProfileCompletion,
+  hasListValue,
+  hasNumberValue,
+  hasTextValue,
+} from "@/shared/lib/profileCompletion";
 import { Container } from "@/shared/ui/Container";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -11,6 +18,7 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { DismissibleNotice } from "@/shared/ui/DismissibleNotice";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
+import { ProfileCompletionCard } from "@/shared/ui/ProfileCompletionCard";
 import {
   REQUIRED_PROFILE_PHOTO_MESSAGE,
   useRequiredPhotoGuard,
@@ -133,6 +141,7 @@ const getErrorStatus = (error: unknown): number | undefined =>
 
 export const LocationProfilePage = () => {
   const navigate = useNavigate();
+  const { logout: clearSession } = useSession();
   const [form, setForm] = useState<LocationProfileForm | null>(null);
   const [profileData, setProfileData] = useState<LocationProfile | null>(null);
   const [mode, setMode] = useState<Mode>("LOADING");
@@ -238,16 +247,25 @@ export const LocationProfilePage = () => {
   };
 
   const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    sessionStorage.clear();
+    clearSession();
     navigate("/login", { replace: true });
   };
 
   const premium = extractProfilePremiumInfo(profileData);
   const hasRequiredPhoto = Boolean(form?.photoUrls.length);
+  const completion = useMemo(
+    () =>
+      buildProfileCompletion([
+        { label: "Название локации", done: hasTextValue(form?.locationName) },
+        { label: "Город", done: hasTextValue(form?.city) },
+        { label: "Описание", done: hasTextValue(form?.description) },
+        { label: "Адрес", done: hasTextValue(form?.address) },
+        { label: "Цена аренды", done: hasNumberValue(form?.rentPrice) },
+        { label: "Контакты", done: hasTextValue(form?.contactPhone) || hasTextValue(form?.contactEmail) || hasTextValue(form?.contactTelegram) },
+        { label: "Фото", done: hasListValue(form?.photoUrls) },
+      ]),
+    [form]
+  );
 
   const revealPhotoRequirement = () => {
     setPhotoRequirementMessage(REQUIRED_PROFILE_PHOTO_MESSAGE);
@@ -359,6 +377,8 @@ export const LocationProfilePage = () => {
                 title="Оплата premium профиля локации"
                 onError={setError}
               />
+
+              <ProfileCompletionCard completion={completion} />
 
               <EditForm form={form} setForm={setForm} />
 

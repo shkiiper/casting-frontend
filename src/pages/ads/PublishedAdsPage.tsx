@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "@/api/client";
+import { useSession } from "@/entities/user/model/authStore";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
@@ -67,7 +68,7 @@ const formatDate = (iso?: string | null) => {
 
 export const PublishedAdsPage = () => {
   const navigate = useNavigate();
-  const isAuthed = Boolean(localStorage.getItem("accessToken"));
+  const { isAuthenticated, role } = useSession();
   const [list, setList] = useState<CastingResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -77,14 +78,10 @@ export const PublishedAdsPage = () => {
   const [typeFilter, setTypeFilter] = useState("");
 
   useEffect(() => {
-    if (!isAuthed) {
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
     (async () => {
       try {
+        setLoading(true);
+        setError(null);
         const res = await api.get<CastingListResponse>(
           "/api/castings/active",
           { params: { page: 0, size: 20 } }
@@ -97,7 +94,7 @@ export const PublishedAdsPage = () => {
         setLoading(false);
       }
     })();
-  }, [isAuthed]);
+  }, []);
 
   const cities = useMemo(
     () =>
@@ -132,8 +129,7 @@ export const PublishedAdsPage = () => {
   }, [list, query, cityFilter, typeFilter]);
 
   const submitApplication = async (casting: CastingResponse) => {
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
+    if (!isAuthenticated) {
       navigate("/login");
       return;
     }
@@ -169,7 +165,7 @@ export const PublishedAdsPage = () => {
         applicantProfileId: me.id ?? null,
         applicantName,
         applicantCity: me.city ?? null,
-        applicantRole: me.type ?? localStorage.getItem("role"),
+        applicantRole: me.type ?? role,
         applicantContact,
       });
 
@@ -294,38 +290,14 @@ export const PublishedAdsPage = () => {
                 <div>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
                     <div className="text-sm text-slate-500">
-                      Найдено: {isAuthed ? filtered.length : "есть объявления"}
+                      Найдено: {filtered.length}
                     </div>
                     <div className="text-xs text-slate-500">
                       Обновлено сегодня
                     </div>
                   </div>
 
-                  {!isAuthed ? (
-                    <div className="glass-object rounded-2xl p-6">
-                      <div className="text-lg font-semibold">
-                        Объявления доступны после авторизации
-                      </div>
-                      <div className="text-sm text-slate-600 mt-2">
-                        На платформе есть активные объявления. Войдите или
-                        зарегистрируйтесь, чтобы увидеть детали и откликнуться.
-                      </div>
-                      <div className="mt-5 flex flex-wrap gap-3">
-                        <Link
-                          to="/login"
-                          className="rounded-xl px-4 py-2 bg-slate-900 text-white text-sm hover:bg-slate-800 transition-colors"
-                        >
-                          Войти
-                        </Link>
-                        <Link
-                          to="/auth/register"
-                          className="rounded-xl px-4 py-2 border text-sm hover:bg-slate-100 transition-colors"
-                        >
-                          Зарегистрироваться
-                        </Link>
-                      </div>
-                    </div>
-                  ) : loading ? (
+                  {loading ? (
                     <div className="text-sm text-slate-500">Загрузка...</div>
                   ) : filtered.length === 0 ? (
                     <div className="text-sm text-slate-500">

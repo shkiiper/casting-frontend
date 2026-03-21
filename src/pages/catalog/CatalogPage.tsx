@@ -107,6 +107,92 @@ const RENT_PRICE_OPTIONS = [
   '15000',
   '20000',
 ];
+const CATALOG_FILTERS_STORAGE_KEY = 'catalog-filters:v1';
+
+const createDefaultFilters = (tab: Tab): Filters => ({
+  tab,
+  city: '',
+  search: '',
+  minAge: '',
+  maxAge: '',
+  gender: '',
+  ethnicity: '',
+  minRate: '',
+  maxRate: '',
+  activityType: '',
+  minRentPrice: '',
+  maxRentPrice: '',
+});
+
+const readCatalogState = (routeTab: Tab | null, search: string) => {
+  const nextTab = routeTab ?? 'ALL';
+  const defaults = createDefaultFilters(nextTab);
+  const searchParams = new URLSearchParams(search);
+  const hasSearchState = Array.from(searchParams.keys()).length > 0;
+
+  const fromStorage = !hasSearchState
+    ? (() => {
+        try {
+          const raw = localStorage.getItem(CATALOG_FILTERS_STORAGE_KEY);
+          return raw ? (JSON.parse(raw) as { filters?: Partial<Filters>; page?: number }) : null;
+        } catch {
+          return null;
+        }
+      })()
+    : null;
+
+  const sourceFilters = hasSearchState
+    ? {
+        tab: (searchParams.get('tab') as Tab | null) ?? undefined,
+        city: searchParams.get('city') ?? undefined,
+        search: searchParams.get('search') ?? undefined,
+        minAge: searchParams.get('minAge') ?? undefined,
+        maxAge: searchParams.get('maxAge') ?? undefined,
+        gender: searchParams.get('gender') ?? undefined,
+        ethnicity: searchParams.get('ethnicity') ?? undefined,
+        minRate: searchParams.get('minRate') ?? undefined,
+        maxRate: searchParams.get('maxRate') ?? undefined,
+        activityType: searchParams.get('activityType') ?? undefined,
+        minRentPrice: searchParams.get('minRentPrice') ?? undefined,
+        maxRentPrice: searchParams.get('maxRentPrice') ?? undefined,
+      }
+    : fromStorage?.filters ?? {};
+
+  const pageCandidate = hasSearchState
+    ? Number(searchParams.get('page') ?? '0')
+    : Number(fromStorage?.page ?? 0);
+
+  return {
+    filters: {
+      ...defaults,
+      ...sourceFilters,
+      tab: routeTab ?? sourceFilters.tab ?? defaults.tab,
+    },
+    page: Number.isFinite(pageCandidate) && pageCandidate >= 0 ? pageCandidate : 0,
+  };
+};
+
+const buildCatalogSearch = (filters: Filters, page: number, routeTab: Tab | null) => {
+  const params = new URLSearchParams();
+  const nextTab = routeTab ?? filters.tab;
+
+  if (!routeTab && nextTab !== 'ALL') params.set('tab', nextTab);
+  if (filters.city) params.set('city', filters.city);
+  if (filters.search) params.set('search', filters.search);
+  if (filters.minAge) params.set('minAge', filters.minAge);
+  if (filters.maxAge) params.set('maxAge', filters.maxAge);
+  if (filters.gender) params.set('gender', filters.gender);
+  if (filters.ethnicity) params.set('ethnicity', filters.ethnicity);
+  if (filters.minRate) params.set('minRate', filters.minRate);
+  if (filters.maxRate) params.set('maxRate', filters.maxRate);
+  if (filters.activityType) params.set('activityType', filters.activityType);
+  if (filters.minRentPrice) params.set('minRentPrice', filters.minRentPrice);
+  if (filters.maxRentPrice) params.set('maxRentPrice', filters.maxRentPrice);
+  if (page > 0) params.set('page', String(page));
+
+  const query = params.toString();
+  return query ? `?${query}` : '';
+};
 
 function getPreviewPhoto(p: ProfilePublic) {
   return pickProfilePhoto(p);
@@ -138,29 +224,40 @@ export const CatalogPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const routeTab = useMemo(() => pathToTab(location.pathname), [location.pathname]);
+  const initialState = useMemo(
+    () => readCatalogState(routeTab, location.search),
+    [location.search, routeTab]
+  );
 
-  const [filters, setFilters] = useState<Filters>({
-    tab: routeTab ?? 'ALL',
-    city: '',
-    search: '',
-    minAge: '',
-    maxAge: '',
-    gender: '',
-    ethnicity: '',
-    minRate: '',
-    maxRate: '',
-    activityType: '',
-    minRentPrice: '',
-    maxRentPrice: '',
-  });
-
-  const [page, setPage] = useState(0);
+  const [filters, setFilters] = useState<Filters>(() => initialState.filters);
+  const [page, setPage] = useState(() => initialState.page);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!routeTab) return;
-    setFilters((prev) => (prev.tab === routeTab ? prev : { ...prev, tab: routeTab }));
-    setPage(0);
-  }, [routeTab]);
+    setFilters((prev) => {
+      const next = readCatalogState(routeTab, location.search).filters;
+      return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+    });
+    setPage((prev) => {
+      const nextPage = readCatalogState(routeTab, location.search).page;
+      return prev === nextPage ? prev : nextPage;
+    });
+  }, [location.search, routeTab]);
+
+  useEffect(() => {
+    const nextSearch = buildCatalogSearch(filters, page, routeTab);
+    if (location.search !== nextSearch) {
+      navigate({ pathname: location.pathname, search: nextSearch }, { replace: true });
+    }
+
+    localStorage.setItem(
+      CATALOG_FILTERS_STORAGE_KEY,
+      JSON.stringify({
+        filters,
+        page,
+      })
+    );
+  }, [filters, page, routeTab, location.pathname, location.search, navigate]);
 
   const serverFilters = useMemo(
     () => ({
@@ -437,6 +534,22 @@ export const CatalogPage = () => {
                       Сбросить фильтры
                     </button>
                   </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                  <span>Фильтры сохраняются автоматически.</span>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(window.location.href);
+                      setShareNotice('Ссылка на каталог скопирована');
+                      window.setTimeout(() => setShareNotice(null), 2200);
+                    }}
+                    className="rounded-full border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:border-slate-500"
+                  >
+                    Скопировать ссылку
+                  </button>
+                  {shareNotice ? <span className="text-emerald-700">{shareNotice}</span> : null}
                 </div>
 
                 {filters.tab !== 'ALL' && (

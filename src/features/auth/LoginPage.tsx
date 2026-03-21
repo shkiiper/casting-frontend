@@ -82,18 +82,8 @@ export const LoginPage = () => {
         }
 
         // 1) кладём в localStorage
-        localStorage.setItem("token", resp.token);
-        localStorage.setItem("accessToken", resp.token);
-        if (resp.role) {
-          localStorage.setItem("role", resp.role);
-          localStorage.setItem(
-            "account_name",
-            resp.role === "CUSTOMER" ? "Заказчик" : resp.role
-          );
-        }
-
-        // 2) кладём в zustand‑store (если используешь дальше)
-        loginStore(resp.token);
+        // 2) кладём в zustand‑store и storage
+        loginStore(resp.token, resp.role);
 
         // 3) проверяем профиль в зависимости от роли
         const role = (resp.role ?? "").toUpperCase() as UserRole;

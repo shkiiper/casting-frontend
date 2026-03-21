@@ -130,12 +130,11 @@ const extractStringList = (value: unknown): string[] => {
   return [];
 };
 
-export const getApiErrorMessage = (error: unknown, fallback: string) => {
+export const getBackendErrorMessage = (error: unknown) => {
   const response = (error as { response?: { status?: number; data?: unknown } })?.response;
-  const requestUrl = (error as { config?: { url?: string } })?.config?.url || "";
   const responseData = response?.data;
 
-  const payloadMessage =
+  return (
     (isNonEmptyObject(responseData) &&
       [
         responseData.message,
@@ -149,7 +148,14 @@ export const getApiErrorMessage = (error: unknown, fallback: string) => {
     extractStringList(
       isNonEmptyObject(responseData) ? responseData.fieldErrors : null
     )[0] ||
-    "";
+    ""
+  ).trim();
+};
+
+export const getApiErrorMessage = (error: unknown, fallback: string) => {
+  const response = (error as { response?: { status?: number; data?: unknown } })?.response;
+  const requestUrl = (error as { config?: { url?: string } })?.config?.url || "";
+  const payloadMessage = getBackendErrorMessage(error);
 
   const normalizedMessage = payloadMessage.toLowerCase();
   const fallbackMessage = (error as { message?: string })?.message?.toLowerCase() || "";
@@ -172,8 +178,8 @@ export const getApiErrorMessage = (error: unknown, fallback: string) => {
     return "Email не подтвержден. Подтвердите почту или запросите письмо повторно.";
   }
 
-  if (payloadMessage.trim()) {
-    return payloadMessage.trim();
+  if (payloadMessage) {
+    return payloadMessage;
   }
 
   return fallback;

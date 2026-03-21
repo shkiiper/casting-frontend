@@ -1,16 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import {
-  createAdminPlanBasics,
-  deleteAdminPlan,
-  getCatalogRoleCounts,
-  getAdminPlans,
-  getAdminStats,
-  updateAdminPlan,
-  updateAdminPlanBasics,
-  updateAdminPlanBooster,
-  updateAdminPlanCasting,
-  updateAdminPlanPremium,
   type RoleCounts,
   type AdminPlan,
   type AdminPlanPayload,
@@ -20,6 +10,9 @@ import {
   type AdminPlanPremiumPayload,
   type AdminStatsResponse,
 } from "@/api/admin";
+import { useSession } from "@/entities/user/model/authStore";
+import { useAdminDashboardData } from "@/pages/admin/hooks/useAdminDashboardData";
+import { getApiErrorMessage } from "@/shared/lib/safety";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { CenterToast } from "@/shared/ui/CenterToast";
 
@@ -81,15 +74,19 @@ const normalizeRoleCounts = (
 
 export const AdminPage = () => {
   const navigate = useNavigate();
-  const role = (localStorage.getItem("role") || "").toUpperCase();
-  const isAdmin = role === "ADMIN";
-
-  const [stats, setStats] = useState<AdminStatsResponse | null>(null);
-  const [roleCountsFallback, setRoleCountsFallback] = useState<RoleCounts | null>(null);
-  const [plans, setPlans] = useState<AdminPlan[]>([]);
+  const { isAdmin, logout: clearSession } = useSession();
+  const {
+    dashboardQuery,
+    createPlan,
+    deletePlan,
+    savePlan,
+    saveBase,
+    saveBooster,
+    saveCasting,
+    savePremium,
+  } = useAdminDashboardData();
   const [newPlan, setNewPlan] = useState<AdminPlanPayload>(emptyPlan);
 
-  const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<number | "new" | null>(null);
   const [expandedPlanId, setExpandedPlanId] = useState<number | null>(null);
   const [planDrafts, setPlanDrafts] = useState<Record<number, AdminPlan>>({});
@@ -97,53 +94,16 @@ export const AdminPage = () => {
   const [toast, setToast] = useState<string | null>(null);
   const [openPlanMenuId, setOpenPlanMenuId] = useState<number | null>(null);
   const planMenuRef = useRef<HTMLDivElement | null>(null);
+  const stats = dashboardQuery.data?.stats ?? null;
+  const roleCountsFallback = dashboardQuery.data?.roleCountsFallback ?? null;
+  const plans = dashboardQuery.data?.plans ?? [];
+  const loading = dashboardQuery.isLoading;
 
   const statValues = useMemo(() => normalizeStats(stats), [stats]);
   const roleCounts = useMemo(
     () => normalizeRoleCounts(stats, roleCountsFallback),
     [stats, roleCountsFallback]
   );
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    (async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const [statsResp, plansResp] = await Promise.all([
-          getAdminStats(),
-          getAdminPlans(),
-        ]);
-        setStats(statsResp);
-        setPlans(plansResp);
-
-        const hasRoleCounts =
-          statsResp.actorsCount !== undefined ||
-          statsResp.actors !== undefined ||
-          statsResp.creatorsCount !== undefined ||
-          statsResp.creators !== undefined ||
-          statsResp.locationOwnersCount !== undefined ||
-          statsResp.locationOwners !== undefined ||
-          statsResp.customersCount !== undefined ||
-          statsResp.customers !== undefined;
-
-        if (!hasRoleCounts) {
-          try {
-            const fallbackCounts = await getCatalogRoleCounts();
-            setRoleCountsFallback(fallbackCounts);
-          } catch {
-            setRoleCountsFallback(null);
-          }
-        } else {
-          setRoleCountsFallback(null);
-        }
-      } catch {
-        setError("Не удалось загрузить данные админки");
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [isAdmin]);
 
   useEffect(() => {
     if (openPlanMenuId === null) return;
@@ -164,11 +124,7 @@ export const AdminPage = () => {
   }
 
   const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    sessionStorage.clear();
+    clearSession();
     navigate("/login", { replace: true });
   };
 
@@ -181,14 +137,13 @@ export const AdminPage = () => {
     try {
       setSavingId("new");
       setError(null);
-      const created = await createAdminPlanBasics(toBasicsPayload(newPlan));
-      setPlans((prev) => [created, ...prev]);
+      const created = await createPlan(toBasicsPayload(newPlan));
       setNewPlan(emptyPlan);
       setExpandedPlanId(created.id);
       setPlanDrafts((prev) => ({ ...prev, [created.id]: created }));
       showToast("План создан");
-    } catch {
-      setError("Не удалось создать план");
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Не удалось создать план"));
     } finally {
       setSavingId(null);
     }
@@ -198,11 +153,10 @@ export const AdminPage = () => {
     try {
       setSavingId(id);
       setError(null);
-      await deleteAdminPlan(id);
-      setPlans((prev) => prev.filter((p) => p.id !== id));
+      await deletePlan(id);
       showToast("План удален");
-    } catch {
-      setError("Не удалось удалить план");
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Не удалось удалить план"));
     } finally {
       setSavingId(null);
     }
@@ -216,12 +170,11 @@ export const AdminPage = () => {
     try {
       setSavingId(id);
       setError(null);
-      const updated = await updateAdminPlan(id, payload);
-      setPlans((prev) => prev.map((plan) => (plan.id === id ? updated : plan)));
+      const updated = await savePlan({ id, payload });
       setPlanDrafts((prev) => ({ ...prev, [id]: updated }));
       showToast(`${sectionLabel} сохранен`);
-    } catch {
-      setError(`Не удалось сохранить: ${sectionLabel.toLowerCase()}`);
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, `Не удалось сохранить: ${sectionLabel.toLowerCase()}`));
     } finally {
       setSavingId(null);
     }
@@ -238,18 +191,19 @@ export const AdminPage = () => {
 
       const updated =
         section === "base"
-          ? await updateAdminPlanBasics(id, toBasicsPayload(plan))
+          ? await saveBase({ id, payload: toBasicsPayload(plan) })
           : section === "booster"
-          ? await updateAdminPlanBooster(id, toBoosterPayload(plan))
+          ? await saveBooster({ id, payload: toBoosterPayload(plan) })
           : section === "casting"
-          ? await updateAdminPlanCasting(id, toCastingPayload(plan))
-          : await updateAdminPlanPremium(id, toPremiumPayload(plan));
+          ? await saveCasting({ id, payload: toCastingPayload(plan) })
+          : await savePremium({ id, payload: toPremiumPayload(plan) });
 
-      setPlans((prev) => prev.map((item) => (item.id === id ? updated : item)));
       setPlanDrafts((prev) => ({ ...prev, [id]: updated }));
       showToast(`${sectionLabelMap[section]} сохранен`);
-    } catch {
-      setError(`Не удалось сохранить: ${sectionLabelMap[section].toLowerCase()}`);
+    } catch (error: unknown) {
+      setError(
+        getApiErrorMessage(error, `Не удалось сохранить: ${sectionLabelMap[section].toLowerCase()}`)
+      );
     } finally {
       setSavingId(null);
     }
@@ -319,9 +273,9 @@ export const AdminPage = () => {
 
       <main className="w-full px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
         <section className="space-y-6">
-          {error && (
+          {(error || dashboardQuery.isError) && (
             <div className="rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
-              {error}
+              {error || "Не удалось загрузить данные админки"}
             </div>
           )}
 

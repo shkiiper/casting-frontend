@@ -26,15 +26,9 @@ const resolveRedirectPath = (role?: string) => {
 const persistAuth = (
   token: string,
   role: string | undefined,
-  loginStore: (token: string) => void
+  loginStore: (token: string, role?: string | null) => void
 ) => {
-  localStorage.setItem("token", token);
-  localStorage.setItem("accessToken", token);
-  loginStore(token);
-  if (role) {
-    localStorage.setItem("role", role);
-    localStorage.setItem("account_name", role === "CUSTOMER" ? "Заказчик" : role);
-  }
+  loginStore(token, role);
   localStorage.removeItem("pendingVerificationEmail");
   sessionStorage.removeItem("pendingVerificationPassword");
 };

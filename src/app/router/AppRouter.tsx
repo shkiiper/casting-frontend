@@ -1,13 +1,9 @@
-// src/app/router/AppRouter.tsx
-import { useEffect } from "react";
 import { Suspense, lazy } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
-  useNavigate,
-  useLocation,
 } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -96,45 +92,9 @@ const PaymentStatusPage = lazy(() =>
   }))
 );
 
-/* ================= UNAUTHORIZED HANDLER ================= */
-
-function UnauthorizedListener() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    const handler = () => {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("role");
-      localStorage.removeItem("token");
-
-      const pathname = location.pathname;
-      const isProtectedPage =
-        pathname.startsWith("/account") ||
-        pathname.startsWith("/ads/manage") ||
-        pathname.startsWith("/admin") ||
-        pathname.startsWith("/payments");
-
-      if (isProtectedPage) {
-        navigate("/login", { replace: true });
-      }
-    };
-
-    window.addEventListener("unauthorized", handler);
-    return () => window.removeEventListener("unauthorized", handler);
-  }, [navigate, location.pathname]);
-
-  return null;
-}
-
-/* ================= ROUTER ================= */
-
 export function AppRouter() {
   return (
     <BrowserRouter>
-      <UnauthorizedListener />
-
       <Suspense
         fallback={
           <div className="min-h-screen grid place-items-center text-slate-500">
@@ -152,7 +112,14 @@ export function AppRouter() {
           <Route path="/profiles/:id" element={<ProfileDetailsPage />} />
 
           <Route path="/ads" element={<PublishedAdsPage />} />
-          <Route path="/ads/manage" element={<AdsPage />} />
+          <Route
+            path="/ads/manage"
+            element={
+              <ProtectedRoute>
+                <AdsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* AUTH */}
           <Route path="/login" element={<LoginPage />} />

@@ -191,6 +191,12 @@ export type AdminCustomerUser = {
   contactTelegram?: string | null;
   minRate?: number | null;
   rateUnit?: string | null;
+  mainPhotoUrl?: string | null;
+  photoUrls?: string[] | null;
+  hasPhoto?: boolean | null;
+  emailVerified?: boolean | null;
+  lastLoginAt?: string | null;
+  lastActivityAt?: string | null;
 };
 
 type CatalogItem = {
@@ -259,6 +265,10 @@ export type AdminUser = {
   minRate?: number | null;
   rateUnit?: string | null;
   published?: boolean | null;
+  hasPhoto?: boolean | null;
+  emailVerified?: boolean | null;
+  lastLoginAt?: string | null;
+  lastActivityAt?: string | null;
   active?: boolean;
   banned?: boolean;
   createdAt?: string | null;
@@ -374,6 +384,8 @@ const performerToAdminUser = (profile: AdminPerformerProfile): AdminUser => ({
   minRate: profile.minRate ?? profile.rentPrice ?? null,
   rateUnit: profile.rateUnit ?? profile.rentPriceUnit ?? null,
   published: profile.published ?? null,
+  hasPhoto: Boolean(profile.mainPhotoUrl || profile.photoUrls?.length),
+  lastActivityAt: null,
   active: true,
   banned: false,
 });
@@ -444,6 +456,13 @@ export async function getAdminUsers(params: AdminUsersQuery) {
       contactTelegram: user.contactTelegram ?? null,
       minRate: user.minRate ?? null,
       rateUnit: user.rateUnit ?? null,
+      hasPhoto:
+        typeof user.hasPhoto === "boolean"
+          ? user.hasPhoto
+          : Boolean(user.mainPhotoUrl || user.photoUrls?.length),
+      emailVerified: user.emailVerified ?? null,
+      lastLoginAt: user.lastLoginAt ?? null,
+      lastActivityAt: user.lastActivityAt ?? null,
       published: null,
       active: true,
       banned: false,

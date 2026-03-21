@@ -1,15 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
-import {
-  banAdminUser,
-  deactivateAdminUser,
-  deleteAdminUser,
-  getAdminUsers,
-  notifyAdminUserMissingPhoto,
-  setAdminUserProfileVisibility,
-  unbanAdminUser,
-  type AdminUser,
-} from "@/api/admin";
+import { type AdminUser } from "@/api/admin";
+import { useSession } from "@/entities/user/model/authStore";
+import { useAdminUsersData } from "@/pages/admin/hooks/useAdminUsersData";
+import { getApiErrorMessage } from "@/shared/lib/safety";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { HeaderPublishSwitch } from "@/shared/ui/HeaderPublishSwitch";
@@ -18,86 +12,73 @@ type UserRoleFilter = "ALL" | "ACTOR" | "CREATOR" | "LOCATION_OWNER" | "CUSTOMER
 type VisibilityFilter = "ALL" | "VISIBLE" | "HIDDEN";
 type SortBy = "createdAt" | "updatedAt" | "id" | "email" | "role";
 type SortDir = "asc" | "desc";
+type QuickFilter = "WITHOUT_PHOTO" | "HIDDEN" | "INACTIVE";
 
 const PAGE_SIZE = 20;
 
 export const AdminUsersPage = () => {
   const navigate = useNavigate();
-  const role = (localStorage.getItem("role") || "").toUpperCase();
-  const isAdmin = role === "ADMIN";
-
-  const [items, setItems] = useState<AdminUser[]>([]);
-  const [totalElements, setTotalElements] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
+  const { isAdmin, logout: clearSession } = useSession();
   const [page, setPage] = useState(0);
 
   const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRoleFilter>("ALL");
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("ALL");
   const [sortBy, setSortBy] = useState<SortBy>("createdAt");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [quickFilters, setQuickFilters] = useState<QuickFilter[]>([]);
 
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const { usersQuery, banToggleUser, deactivateUser, updateVisibility, deleteUser, notifyMissingPhoto } =
+    useAdminUsersData({
+      page,
+      size: PAGE_SIZE,
+      role: roleFilter === "ALL" ? undefined : roleFilter,
+      visibility: visibilityFilter,
+      query: appliedSearch || undefined,
+      sortBy,
+      sortDir,
+    });
+  const items = useMemo(
+    () => (usersQuery.data?.content ?? []).filter((user) => user.role !== "ADMIN"),
+    [usersQuery.data?.content]
+  );
+  const filteredItems = useMemo(
+    () =>
+      items.filter((user) => {
+        if (quickFilters.includes("WITHOUT_PHOTO") && user.hasPhoto !== false) return false;
+        if (quickFilters.includes("HIDDEN") && user.published !== false) return false;
+        if (quickFilters.includes("INACTIVE") && user.active !== false) return false;
+        return true;
+      }),
+    [items, quickFilters]
+  );
+  const totalElements = usersQuery.data?.totalElements ?? 0;
+  const totalPages = Math.max(1, usersQuery.data?.totalPages ?? 1);
+  const loading = usersQuery.isLoading;
 
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 2200);
   };
 
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await getAdminUsers({
-        page,
-        size: PAGE_SIZE,
-        role: roleFilter === "ALL" ? undefined : roleFilter,
-        visibility: visibilityFilter,
-        query: search.trim() || undefined,
-        sortBy,
-        sortDir,
-      });
-      setItems((data.content ?? []).filter((user) => user.role !== "ADMIN"));
-      setTotalElements(data.totalElements ?? 0);
-      setTotalPages(Math.max(1, data.totalPages ?? 1));
-    } catch {
-      setError(
-        "Не удалось загрузить пользователей. Нужен backend-эндпоинт /api/admin/users с page/size/sort/query."
-      );
-      setItems([]);
-      setTotalElements(0);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!isAdmin) return;
-    void loadUsers();
-  }, [isAdmin, page, roleFilter, visibilityFilter, sortBy, sortDir]);
-
   if (!isAdmin) {
     return <Navigate to="/" replace />;
   }
 
   const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    sessionStorage.clear();
+    clearSession();
     navigate("/login", { replace: true });
   };
 
   const applySearch = () => {
     setPage(0);
-    void loadUsers();
+    setAppliedSearch(search.trim());
   };
 
   const onBanToggle = async (user: AdminUser) => {
@@ -108,21 +89,13 @@ export const AdminUsersPage = () => {
     try {
       setProcessingId(user.id);
       setError(null);
-      if (user.banned) {
-        await unbanAdminUser(user.id);
-        showToast("Пользователь разбанен");
-      } else {
-        await banAdminUser(user.id);
-        showToast("Пользователь забанен");
-      }
-      await loadUsers();
+      const updatedUser = await banToggleUser(user);
+      showToast(updatedUser.banned ? "Пользователь забанен" : "Пользователь разбанен");
       if (selectedUser?.id === user.id) {
-        setSelectedUser((prev) =>
-          prev ? { ...prev, banned: !Boolean(prev.banned) } : prev
-        );
+        setSelectedUser((prev) => (prev ? { ...prev, banned: updatedUser.banned } : prev));
       }
-    } catch {
-      setError("Не удалось выполнить операцию бан/разбан");
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Не удалось выполнить операцию бан/разбан"));
     } finally {
       setProcessingId(null);
     }
@@ -136,14 +109,13 @@ export const AdminUsersPage = () => {
     try {
       setProcessingId(user.id);
       setError(null);
-      await deactivateAdminUser(user.id);
+      await deactivateUser(user.id);
       showToast("Пользователь деактивирован");
-      await loadUsers();
       if (selectedUser?.id === user.id) {
         setSelectedUser((prev) => (prev ? { ...prev, active: false } : prev));
       }
-    } catch {
-      setError("Не удалось деактивировать пользователя");
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Не удалось деактивировать пользователя"));
     } finally {
       setProcessingId(null);
     }
@@ -158,15 +130,10 @@ export const AdminUsersPage = () => {
     try {
       setProcessingId(user.id);
       setError(null);
-      const updatedUser = await setAdminUserProfileVisibility(user.id, nextPublished);
-
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === user.id
-            ? { ...item, published: updatedUser?.published ?? nextPublished }
-            : item
-        )
-      );
+      const updatedUser = await updateVisibility({
+        userId: user.id,
+        published: nextPublished,
+      });
 
       if (selectedUser?.id === user.id) {
         setSelectedUser((prev) =>
@@ -181,13 +148,7 @@ export const AdminUsersPage = () => {
 
       showToast(nextPublished ? "Профиль показан в каталоге" : "Профиль скрыт из каталога");
     } catch (error: unknown) {
-      const message =
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.message ||
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.error;
-
-      setError(message || "Не удалось изменить видимость профиля");
+      setError(getApiErrorMessage(error, "Не удалось изменить видимость профиля"));
     } finally {
       setProcessingId(null);
     }
@@ -207,20 +168,13 @@ export const AdminUsersPage = () => {
     try {
       setProcessingId(user.id);
       setError(null);
-      await deleteAdminUser(user.id);
-      setItems((prev) => prev.filter((item) => item.id !== user.id));
-      setTotalElements((prev) => Math.max(0, prev - 1));
+      await deleteUser(user.id);
       if (selectedUser?.id === user.id) {
         setSelectedUser(null);
       }
       showToast("Аккаунт пользователя удален");
     } catch (error: unknown) {
-      const message =
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.message ||
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.error;
-      setError(message || "Не удалось удалить пользователя");
+      setError(getApiErrorMessage(error, "Не удалось удалить пользователя"));
     } finally {
       setProcessingId(null);
     }
@@ -235,15 +189,10 @@ export const AdminUsersPage = () => {
     try {
       setProcessingId(user.id);
       setError(null);
-      await notifyAdminUserMissingPhoto(user.id);
+      await notifyMissingPhoto(user.id);
       showToast("Напоминание о фото отправлено");
     } catch (error: unknown) {
-      const message =
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.message ||
-        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
-          ?.error;
-      setError(message || "Не удалось отправить напоминание о фото");
+      setError(getApiErrorMessage(error, "Не удалось отправить напоминание о фото"));
     } finally {
       setProcessingId(null);
     }
@@ -251,10 +200,10 @@ export const AdminUsersPage = () => {
 
   const pageInfo = useMemo(
     () => ({
-      from: totalElements === 0 ? 0 : page * PAGE_SIZE + 1,
-      to: Math.min((page + 1) * PAGE_SIZE, totalElements),
+      from: filteredItems.length === 0 ? 0 : page * PAGE_SIZE + 1,
+      to: Math.min(page * PAGE_SIZE + filteredItems.length, totalElements),
     }),
-    [page, totalElements]
+    [filteredItems.length, page, totalElements]
   );
 
   return (
@@ -290,9 +239,10 @@ export const AdminUsersPage = () => {
 
       <main className="w-full px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
         <section className="space-y-4">
-          {error && (
+          {(error || usersQuery.isError) && (
             <div className="rounded-xl bg-red-50 text-red-700 px-4 py-3 text-sm">
-              {error}
+              {error ||
+                "Не удалось загрузить пользователей. Нужен backend-эндпоинт /api/admin/users с page/size/sort/query."}
             </div>
           )}
 
@@ -363,6 +313,40 @@ export const AdminUsersPage = () => {
                 Найти
               </button>
             </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-black/5 pt-4">
+              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Быстрые фильтры
+              </span>
+              {[
+                { key: "WITHOUT_PHOTO" as QuickFilter, label: "Без фото" },
+                { key: "HIDDEN" as QuickFilter, label: "Скрыт из каталога" },
+                { key: "INACTIVE" as QuickFilter, label: "Неактивен" },
+              ].map((filter) => {
+                const active = quickFilters.includes(filter.key);
+                return (
+                  <button
+                    key={filter.key}
+                    type="button"
+                    onClick={() =>
+                      setQuickFilters((prev) =>
+                        prev.includes(filter.key)
+                          ? prev.filter((item) => item !== filter.key)
+                          : [...prev, filter.key]
+                      )
+                    }
+                    className={[
+                      "rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
+                      active
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-slate-300 bg-white text-slate-600 hover:border-slate-500",
+                    ].join(" ")}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-sm">
@@ -378,11 +362,11 @@ export const AdminUsersPage = () => {
 
                 {loading ? (
                   <div className="px-5 py-8 text-slate-600">Загрузка...</div>
-                ) : items.length === 0 ? (
+                ) : filteredItems.length === 0 ? (
                   <div className="px-5 py-8 text-slate-600">Нет данных</div>
                 ) : (
                   <div className="divide-y divide-black/10">
-                    {items.map((user) => (
+                    {filteredItems.map((user) => (
                       <div
                         key={user.id}
                         className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_320px] gap-4 px-5 py-4 text-sm items-center"
@@ -409,6 +393,26 @@ export const AdminUsersPage = () => {
                           ) : null}
                           <div className={user.banned ? "mt-1 text-red-600" : "mt-1 text-emerald-700"}>
                             {user.banned ? "Забанен" : "Не забанен"}
+                          </div>
+                          <div className="mt-1 text-slate-500">
+                            {user.hasPhoto === true
+                              ? "Фото есть"
+                              : user.hasPhoto === false
+                              ? "Без фото"
+                              : "Фото: —"}
+                          </div>
+                          <div className="mt-1 text-slate-500">
+                            {user.emailVerified === true
+                              ? "Email подтверждён"
+                              : user.emailVerified === false
+                              ? "Email не подтверждён"
+                              : "Email: —"}
+                          </div>
+                          <div className="mt-1 text-slate-500">
+                            Логин: {formatAdminDate(user.lastLoginAt)}
+                          </div>
+                          <div className="mt-1 text-slate-500">
+                            Активность: {formatAdminDate(user.lastActivityAt || user.updatedAt)}
                           </div>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
@@ -471,7 +475,8 @@ export const AdminUsersPage = () => {
 
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm text-slate-600">
-              Показано {pageInfo.from}-{pageInfo.to} из {totalElements}
+              Показано {pageInfo.from}-{pageInfo.to} из{" "}
+              {quickFilters.length > 0 ? `${filteredItems.length} на странице (${totalElements} всего)` : totalElements}
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -564,6 +569,27 @@ const UserDrawer = ({
                 : "—"
             }
           />
+          <Row
+            label="Фото"
+            value={
+              user.hasPhoto === true ? "Есть фото" : user.hasPhoto === false ? "Нет фото" : "—"
+            }
+          />
+          <Row
+            label="Email подтвержден"
+            value={
+              user.emailVerified === true
+                ? "Да"
+                : user.emailVerified === false
+                ? "Нет"
+                : "—"
+            }
+          />
+          <Row label="Последний логин" value={formatAdminDate(user.lastLoginAt)} />
+          <Row
+            label="Последняя активность"
+            value={formatAdminDate(user.lastActivityAt || user.updatedAt)}
+          />
           <Row label="Статус" value={Boolean(user.active) ? "Активен" : "Неактивен"} />
           <Row label="Бан" value={user.banned ? "Забанен" : "Не забанен"} />
           <Row label="Создан" value={user.createdAt || "—"} />
@@ -580,6 +606,19 @@ const Row = ({ label, value }: { label: string; value: string }) => (
     <div className="text-slate-800 mt-0.5 break-words">{value}</div>
   </div>
 );
+
+const formatAdminDate = (value?: string | null) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
 
 const userName = (user: AdminUser) =>
   user.displayName ||

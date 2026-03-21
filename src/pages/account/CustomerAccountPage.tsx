@@ -1,7 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "@/api/client";
 import { getSubscriptionInfo, getViewedContacts } from "@/api/customer";
+import { useSession } from "@/entities/user/model/authStore";
+import {
+  buildProfileCompletion,
+  hasTextValue,
+} from "@/shared/lib/profileCompletion";
 import { Container } from "@/shared/ui/Container";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -9,6 +14,7 @@ import { SubscriptionModal } from "@/features/subscription/SubscriptionModal";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { DismissibleNotice } from "@/shared/ui/DismissibleNotice";
+import { ProfileCompletionCard } from "@/shared/ui/ProfileCompletionCard";
 import type {
   CustomerProfileResponse,
   SubscriptionInfoResponse,
@@ -91,6 +97,7 @@ const formatDateTime = (iso?: string) => {
 
 export const CustomerAccountPage = () => {
   const navigate = useNavigate();
+  const { logout: clearSession } = useSession();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoSectionRef = useRef<HTMLDivElement>(null);
 
@@ -115,6 +122,17 @@ export const CustomerAccountPage = () => {
     "SUBSCRIPTION" | "BOOSTERS"
   >("SUBSCRIPTION");
   const hasRequiredPhoto = Boolean(form?.mainPhotoUrl);
+  const completion = useMemo(
+    () =>
+      buildProfileCompletion([
+        { label: "Имя", done: hasTextValue(form?.displayName) },
+        { label: "Город", done: hasTextValue(form?.city) },
+        { label: "Описание", done: hasTextValue(form?.description) },
+        { label: "Фото", done: hasTextValue(form?.mainPhotoUrl) },
+        { label: "Контакты", done: hasTextValue(form?.contactPhone) || hasTextValue(form?.contactEmail) || hasTextValue(form?.contactTelegram) },
+      ]),
+    [form]
+  );
 
   /* ---------- LOAD ---------- */
 
@@ -223,11 +241,7 @@ export const CustomerAccountPage = () => {
   /* ---------- LOGOUT ---------- */
 
   const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    sessionStorage.clear();
+    clearSession();
     navigate("/login", { replace: true });
   };
 
@@ -290,6 +304,8 @@ export const CustomerAccountPage = () => {
 
             <div className="grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
               <div className="space-y-8">
+                <ProfileCompletionCard completion={completion} />
+
                 <Section title="Профиль заказчика">
                   {form && (
                     <div className="space-y-6">

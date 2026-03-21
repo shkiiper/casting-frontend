@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import api from "@/api/client";
+import {
+  getStoredAccessToken,
+  getStoredRole,
+  logoutSession,
+} from "@/entities/user/model/authStore";
 import type { CustomerProfileResponse } from "@/types/customer";
 
 type PerformerProfileResponse = {
@@ -13,7 +18,14 @@ type WindowWithApiBase = Window & {
 
 const resolveApiBase = () => {
   const configuredBase =
-    (window as WindowWithApiBase).__API_BASE_URL__?.trim().replace(/\/+$/, "") || "";
+    (
+      import.meta.env.VITE_API_BASE_URL ||
+      import.meta.env.VITE_API_URL ||
+      (window as WindowWithApiBase).__API_BASE_URL__ ||
+      ""
+    )
+      .trim()
+      .replace(/\/+$/, "");
 
   const runsOnLocalhost = /^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(
     window.location.hostname
@@ -73,7 +85,7 @@ export function resolveMediaUrl(url?: string | null) {
 }
 
 export function useProfileAvatar() {
-  const initialToken = localStorage.getItem("accessToken");
+  const initialToken = getStoredAccessToken();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(() => {
     if (cachedToken && cachedToken === initialToken) return cachedAvatarUrl;
     return null;
@@ -86,7 +98,7 @@ export function useProfileAvatar() {
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
+    const token = getStoredAccessToken();
     if (!token) {
       cachedToken = null;
       cachedAvatarUrl = null;
@@ -102,7 +114,7 @@ export function useProfileAvatar() {
       cachedIsAuthed = true;
     }
 
-    const role = (localStorage.getItem("role") ?? "").toUpperCase();
+    const role = getStoredRole() ?? "";
     const endpoint =
       role === "CUSTOMER" ? "/api/customer/me" : "/api/profile/me";
 
@@ -118,10 +130,7 @@ export function useProfileAvatar() {
             ?.status;
 
           if (status === 401) {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("role");
-            localStorage.removeItem("token");
+            logoutSession();
             cachedToken = null;
             cachedAvatarUrl = null;
             cachedIsAuthed = false;
@@ -137,7 +146,7 @@ export function useProfileAvatar() {
     }
 
     inflightRequest.finally(() => {
-      const currentToken = localStorage.getItem("accessToken");
+      const currentToken = getStoredAccessToken();
       if (!currentToken || currentToken !== cachedToken) return;
       setAvatarUrl(cachedAvatarUrl);
       setIsAuthed(Boolean(cachedIsAuthed));
@@ -146,7 +155,7 @@ export function useProfileAvatar() {
 
   useEffect(() => {
     const handler = () => {
-      const token = localStorage.getItem("accessToken");
+      const token = getStoredAccessToken();
       if (!token) return;
 
       cachedToken = null;
@@ -154,7 +163,7 @@ export function useProfileAvatar() {
       cachedIsAuthed = null;
       inflightRequest = null;
 
-      const role = (localStorage.getItem("role") ?? "").toUpperCase();
+      const role = getStoredRole() ?? "";
       const endpoint =
         role === "CUSTOMER" ? "/api/customer/me" : "/api/profile/me";
 
@@ -171,10 +180,7 @@ export function useProfileAvatar() {
           const status = (error as { response?: { status?: number } })?.response
             ?.status;
           if (status === 401) {
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("refreshToken");
-            localStorage.removeItem("role");
-            localStorage.removeItem("token");
+            logoutSession();
             setAvatarUrl(null);
             setIsAuthed(false);
             return;

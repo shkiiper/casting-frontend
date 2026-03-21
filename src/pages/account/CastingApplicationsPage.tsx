@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
+import { useSession } from "@/entities/user/model/authStore";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
@@ -20,7 +21,7 @@ const formatDateTime = (iso: string) => {
 };
 
 export const CastingApplicationsPage = () => {
-  const role = localStorage.getItem("role");
+  const { role } = useSession();
   const list = useMemo(() => getCastingApplications(), []);
   const uniqueCastings = useMemo(
     () => new Set(list.map((item) => item.castingId)).size,

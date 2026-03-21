@@ -1,15 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useSession } from "@/entities/user/model/authStore";
 import { resolveMediaUrl, useProfileAvatar } from "@/shared/ui/useProfileAvatar";
 
 export const Header = () => {
   const navigate = useNavigate();
   const { avatarUrl, isAuthed } = useProfileAvatar();
+  const { logout } = useSession();
 
-  const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
+  const onLogout = () => {
+    logout();
     navigate("/", { replace: true });
   };
 
@@ -50,7 +49,7 @@ export const Header = () => {
                   />
                 ) : null}
               </button>
-              <button onClick={logout} className="text-sm text-red-600">
+              <button onClick={onLogout} className="text-sm text-red-600">
                 Выйти
               </button>
             </>

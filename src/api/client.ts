@@ -1,4 +1,8 @@
 import axios from "axios";
+import {
+  getStoredAccessToken,
+  logoutSession,
+} from "@/entities/user/model/authStore";
 
 type WindowWithApiBase = Window & {
   __API_BASE_URL__?: string;
@@ -40,8 +44,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem("accessToken") || localStorage.getItem("token");
+  const token = getStoredAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -56,12 +59,10 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    const hasToken = Boolean(
-      localStorage.getItem("accessToken") || localStorage.getItem("token")
-    );
+    const hasToken = Boolean(getStoredAccessToken());
     if (error.response?.status === 401 && hasToken && !logoutTriggered) {
       logoutTriggered = true;
-      window.dispatchEvent(new Event("unauthorized"));
+      logoutSession();
     }
     return Promise.reject(error);
   }

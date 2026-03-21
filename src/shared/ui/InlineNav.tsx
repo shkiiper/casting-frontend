@@ -1,5 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "@/entities/user/model/authStore";
 import { resolveMediaUrl, useProfileAvatar } from "@/shared/ui/useProfileAvatar";
 
 type ActiveKey =
@@ -29,8 +30,7 @@ export const InlineNav = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { avatarUrl, isAuthed } = useProfileAvatar();
-  const role = (localStorage.getItem("role") || "").toUpperCase();
-  const isAdmin = role === "ADMIN";
+  const { isAdmin, logout } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
@@ -41,11 +41,7 @@ export const InlineNav = ({
           {
             label: "Выйти",
             onClick: () => {
-              localStorage.removeItem("accessToken");
-              localStorage.removeItem("refreshToken");
-              localStorage.removeItem("role");
-              localStorage.removeItem("token");
-              sessionStorage.clear();
+              logout();
               navigate("/login", { replace: true });
             },
             danger: true,

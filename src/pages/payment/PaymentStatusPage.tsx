@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import api from "@/api/client";
+import { useSession } from "@/entities/user/model/authStore";
 import {
   getPaymentStatus,
   isFinalPaymentStatus,
@@ -15,6 +16,7 @@ const POLL_INTERVAL_MS = 2500;
 
 export const PaymentStatusPage = () => {
   const navigate = useNavigate();
+  const { role, isAuthenticated, logout: clearSession } = useSession();
   const [searchParams] = useSearchParams();
 
   const externalId = searchParams.get("externalId") || "";
@@ -28,8 +30,6 @@ export const PaymentStatusPage = () => {
   const [toast, setToast] = useState<string | null>(null);
 
   const doneRef = useRef(false);
-  const role = (localStorage.getItem("role") || "").toUpperCase();
-  const isAuthed = Boolean(localStorage.getItem("accessToken"));
 
   const computedMockUrl = useMemo(() => {
     const base = String(api.defaults.baseURL || "").replace(/\/$/, "");
@@ -73,16 +73,12 @@ export const PaymentStatusPage = () => {
     return () => window.clearInterval(id);
   }, [externalId]);
 
-  if (!isAuthed) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
   const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    sessionStorage.clear();
+    clearSession();
     navigate("/login", { replace: true });
   };
 

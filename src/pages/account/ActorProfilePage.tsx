@@ -1,6 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "@/api/client";
+import { useSession } from "@/entities/user/model/authStore";
+import {
+  buildProfileCompletion,
+  hasListValue,
+  hasNumberValue,
+  hasTextValue,
+} from "@/shared/lib/profileCompletion";
 import { Container } from "@/shared/ui/Container";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
@@ -11,6 +18,7 @@ import { CenterToast } from "@/shared/ui/CenterToast";
 import { DismissibleNotice } from "@/shared/ui/DismissibleNotice";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
+import { ProfileCompletionCard } from "@/shared/ui/ProfileCompletionCard";
 import {
   REQUIRED_PROFILE_PHOTO_MESSAGE,
   useRequiredPhotoGuard,
@@ -245,6 +253,7 @@ const getErrorStatus = (error: unknown): number | undefined =>
 
 export const ActorProfilePage = () => {
   const navigate = useNavigate();
+  const { logout: clearSession } = useSession();
   const [form, setForm] = useState<ActorProfileForm | null>(null);
   const [profileData, setProfileData] = useState<ActorProfile | null>(null);
   const [mode, setMode] = useState<Mode>("LOADING");
@@ -456,16 +465,26 @@ export const ActorProfilePage = () => {
   }, [form, saving, publishSaving, mode]);
 
   const logout = () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("role");
-    localStorage.removeItem("token");
-    sessionStorage.clear();
+    clearSession();
     navigate("/login", { replace: true });
   };
 
   const premium = extractProfilePremiumInfo(profileData);
   const hasRequiredPhoto = Boolean(form?.photoUrls.length);
+  const completion = useMemo(
+    () =>
+      buildProfileCompletion([
+        { label: "Имя и фамилия", done: hasTextValue(form?.firstName) && hasTextValue(form?.lastName) },
+        { label: "Город", done: hasTextValue(form?.city) },
+        { label: "Описание", done: hasTextValue(form?.description) || hasTextValue(form?.bio) },
+        { label: "Фото профиля", done: hasListValue(form?.photoUrls) },
+        { label: "Контакты", done: hasTextValue(form?.contactPhone) || hasTextValue(form?.contactEmail) || hasTextValue(form?.contactTelegram) },
+        { label: "Возраст", done: hasNumberValue(form?.age) },
+        { label: "Ставка", done: hasNumberValue(form?.minRate) },
+        { label: "Навыки", done: hasListValue(form?.skills) },
+      ]),
+    [form]
+  );
 
   const revealPhotoRequirement = () => {
     setPhotoRequirementMessage(REQUIRED_PROFILE_PHOTO_MESSAGE);
@@ -587,6 +606,8 @@ export const ActorProfilePage = () => {
                   title="Оплата premium профиля актёра"
                   onError={setError}
                 />
+
+                <ProfileCompletionCard completion={completion} />
 
 	                <EditForm
 	                  form={form}

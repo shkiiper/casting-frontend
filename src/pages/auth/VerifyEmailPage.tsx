@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { login as apiLogin, verifyEmail } from "../../api/auth";
 import { useAuthStore } from "../../entities/user/model/authStore";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { getApiErrorMessage } from "@/shared/lib/safety";
 import "./VerifyEmailPage.css";
 
 type UserRole =
@@ -26,15 +27,9 @@ const resolveRedirectPath = (role?: string) => {
 const persistAuth = (
   token: string,
   role: string | undefined,
-  loginStore: (token: string) => void
+  loginStore: (token: string, role?: string | null) => void
 ) => {
-  localStorage.setItem("token", token);
-  localStorage.setItem("accessToken", token);
-  loginStore(token);
-  if (role) {
-    localStorage.setItem("role", role);
-    localStorage.setItem("account_name", role === "CUSTOMER" ? "Заказчик" : role);
-  }
+  loginStore(token, role);
   localStorage.removeItem("pendingVerificationEmail");
   sessionStorage.removeItem("pendingVerificationPassword");
 };
@@ -83,10 +78,7 @@ export function VerifyEmailPage() {
       .catch((e: unknown) => {
         console.error(e);
         setStatus("error");
-        setMessage(
-          (e as { response?: { data?: { message?: string } } })?.response?.data
-            ?.message || "Ошибка подтверждения email"
-        );
+        setMessage(getApiErrorMessage(e, "Ошибка подтверждения email"));
       });
   }, [email, code]);
 

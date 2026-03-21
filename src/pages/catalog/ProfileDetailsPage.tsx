@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import api from "@/api/client";
+import { useSession } from "@/entities/user/model/authStore";
 import publicApi from "@/shared/api/publicClient";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
@@ -322,14 +323,11 @@ const loadPublicProfileById = async (profileId: string) => {
 
 export const ProfileDetailsPage = () => {
   const { id } = useParams();
+  const { isAuthenticated, role } = useSession();
   const location = useLocation();
   const locationState = location.state as ProfileLocationState;
   const previewProfile = locationState?.profilePreview ?? null;
-  const isAuthed = Boolean(
-    localStorage.getItem("accessToken") || localStorage.getItem("token")
-  );
-  const role = (localStorage.getItem("role") || "").toUpperCase();
-  const isCustomer = isAuthed && role === "CUSTOMER";
+  const isCustomer = isAuthenticated && role === "CUSTOMER";
   const [profile, setProfile] = useState<PublicProfile | null>(previewProfile);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -785,7 +783,7 @@ export const ProfileDetailsPage = () => {
 
                     <aside className="space-y-6">
                       <ActionPanel
-                        isAuthed={isAuthed}
+                        isAuthed={isAuthenticated}
                         isCustomer={isCustomer}
                         unlocking={unlocking}
                         hasRemainingContacts={remainingContacts > 0}

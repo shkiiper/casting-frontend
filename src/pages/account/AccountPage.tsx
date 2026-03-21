@@ -1,12 +1,13 @@
 // account/AccountPage.tsx
 import { useMemo } from "react";
+import { useSession } from "@/entities/user/model/authStore";
 import { CustomerAccountPage } from "./CustomerAccountPage";
 import { ActorProfilePage } from "./ActorProfilePage";
 import { CreatorProfilePage } from "./CreatorProfilePage";
 import { LocationProfilePage } from "./LocationProfilePage";
 
 export const AccountPage = () => {
-  const role = localStorage.getItem("role");
+  const { role } = useSession();
 
   return useMemo(() => {
     switch (role) {
