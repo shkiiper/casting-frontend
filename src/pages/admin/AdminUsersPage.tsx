@@ -5,6 +5,7 @@ import {
   deactivateAdminUser,
   deleteAdminUser,
   getAdminUsers,
+  notifyAdminUserMissingPhoto,
   setAdminUserProfileVisibility,
   unbanAdminUser,
   type AdminUser,
@@ -225,6 +226,29 @@ export const AdminUsersPage = () => {
     }
   };
 
+  const onNotifyMissingPhoto = async (user: AdminUser) => {
+    if (user.role === "CUSTOMER" || user.role === "ADMIN") {
+      setError("Для этой роли нельзя отправлять напоминание о фото");
+      return;
+    }
+
+    try {
+      setProcessingId(user.id);
+      setError(null);
+      await notifyAdminUserMissingPhoto(user.id);
+      showToast("Напоминание о фото отправлено");
+    } catch (error: unknown) {
+      const message =
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
+          ?.message ||
+        (error as { response?: { data?: { message?: string; error?: string } } })?.response?.data
+          ?.error;
+      setError(message || "Не удалось отправить напоминание о фото");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
   const pageInfo = useMemo(
     () => ({
       from: totalElements === 0 ? 0 : page * PAGE_SIZE + 1,
@@ -402,6 +426,16 @@ export const AdminUsersPage = () => {
                           >
                             Карточка
                           </button>
+                          {user.role !== "CUSTOMER" && user.role !== "ADMIN" ? (
+                            <button
+                              type="button"
+                              disabled={processingId === user.id}
+                              onClick={() => void onNotifyMissingPhoto(user)}
+                              className="rounded-lg px-3 py-1.5 text-xs border border-sky-300 text-sky-700 disabled:opacity-60"
+                            >
+                              Напомнить о фото
+                            </button>
+                          ) : null}
                           <button
                             type="button"
                             disabled={processingId === user.id}
