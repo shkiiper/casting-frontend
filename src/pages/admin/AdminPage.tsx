@@ -5,9 +5,6 @@ import {
   type AdminPlan,
   type AdminPlanPayload,
   type AdminPlanBasicsPayload,
-  type AdminPlanBoosterPayload,
-  type AdminPlanCastingPayload,
-  type AdminPlanPremiumPayload,
   type AdminStatsResponse,
 } from "@/api/admin";
 import { useSession } from "@/entities/user/model/authStore";
@@ -79,15 +76,15 @@ export const AdminPage = () => {
     dashboardQuery,
     createPlan,
     deletePlan,
-    savePlan,
     saveBase,
     saveBooster,
     saveCasting,
     savePremium,
   } = useAdminDashboardData();
   const [newPlan, setNewPlan] = useState<AdminPlanPayload>(emptyPlan);
+  const [globalProducts, setGlobalProducts] = useState<GlobalProductsDraft>(emptyGlobalProducts);
 
-  const [savingId, setSavingId] = useState<number | "new" | null>(null);
+  const [savingId, setSavingId] = useState<number | "new" | "global-booster" | "global-casting" | "global-premium" | null>(null);
   const [expandedPlanId, setExpandedPlanId] = useState<number | null>(null);
   const [planDrafts, setPlanDrafts] = useState<Record<number, AdminPlan>>({});
   const [error, setError] = useState<string | null>(null);
@@ -104,6 +101,10 @@ export const AdminPage = () => {
     () => normalizeRoleCounts(stats, roleCountsFallback),
     [stats, roleCountsFallback]
   );
+  const hasMultipleActivePlans = plans.filter((plan) => plan.active).length > 1;
+  const hasGlobalBoosterMismatch = hasSectionMismatch(plans, "booster");
+  const hasGlobalCastingMismatch = hasSectionMismatch(plans, "casting");
+  const hasGlobalPremiumMismatch = hasSectionMismatch(plans, "premium");
 
   useEffect(() => {
     if (openPlanMenuId === null) return;
@@ -118,6 +119,10 @@ export const AdminPage = () => {
     document.addEventListener("mousedown", handlePointerDown);
     return () => document.removeEventListener("mousedown", handlePointerDown);
   }, [openPlanMenuId]);
+
+  useEffect(() => {
+    setGlobalProducts(getGlobalProductsDraft(plans));
+  }, [plans]);
 
   if (!isAdmin) {
     return <Navigate to="/" replace />;
@@ -166,44 +171,69 @@ export const AdminPage = () => {
     setPlanDrafts((prev) => ({ ...prev, [id]: next }));
   };
 
-  const onSavePlan = async (id: number, payload: AdminPlanPayload, sectionLabel = "Тариф") => {
+  const onSaveGlobalSection = async (section: Exclude<PlanSectionKey, "base">) => {
+    if (plans.length === 0) {
+      setError("Сначала создайте хотя бы один тариф");
+      return;
+    }
+
     try {
-      setSavingId(id);
+      setSavingId(`global-${section}`);
       setError(null);
-      const updated = await savePlan({ id, payload });
-      setPlanDrafts((prev) => ({ ...prev, [id]: updated }));
-      showToast(`${sectionLabel} сохранен`);
+      const updatedPlans = await Promise.all(
+        plans.map((plan) =>
+          section === "booster"
+            ? saveBooster({
+                id: plan.id,
+                payload: {
+                  boosterPrice: globalProducts.boosterPrice,
+                  boosterContacts: globalProducts.boosterContacts,
+                },
+              })
+            : section === "casting"
+            ? saveCasting({
+                id: plan.id,
+                payload: {
+                  castingPostPrice: globalProducts.castingPostPrice,
+                  castingPostDays: globalProducts.castingPostDays,
+                },
+              })
+            : savePremium({
+                id: plan.id,
+                payload: {
+                  premiumProfilePrice: globalProducts.premiumProfilePrice,
+                  premiumProfileDays: globalProducts.premiumProfileDays,
+                },
+              })
+        )
+      );
+
+      setPlanDrafts((prev) => {
+        const next = { ...prev };
+        updatedPlans.forEach((plan) => {
+          next[plan.id] = plan;
+        });
+        return next;
+      });
+      showToast(`${sectionLabelMap[section]} сохранен для всех тарифов`);
     } catch (error: unknown) {
-      setError(getApiErrorMessage(error, `Не удалось сохранить: ${sectionLabel.toLowerCase()}`));
+      setError(
+        getApiErrorMessage(error, `Не удалось сохранить: ${sectionLabelMap[section].toLowerCase()}`)
+      );
     } finally {
       setSavingId(null);
     }
   };
 
-  const onSavePlanSection = async (
-    id: number,
-    section: PlanSectionKey,
-    plan: AdminPlanPayload | AdminPlan
-  ) => {
+  const onSavePlanBase = async (id: number, plan: AdminPlanPayload | AdminPlan) => {
     try {
       setSavingId(id);
       setError(null);
-
-      const updated =
-        section === "base"
-          ? await saveBase({ id, payload: toBasicsPayload(plan) })
-          : section === "booster"
-          ? await saveBooster({ id, payload: toBoosterPayload(plan) })
-          : section === "casting"
-          ? await saveCasting({ id, payload: toCastingPayload(plan) })
-          : await savePremium({ id, payload: toPremiumPayload(plan) });
-
+      const updated = await saveBase({ id, payload: toBasicsPayload(plan) });
       setPlanDrafts((prev) => ({ ...prev, [id]: updated }));
-      showToast(`${sectionLabelMap[section]} сохранен`);
+      showToast("Тариф сохранен");
     } catch (error: unknown) {
-      setError(
-        getApiErrorMessage(error, `Не удалось сохранить: ${sectionLabelMap[section].toLowerCase()}`)
-      );
+      setError(getApiErrorMessage(error, "Не удалось сохранить тариф"));
     } finally {
       setSavingId(null);
     }
@@ -347,9 +377,9 @@ export const AdminPage = () => {
                     </div>
                     <h2 className="mt-2 text-2xl font-bold text-slate-900">Создать тариф</h2>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      Сначала задайте базовые параметры тарифа, затем отдельно настройте
-                      бустер, объявления и premium-профиль. Все блоки заполняются независимо и
-                      собраны в одной форме только для сохранения на backend.
+                      Здесь создаются только тарифные планы подписки. Бустер, размещение объявлений
+                      и premium-профиль вынесены в отдельные глобальные настройки ниже и не зависят
+                      от конкретного тарифа.
                     </p>
                   </div>
 
@@ -366,14 +396,13 @@ export const AdminPage = () => {
                       <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                         <div className="text-sm font-semibold text-slate-900">Параметры нового тарифа</div>
                         <div className="mt-1 text-sm text-slate-500">
-                          Основной тариф, бустер, объявления и premium теперь разделены на
-                          отдельные широкие блоки. Так проще видеть введённые значения во время
-                          редактирования.
+                          Можно держать несколько активных тарифов одновременно, чтобы заказчик
+                          видел выбор из нескольких вариантов подписки.
                         </div>
                       </div>
 
                       <div className="mt-5">
-                        <PlanFields plan={newPlan} onChange={setNewPlan} />
+                        <PlanBaseFields plan={newPlan} onChange={setNewPlan} />
                       </div>
                     </div>
 
@@ -399,23 +428,6 @@ export const AdminPage = () => {
                               {
                                 label: "Контакты",
                                 value: `${formatNumber(newPlan.baseContactLimit)}`,
-                              },
-                            ]}
-                          />
-                          <SummarySection
-                            title="Дополнительно"
-                            items={[
-                              {
-                                label: "Бустер",
-                                value: `${formatNumber(newPlan.boosterPrice)} сом за ${formatNumber(newPlan.boosterContacts)}`,
-                              },
-                              {
-                                label: "Объявление",
-                                value: `${formatNumber(newPlan.castingPostPrice)} сом / ${newPlan.castingPostDays} дн.`,
-                              },
-                              {
-                                label: "Premium профиль",
-                                value: `${formatNumber(newPlan.premiumProfilePrice)} сом / ${newPlan.premiumProfileDays} дн.`,
                               },
                             ]}
                           />
@@ -447,13 +459,142 @@ export const AdminPage = () => {
                           Созданные тарифы
                         </div>
                         <div className="mt-1 text-sm text-slate-500">
-                          Заказчиков в системе: {roleCounts.customers}. Выберите любой тариф справа
-                          и обновите условия.
+                          Заказчиков в системе: {roleCounts.customers}. Можно держать сразу несколько
+                          активных тарифов, чтобы заказчики выбирали между ними.
                         </div>
                       </div>
                       <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                         Планов: <span className="font-semibold text-slate-900">{plans.length}</span>
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[30px] border border-slate-200 bg-white/95 p-5 shadow-sm">
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                      Глобальные продукты
+                    </div>
+                    <div className="mt-2 text-2xl font-bold text-slate-900">
+                      Бустер, объявления и premium
+                    </div>
+                    <div className="mt-2 text-sm leading-6 text-slate-500">
+                      Эти настройки применяются ко всем тарифам одинаково и не привязаны к
+                      конкретному плану.
+                    </div>
+
+                    <div className="mt-5 space-y-4">
+                      <FieldGroup
+                        title="Бустер"
+                        description="Глобальная докупка контактов. После сохранения одинаковое значение уйдёт во все тарифы."
+                        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+                        action={
+                          <button
+                            type="button"
+                            onClick={() => void onSaveGlobalSection("booster")}
+                            disabled={savingId === "global-booster" || plans.length === 0}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                          >
+                            {savingId === "global-booster" ? "Сохраняем..." : "Сохранить блок"}
+                          </button>
+                        }
+                      >
+                        <Field
+                          label="Цена бустера"
+                          type="number"
+                          value={String(globalProducts.boosterPrice)}
+                          suffix="сом"
+                          onChange={(v) =>
+                            setGlobalProducts((prev) => ({ ...prev, boosterPrice: toNum(v) }))
+                          }
+                        />
+                        <Field
+                          label="Контакты бустера"
+                          type="number"
+                          value={String(globalProducts.boosterContacts)}
+                          suffix="шт"
+                          onChange={(v) =>
+                            setGlobalProducts((prev) => ({ ...prev, boosterContacts: toNum(v) }))
+                          }
+                        />
+                      </FieldGroup>
+                      {hasGlobalBoosterMismatch ? (
+                        <InlineWarning message="Сейчас в тарифах разные настройки бустера. После сохранения они станут одинаковыми." />
+                      ) : null}
+
+                      <FieldGroup
+                        title="Объявления"
+                        description="Глобальная цена и срок публикации объявления для заказчиков."
+                        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+                        action={
+                          <button
+                            type="button"
+                            onClick={() => void onSaveGlobalSection("casting")}
+                            disabled={savingId === "global-casting" || plans.length === 0}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                          >
+                            {savingId === "global-casting" ? "Сохраняем..." : "Сохранить блок"}
+                          </button>
+                        }
+                      >
+                        <Field
+                          label="Цена объявления"
+                          type="number"
+                          value={String(globalProducts.castingPostPrice)}
+                          suffix="сом"
+                          onChange={(v) =>
+                            setGlobalProducts((prev) => ({ ...prev, castingPostPrice: toNum(v) }))
+                          }
+                        />
+                        <Field
+                          label="Дней объявления"
+                          type="number"
+                          value={String(globalProducts.castingPostDays)}
+                          suffix="дней"
+                          onChange={(v) =>
+                            setGlobalProducts((prev) => ({ ...prev, castingPostDays: toNum(v) }))
+                          }
+                        />
+                      </FieldGroup>
+                      {hasGlobalCastingMismatch ? (
+                        <InlineWarning message="Сейчас в тарифах разные настройки объявлений. После сохранения они станут одинаковыми." />
+                      ) : null}
+
+                      <FieldGroup
+                        title="Premium профиль"
+                        description="Глобальная цена и срок premium, отдельно от подписочных тарифов."
+                        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
+                        action={
+                          <button
+                            type="button"
+                            onClick={() => void onSaveGlobalSection("premium")}
+                            disabled={savingId === "global-premium" || plans.length === 0}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                          >
+                            {savingId === "global-premium" ? "Сохраняем..." : "Сохранить блок"}
+                          </button>
+                        }
+                      >
+                        <Field
+                          label="Цена premium"
+                          type="number"
+                          value={String(globalProducts.premiumProfilePrice)}
+                          suffix="сом"
+                          onChange={(v) =>
+                            setGlobalProducts((prev) => ({ ...prev, premiumProfilePrice: toNum(v) }))
+                          }
+                        />
+                        <Field
+                          label="Срок premium"
+                          type="number"
+                          value={String(globalProducts.premiumProfileDays)}
+                          suffix="дней"
+                          onChange={(v) =>
+                            setGlobalProducts((prev) => ({ ...prev, premiumProfileDays: toNum(v) }))
+                          }
+                        />
+                      </FieldGroup>
+                      {hasGlobalPremiumMismatch ? (
+                        <InlineWarning message="Сейчас в тарифах разные настройки premium. После сохранения они станут одинаковыми." />
+                      ) : null}
                     </div>
                   </div>
 
@@ -535,44 +676,25 @@ export const AdminPage = () => {
                           label="Контакты"
                           value={`${formatNumber(plan.baseContactLimit)}`}
                         />
-                        <SummaryChip
-                          label="Бустер"
-                          value={`${formatNumber(plan.boosterPrice)} сом за ${formatNumber(plan.boosterContacts)}`}
-                        />
-                        <SummaryChip
-                          label="Объявление"
-                          value={`${formatNumber(plan.castingPostPrice)} сом / ${plan.castingPostDays} дн.`}
-                        />
-                        <SummaryChip
-                          label="Premium профиль"
-                          value={`${formatNumber(plan.premiumProfilePrice)} сом / ${plan.premiumProfileDays} дн.`}
-                        />
+                        {hasMultipleActivePlans && plan.active ? (
+                          <SummaryChip label="Выбор" value="Доступен заказчикам как вариант" />
+                        ) : null}
                       </div>
 
                       {expandedPlanId === plan.id ? (
                         <div className="mt-5 border-t border-slate-200 pt-5">
-                          <PlanFields
+                          <PlanBaseFields
                             plan={planDrafts[plan.id] ?? plan}
                             onChange={(next) => updatePlanDraft(plan.id, next as AdminPlan)}
-                            onSaveSection={(section, currentPlan) =>
-                              void onSavePlanSection(plan.id, section, currentPlan)
-                            }
-                            saving={savingId === plan.id}
                           />
                           <div className="mt-4 flex justify-end">
                             <button
                               type="button"
-                              onClick={() =>
-                                void onSavePlan(
-                                  plan.id,
-                                  toAdminPlanPayload(planDrafts[plan.id] ?? plan),
-                                  "Тариф"
-                                )
-                              }
+                              onClick={() => void onSavePlanBase(plan.id, planDrafts[plan.id] ?? plan)}
                               disabled={savingId === plan.id}
                               className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
                             >
-                              {savingId === plan.id ? "Сохраняем..." : "Сохранить весь тариф"}
+                              {savingId === plan.id ? "Сохраняем..." : "Сохранить тариф"}
                             </button>
                           </div>
                         </div>
@@ -704,20 +826,6 @@ const sectionLabelMap: Record<PlanSectionKey, string> = {
   premium: "Premium",
 };
 
-const toAdminPlanPayload = (plan: AdminPlan | AdminPlanPayload): AdminPlanPayload => ({
-  name: plan.name,
-  pricePerPeriod: plan.pricePerPeriod,
-  periodDays: plan.periodDays,
-  baseContactLimit: plan.baseContactLimit,
-  boosterPrice: plan.boosterPrice,
-  boosterContacts: plan.boosterContacts,
-  castingPostPrice: plan.castingPostPrice,
-  castingPostDays: plan.castingPostDays,
-  premiumProfilePrice: plan.premiumProfilePrice,
-  premiumProfileDays: plan.premiumProfileDays,
-  active: plan.active,
-});
-
 const toBasicsPayload = (
   plan: AdminPlan | AdminPlanPayload
 ): AdminPlanBasicsPayload => ({
@@ -728,37 +836,60 @@ const toBasicsPayload = (
   active: plan.active,
 });
 
-const toBoosterPayload = (
-  plan: AdminPlan | AdminPlanPayload
-): AdminPlanBoosterPayload => ({
-  boosterPrice: plan.boosterPrice,
-  boosterContacts: plan.boosterContacts,
-});
+type GlobalProductsDraft = {
+  boosterPrice: number;
+  boosterContacts: number;
+  castingPostPrice: number;
+  castingPostDays: number;
+  premiumProfilePrice: number;
+  premiumProfileDays: number;
+};
 
-const toCastingPayload = (
-  plan: AdminPlan | AdminPlanPayload
-): AdminPlanCastingPayload => ({
-  castingPostPrice: plan.castingPostPrice,
-  castingPostDays: plan.castingPostDays,
-});
+const emptyGlobalProducts: GlobalProductsDraft = {
+  boosterPrice: 0,
+  boosterContacts: 0,
+  castingPostPrice: 0,
+  castingPostDays: 30,
+  premiumProfilePrice: 0,
+  premiumProfileDays: 30,
+};
 
-const toPremiumPayload = (
-  plan: AdminPlan | AdminPlanPayload
-): AdminPlanPremiumPayload => ({
-  premiumProfilePrice: plan.premiumProfilePrice,
-  premiumProfileDays: plan.premiumProfileDays,
-});
+const getGlobalProductsDraft = (plans: AdminPlan[]): GlobalProductsDraft => {
+  const firstPlan = plans[0];
+  if (!firstPlan) return emptyGlobalProducts;
 
-const PlanFields = ({
+  return {
+    boosterPrice: firstPlan.boosterPrice,
+    boosterContacts: firstPlan.boosterContacts,
+    castingPostPrice: firstPlan.castingPostPrice,
+    castingPostDays: firstPlan.castingPostDays,
+    premiumProfilePrice: firstPlan.premiumProfilePrice,
+    premiumProfileDays: firstPlan.premiumProfileDays,
+  };
+};
+
+const hasSectionMismatch = (plans: AdminPlan[], section: Exclude<PlanSectionKey, "base">) => {
+  if (plans.length <= 1) return false;
+  const first = plans[0];
+  if (!first) return false;
+
+  return plans.slice(1).some((plan) =>
+    section === "booster"
+      ? plan.boosterPrice !== first.boosterPrice || plan.boosterContacts !== first.boosterContacts
+      : section === "casting"
+      ? plan.castingPostPrice !== first.castingPostPrice ||
+        plan.castingPostDays !== first.castingPostDays
+      : plan.premiumProfilePrice !== first.premiumProfilePrice ||
+        plan.premiumProfileDays !== first.premiumProfileDays
+  );
+};
+
+const PlanBaseFields = ({
   plan,
   onChange,
-  onSaveSection,
-  saving = false,
 }: {
   plan: AdminPlanPayload | AdminPlan;
   onChange: (next: AdminPlanPayload | AdminPlan) => void;
-  onSaveSection?: (section: PlanSectionKey, plan: AdminPlanPayload | AdminPlan) => void;
-  saving?: boolean;
 }) => (
   <div className="space-y-4">
     <div className="grid gap-4 md:grid-cols-2">
@@ -778,20 +909,8 @@ const PlanFields = ({
     <div className="space-y-4">
       <FieldGroup
         title="Базовый тариф"
-        description="Основные условия подписки. Это самостоятельный блок с ценой, сроком и лимитом контактов."
+        description="Основные условия подписки. Здесь только цена, срок, лимит контактов и статус доступности тарифа."
         fieldsLayoutClassName="grid gap-4 md:grid-cols-3"
-        action={
-          onSaveSection ? (
-            <button
-              type="button"
-              onClick={() => onSaveSection("base", plan)}
-              disabled={saving}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-            >
-              Сохранить блок
-            </button>
-          ) : null
-        }
       >
         <Field
           label="Цена периода"
@@ -815,106 +934,13 @@ const PlanFields = ({
           onChange={(v) => onChange({ ...plan, baseContactLimit: toNum(v) })}
         />
       </FieldGroup>
-
-      <FieldGroup
-        title="Бустер"
-        description="Отдельный продукт для докупки контактов. Не смешан с базовым тарифом."
-        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
-        action={
-          onSaveSection ? (
-            <button
-              type="button"
-              onClick={() => onSaveSection("booster", plan)}
-              disabled={saving}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-            >
-              Сохранить блок
-            </button>
-          ) : null
-        }
-      >
-        <Field
-          label="Цена бустера"
-          type="number"
-          value={String(plan.boosterPrice)}
-          suffix="сом"
-          onChange={(v) => onChange({ ...plan, boosterPrice: toNum(v) })}
-        />
-        <Field
-          label="Контакты бустера"
-          type="number"
-          value={String(plan.boosterContacts)}
-          suffix="шт"
-          onChange={(v) => onChange({ ...plan, boosterContacts: toNum(v) })}
-        />
-      </FieldGroup>
-
-      <FieldGroup
-        title="Объявления"
-        description="Отдельная настройка стоимости публикации и срока размещения."
-        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
-        action={
-          onSaveSection ? (
-            <button
-              type="button"
-              onClick={() => onSaveSection("casting", plan)}
-              disabled={saving}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-            >
-              Сохранить блок
-            </button>
-          ) : null
-        }
-      >
-        <Field
-          label="Цена объявления"
-          type="number"
-          value={String(plan.castingPostPrice)}
-          suffix="сом"
-          onChange={(v) => onChange({ ...plan, castingPostPrice: toNum(v) })}
-        />
-        <Field
-          label="Дней объявления"
-          type="number"
-          value={String(plan.castingPostDays)}
-          suffix="дней"
-          onChange={(v) => onChange({ ...plan, castingPostDays: toNum(v) })}
-        />
-      </FieldGroup>
-
-      <FieldGroup
-        title="Premium профиль"
-        description="Отдельная настройка visual upgrade для performer-профиля."
-        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
-        action={
-          onSaveSection ? (
-            <button
-              type="button"
-              onClick={() => onSaveSection("premium", plan)}
-              disabled={saving}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-            >
-              Сохранить блок
-            </button>
-          ) : null
-        }
-      >
-        <Field
-          label="Цена premium"
-          type="number"
-          value={String(plan.premiumProfilePrice)}
-          suffix="сом"
-          onChange={(v) => onChange({ ...plan, premiumProfilePrice: toNum(v) })}
-        />
-        <Field
-          label="Срок premium"
-          type="number"
-          value={String(plan.premiumProfileDays)}
-          suffix="дней"
-          onChange={(v) => onChange({ ...plan, premiumProfileDays: toNum(v) })}
-        />
-      </FieldGroup>
     </div>
+  </div>
+);
+
+const InlineWarning = ({ message }: { message: string }) => (
+  <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+    {message}
   </div>
 );
 

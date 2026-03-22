@@ -143,6 +143,7 @@ export const LocationProfilePage = () => {
   const navigate = useNavigate();
   const { logout: clearSession } = useSession();
   const [form, setForm] = useState<LocationProfileForm | null>(null);
+  const currentFormRef = useRef<LocationProfileForm | null>(null);
   const [profileData, setProfileData] = useState<LocationProfile | null>(null);
   const [mode, setMode] = useState<Mode>("LOADING");
   const [saving, setSaving] = useState(false);
@@ -178,10 +179,17 @@ export const LocationProfilePage = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    currentFormRef.current = form;
+  }, [form]);
+
   /* ---------- UPLOAD ---------- */
 
   const uploadPhotos = async (files: File[]) => {
     try {
+      const currentForm = currentFormRef.current;
+      if (!currentForm) return;
+
       const uploaded: string[] = [];
       for (const file of files) {
         const preparedFile = await preparePhotoFile(file);
@@ -191,14 +199,14 @@ export const LocationProfilePage = () => {
         uploaded.push(...mergeUniqueUrls([], urls, { maxItems: 20 }));
       }
 
-      setForm((prev) =>
-        prev
-          ? {
-              ...prev,
-              photoUrls: mergeUniqueUrls(prev.photoUrls, uploaded, { maxItems: 20 }),
-            }
-          : prev
-      );
+      const nextForm = {
+        ...currentForm,
+        photoUrls: mergeUniqueUrls(currentForm.photoUrls, uploaded, { maxItems: 20 }),
+      };
+
+      currentFormRef.current = nextForm;
+      setForm(nextForm);
+      await saveProfile(nextForm, "Фото сохранены");
     } catch (e: unknown) {
       if (getErrorStatus(e) !== 401) {
         setError(getUploadErrorMessage(e, "photo"));
@@ -208,15 +216,18 @@ export const LocationProfilePage = () => {
 
   /* ---------- SAVE ---------- */
 
-  const saveProfile = async () => {
-    if (!form) return;
+  const saveProfile = async (
+    formToSave: LocationProfileForm | null = currentFormRef.current ?? form,
+    successMessage = "Профиль успешно сохранен"
+  ) => {
+    if (!formToSave) return;
 
     try {
       setSaving(true);
       setError(null);
       setSaveNotice(null);
 
-      const payload = normalize(form);
+      const payload = normalize(formToSave);
 
       const res =
         mode === "EMPTY"
@@ -229,12 +240,15 @@ export const LocationProfilePage = () => {
               payload
             );
 
-      const merged = mergeLocationResponseWithForm(res.data, form);
+      const merged = mergeLocationResponseWithForm(res.data, formToSave);
+      const nextForm = mapToForm(merged);
       setProfileData(merged);
       persistLocationFallback(merged);
-      setForm(mapToForm(merged));
+      currentFormRef.current = nextForm;
+      setForm(nextForm);
       setMode("VIEW");
-      setSaveNotice("Профиль успешно сохранен");
+      window.dispatchEvent(new Event("profile-updated"));
+      setSaveNotice(successMessage);
       window.setTimeout(() => setSaveNotice(null), 2500);
     } catch (e: unknown) {
       setSaveNotice(null);
@@ -391,17 +405,22 @@ export const LocationProfilePage = () => {
                 showModerationWarning={showModerationWarning}
                 onDismissModerationWarning={() => setShowModerationWarning(false)}
                 onAdd={uploadPhotos}
-                onRemove={(url) =>
-                  setForm({
-                    ...form,
-                    photoUrls: form.photoUrls.filter((u) => u !== url),
-                  })
-                }
+                onRemove={(url) => {
+                  const currentForm = currentFormRef.current;
+                  if (!currentForm) return;
+                  const nextForm = {
+                    ...currentForm,
+                    photoUrls: currentForm.photoUrls.filter((u) => u !== url),
+                  };
+                  currentFormRef.current = nextForm;
+                  setForm(nextForm);
+                  void saveProfile(nextForm, "Фото сохранены");
+                }}
               />
 
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={saveProfile}
+                  onClick={() => void saveProfile()}
                   disabled={saving}
                   className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto disabled:opacity-60"
                 >

@@ -196,7 +196,9 @@ export const CustomerAccountPage = () => {
         setError("Сервер вернул некорректный адрес фото");
         return;
       }
-      setForm({ ...form, mainPhotoUrl: next });
+      const nextForm = { ...form, mainPhotoUrl: next };
+      setForm(nextForm);
+      await saveProfile(nextForm, "Фото профиля сохранено");
     } catch (error) {
       setError(getApiErrorMessage(error, "Ошибка загрузки фото"));
     } finally {
@@ -206,8 +208,11 @@ export const CustomerAccountPage = () => {
 
   /* ---------- SAVE ---------- */
 
-  const saveProfile = async () => {
-    if (!form) return;
+  const saveProfile = async (
+    formToSave: CustomerProfileForm | null = form,
+    successMessage = "Профиль успешно сохранен"
+  ) => {
+    if (!formToSave) return;
 
     try {
       setSaving(true);
@@ -217,18 +222,19 @@ export const CustomerAccountPage = () => {
       const res = await api.patch<CustomerProfileResponse>(
         "/api/customer/me",
         {
-          displayName: trimToNull(form.displayName, 120),
-          description: trimMultilineToNull(form.description, 2000),
-          city: trimToNull(form.city, 120),
-          contactPhone: sanitizePhone(form.contactPhone),
-          contactEmail: sanitizeEmail(form.contactEmail),
-          contactTelegram: sanitizeTelegram(form.contactTelegram),
-          mainPhotoUrl: trimToNull(form.mainPhotoUrl, 1500),
+          displayName: trimToNull(formToSave.displayName, 120),
+          description: trimMultilineToNull(formToSave.description, 2000),
+          city: trimToNull(formToSave.city, 120),
+          contactPhone: sanitizePhone(formToSave.contactPhone),
+          contactEmail: sanitizeEmail(formToSave.contactEmail),
+          contactTelegram: sanitizeTelegram(formToSave.contactTelegram),
+          mainPhotoUrl: trimToNull(formToSave.mainPhotoUrl, 1500),
         }
       );
 
       setForm(mapToForm(res.data));
-      setSaveNotice("Профиль успешно сохранен");
+      window.dispatchEvent(new Event("profile-updated"));
+      setSaveNotice(successMessage);
       window.setTimeout(() => setSaveNotice(null), 2500);
     } catch (error) {
       setSaveNotice(null);
@@ -341,10 +347,13 @@ export const CustomerAccountPage = () => {
 
                           {form.mainPhotoUrl && (
                             <button
-                              onClick={() =>
-                                setForm({ ...form, mainPhotoUrl: "" })
-                              }
+                              onClick={() => {
+                                const nextForm = { ...form, mainPhotoUrl: "" };
+                                setForm(nextForm);
+                                void saveProfile(nextForm, "Фото профиля удалено");
+                              }}
                               className="px-4 py-2 rounded-xl border text-sm"
+                              disabled={saving}
                             >
                               Удалить фото
                             </button>
@@ -432,7 +441,7 @@ export const CustomerAccountPage = () => {
 
                       <div className="flex flex-wrap gap-3">
                         <button
-                          onClick={saveProfile}
+                          onClick={() => void saveProfile()}
                           disabled={saving}
                           className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto"
                         >

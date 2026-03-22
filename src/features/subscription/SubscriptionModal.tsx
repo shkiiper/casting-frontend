@@ -47,9 +47,10 @@ export function SubscriptionModal({
     getCustomerPlans()
       .then((list) => {
         const normalizedPlans = Array.isArray(list) ? list.filter((item) => item?.id) : [];
-        setPlans(normalizedPlans);
-        const active = normalizedPlans.find((p) => p.active);
-        setSelectedPlanId(active?.id ?? (normalizedPlans[0]?.id ?? null));
+        const activePlans = normalizedPlans.filter((plan) => plan.active);
+        const visiblePlans = activePlans.length ? activePlans : normalizedPlans;
+        setPlans(visiblePlans);
+        setSelectedPlanId(visiblePlans[0]?.id ?? null);
       })
       .catch((error) => {
         console.error(error);
@@ -61,7 +62,10 @@ export function SubscriptionModal({
   if (!open) return null;
 
   const pay = async () => {
-    if (!selectedPlanId || !selectedPlan) {
+    const boosterPlanId = plans[0]?.id ?? selectedPlanId;
+    const planId = mode === "BOOSTERS" ? boosterPlanId : selectedPlanId;
+
+    if (!planId || (mode === "SUBSCRIPTION" && !selectedPlan)) {
       setError("Выберите план");
       return;
     }
@@ -94,42 +98,60 @@ export function SubscriptionModal({
         ) : (
           <>
             <div className="submodal-body">
-              <label className="submodal-label">
-                План
-                <select
-                  className="submodal-select"
-                  value={selectedPlanId ?? ""}
-                  onChange={(e) =>
-                    setSelectedPlanId(
-                      toOptionalNumber(e.target.value, { min: 1, integer: true })
-                    )
-                  }
-                >
-                  {plans.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                      {p.active ? " • активный" : ""}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              {mode === "SUBSCRIPTION" ? (
+                <>
+                  <label className="submodal-label">
+                    Тариф
+                    <select
+                      className="submodal-select"
+                      value={selectedPlanId ?? ""}
+                      onChange={(e) =>
+                        setSelectedPlanId(
+                          toOptionalNumber(e.target.value, { min: 1, integer: true })
+                        )
+                      }
+                    >
+                      {plans.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
-              {selectedPlan && (
+                  {selectedPlan ? (
+                    <div className="submodal-plan-grid">
+                      <div className="submodal-kv">
+                        <span>Контактов</span>
+                        <strong>{selectedPlan.baseContactLimit}</strong>
+                      </div>
+                      <div className="submodal-kv">
+                        <span>Период</span>
+                        <strong>{selectedPlan.periodDays} дн.</strong>
+                      </div>
+                      <div className="submodal-kv">
+                        <span>Цена</span>
+                        <strong>{selectedPlan.pricePerPeriod ?? "—"}</strong>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : plans[0] ? (
                 <div className="submodal-plan-grid">
                   <div className="submodal-kv">
-                    <span>Контактов</span>
-                    <strong>{selectedPlan.baseContactLimit}</strong>
-                  </div>
-                  <div className="submodal-kv">
-                    <span>Период</span>
-                    <strong>{selectedPlan.periodDays} дн.</strong>
+                    <span>Бустер</span>
+                    <strong>{plans[0].boosterContacts}</strong>
                   </div>
                   <div className="submodal-kv">
                     <span>Цена</span>
-                    <strong>{selectedPlan.pricePerPeriod ?? "—"}</strong>
+                    <strong>{plans[0].boosterPrice ?? "—"}</strong>
+                  </div>
+                  <div className="submodal-kv">
+                    <span>Тарифов активно</span>
+                    <strong>{plans.length}</strong>
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {mode === "BOOSTERS" && (
                 <label className="submodal-label">
@@ -170,7 +192,7 @@ export function SubscriptionModal({
               <button
                 className="submodal-primary"
                 onClick={pay}
-                disabled={loadingPlans || !selectedPlanId}
+                disabled={loadingPlans || (mode === "SUBSCRIPTION" ? !selectedPlanId : plans.length === 0)}
               >
                 Оплатить
               </button>

@@ -235,6 +235,7 @@ export const CreatorProfilePage = () => {
   const { logout: clearSession } = useSession();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CreatorProfileForm | null>(null);
+  const currentFormRef = useRef<CreatorProfileForm | null>(null);
   const [profileData, setProfileData] = useState<CreatorProfile | null>(null);
   const [pageState, setPageState] = useState<PageState>("LOADING");
   const [hasProfile, setHasProfile] = useState(false);
@@ -278,6 +279,10 @@ export const CreatorProfilePage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    currentFormRef.current = form;
+  }, [form]);
+
   const showSaveNotice = (message: string, timeout = 1800) => {
     if (saveNoticeTimeoutRef.current) {
       window.clearTimeout(saveNoticeTimeoutRef.current);
@@ -291,6 +296,9 @@ export const CreatorProfilePage = () => {
 
   const uploadFiles = async (files: File[], type: "photo" | "video") => {
     try {
+      const currentForm = currentFormRef.current;
+      if (!currentForm) return;
+
       const uploaded: string[] = [];
 
       for (const file of files) {
@@ -304,28 +312,26 @@ export const CreatorProfilePage = () => {
         uploaded.push(...mergeUniqueUrls([], urls, { maxItems: 20 }));
       }
 
-      setForm((prev) => {
-        if (!prev) return prev;
-
-        const nextPhotoUrls =
+      const nextPhotoUrls =
+        type === "photo"
+          ? mergeUniqueUrls(currentForm.photoUrls, uploaded, { maxItems: 20 })
+          : currentForm.photoUrls;
+      const nextForm = {
+        ...currentForm,
+        photoUrls: nextPhotoUrls,
+        videoUrls:
+          type === "video"
+            ? mergeUniqueUrls(currentForm.videoUrls, uploaded, { maxItems: 12 })
+            : currentForm.videoUrls,
+        mainPhotoUrl:
           type === "photo"
-            ? mergeUniqueUrls(prev.photoUrls, uploaded, { maxItems: 20 })
-            : prev.photoUrls;
-        const nextMainPhotoUrl =
-          type === "photo"
-            ? prev.mainPhotoUrl || nextPhotoUrls[0] || ""
-            : prev.mainPhotoUrl;
+            ? currentForm.mainPhotoUrl || nextPhotoUrls[0] || ""
+            : currentForm.mainPhotoUrl,
+      };
 
-        return {
-          ...prev,
-          photoUrls: nextPhotoUrls,
-          videoUrls:
-            type === "video"
-              ? mergeUniqueUrls(prev.videoUrls, uploaded, { maxItems: 12 })
-              : prev.videoUrls,
-          mainPhotoUrl: nextMainPhotoUrl,
-        };
-      });
+      currentFormRef.current = nextForm;
+      setForm(nextForm);
+      await saveProfile(nextForm, type === "photo" ? "Фото сохранены" : "Видео сохранены");
     } catch (error: unknown) {
       if (getErrorStatus(error) !== 401) {
         setError(getUploadErrorMessage(error, type));
@@ -333,26 +339,31 @@ export const CreatorProfilePage = () => {
     }
   };
 
-  const saveProfile = async () => {
-    if (!form) return;
+  const saveProfile = async (
+    formToSave: CreatorProfileForm | null = currentFormRef.current ?? form,
+    successMessage = "Профиль успешно сохранен"
+  ) => {
+    if (!formToSave) return;
 
     try {
       setSaving(true);
       setError(null);
       setSaveNotice(null);
 
-      const payload = normalize(form);
+      const payload = normalize(formToSave);
       const res =
         hasProfile
           ? await api.patch<CreatorProfile>("/api/profile/creator", payload)
           : await api.post<CreatorProfile>("/api/profile/creator", payload);
 
       setProfileData(res.data);
-      setForm(mapToForm(res.data));
+      const nextForm = mapToForm(res.data);
+      currentFormRef.current = nextForm;
+      setForm(nextForm);
       setHasProfile(true);
       window.dispatchEvent(new Event("profile-updated"));
       queryClient.invalidateQueries({ queryKey: ["catalog"] });
-      showSaveNotice("Профиль успешно сохранен");
+      showSaveNotice(successMessage);
     } catch (error: unknown) {
       if (getErrorStatus(error) !== 401) {
         setError("Ошибка сохранения профиля");
@@ -513,20 +524,22 @@ export const CreatorProfilePage = () => {
                   showModerationWarning={showModerationWarning}
                   onDismissModerationWarning={() => setShowModerationWarning(false)}
                   onAdd={(files) => uploadFiles(files, "photo")}
-                  onRemove={(url) =>
-                    setForm((prev) => {
-                      if (!prev) return prev;
-                      const nextPhotoUrls = prev.photoUrls.filter((u) => u !== url);
-                      return {
-                        ...prev,
-                        photoUrls: nextPhotoUrls,
-                        mainPhotoUrl:
-                          prev.mainPhotoUrl === url
-                            ? nextPhotoUrls[0] || ""
-                            : prev.mainPhotoUrl,
-                      };
-                    })
-                  }
+                  onRemove={(url) => {
+                    const currentForm = currentFormRef.current;
+                    if (!currentForm) return;
+                    const nextPhotoUrls = currentForm.photoUrls.filter((u) => u !== url);
+                    const nextForm = {
+                      ...currentForm,
+                      photoUrls: nextPhotoUrls,
+                      mainPhotoUrl:
+                        currentForm.mainPhotoUrl === url
+                          ? nextPhotoUrls[0] || ""
+                          : currentForm.mainPhotoUrl,
+                    };
+                    currentFormRef.current = nextForm;
+                    setForm(nextForm);
+                    void saveProfile(nextForm, "Фото сохранены");
+                  }}
                 />
 
                 <MediaSection
@@ -538,17 +551,22 @@ export const CreatorProfilePage = () => {
                   showModerationWarning={showModerationWarning}
                   onDismissModerationWarning={() => setShowModerationWarning(false)}
                   onAdd={(files) => uploadFiles(files, "video")}
-                  onRemove={(url) =>
-                    setForm({
-                      ...form,
-                      videoUrls: form.videoUrls.filter((u) => u !== url),
-                    })
-                  }
+                  onRemove={(url) => {
+                    const currentForm = currentFormRef.current;
+                    if (!currentForm) return;
+                    const nextForm = {
+                      ...currentForm,
+                      videoUrls: currentForm.videoUrls.filter((u) => u !== url),
+                    };
+                    currentFormRef.current = nextForm;
+                    setForm(nextForm);
+                    void saveProfile(nextForm, "Видео сохранены");
+                  }}
                 />
 
                 <div className="flex flex-wrap items-center gap-3">
                   <button
-                    onClick={saveProfile}
+                    onClick={() => void saveProfile()}
                     disabled={saving}
                     className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white disabled:opacity-60 sm:min-w-44 sm:w-auto"
                   >
