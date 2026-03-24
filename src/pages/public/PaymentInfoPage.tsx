@@ -49,8 +49,6 @@ export const PaymentInfoPage = () => {
               <InfoCard title="Платёжные системы">
                 <div className="flex flex-wrap gap-3">
                   <img src="/payments-visa.svg" alt="Visa" className="h-11 w-auto" />
-                  <img src="/payments-mastercard.svg" alt="Mastercard" className="h-11 w-auto" />
-                  <img src="/payments-elcart.svg" alt="Элкарт" className="h-11 w-auto" />
                 </div>
               </InfoCard>
             </main>

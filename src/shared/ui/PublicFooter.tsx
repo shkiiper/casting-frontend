@@ -28,8 +28,6 @@ export function PublicFooter() {
 
             <div className="mt-5 flex flex-wrap items-center gap-3">
               <img src="/payments-visa.svg" alt="Visa" className="h-10 w-auto" />
-              <img src="/payments-mastercard.svg" alt="Mastercard" className="h-10 w-auto" />
-              <img src="/payments-elcart.svg" alt="Элкарт" className="h-10 w-auto" />
             </div>
           </div>
 
