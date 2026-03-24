@@ -4,6 +4,7 @@ import { Container } from '@/shared/ui/Container';
 import { InlineNav } from '@/shared/ui/InlineNav';
 import { PageOctopusDecor } from '@/shared/ui/PageOctopusDecor';
 import publicApi from '@/shared/api/publicClient';
+import { PublicFooter } from '@/shared/ui/PublicFooter';
 import actorIcon from '@/shared/assets/actor-icon.svg';
 import directorIcon from '@/shared/assets/director-icon.svg';
 import locationIcon from '@/shared/assets/location-icon.svg';
@@ -303,6 +304,9 @@ export const HomePage = () => {
             </section>
           </div>
         </Container>
+      </div>
+      <div className="relative z-10">
+        <PublicFooter />
       </div>
     </div>
   );

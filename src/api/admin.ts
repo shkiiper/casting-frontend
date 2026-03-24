@@ -264,6 +264,8 @@ export type AdminUser = {
   contactWhatsapp?: string | null;
   minRate?: number | null;
   rateUnit?: string | null;
+  mainPhotoUrl?: string | null;
+  photoUrls?: string[] | null;
   published?: boolean | null;
   hasPhoto?: boolean | null;
   emailVerified?: boolean | null;
@@ -383,6 +385,8 @@ const performerToAdminUser = (profile: AdminPerformerProfile): AdminUser => ({
   contactWhatsapp: profile.contactWhatsapp ?? null,
   minRate: profile.minRate ?? profile.rentPrice ?? null,
   rateUnit: profile.rateUnit ?? profile.rentPriceUnit ?? null,
+  mainPhotoUrl: profile.mainPhotoUrl ?? null,
+  photoUrls: profile.photoUrls ?? [],
   published: profile.published ?? null,
   hasPhoto: Boolean(profile.mainPhotoUrl || profile.photoUrls?.length),
   lastActivityAt: null,
@@ -456,6 +460,8 @@ export async function getAdminUsers(params: AdminUsersQuery) {
       contactTelegram: user.contactTelegram ?? null,
       minRate: user.minRate ?? null,
       rateUnit: user.rateUnit ?? null,
+      mainPhotoUrl: user.mainPhotoUrl ?? null,
+      photoUrls: user.photoUrls ?? [],
       hasPhoto:
         typeof user.hasPhoto === "boolean"
           ? user.hasPhoto

@@ -6,6 +6,7 @@ import publicApi from "@/shared/api/publicClient";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { PublicFooter } from "@/shared/ui/PublicFooter";
 import { pickProfilePhoto, resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
 import { getSubscriptionInfo, showContacts } from "@/api/customer";
 import type { ContactInfoResponse, SubscriptionInfoResponse } from "@/types/customer";
@@ -886,6 +887,9 @@ export const ProfileDetailsPage = () => {
           </div>
         </div>
       )}
+      <div className="relative z-10">
+        <PublicFooter />
+      </div>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import publicApi from '@/shared/api/publicClient';
 import { Container } from '@/shared/ui/Container';
 import { InlineNav } from '@/shared/ui/InlineNav';
 import { PageOctopusDecor } from '@/shared/ui/PageOctopusDecor';
+import { PublicFooter } from '@/shared/ui/PublicFooter';
 import { pickProfilePhoto, resolveMediaUrl } from '@/shared/ui/useProfileAvatar';
 
 type Tab = 'ALL' | 'ACTOR' | 'CREATOR' | 'LOCATION';
@@ -971,6 +972,9 @@ export const CatalogPage = () => {
             </div>
           </div>
         </Container>
+      </div>
+      <div className="relative z-10">
+        <PublicFooter />
       </div>
     </div>
   );

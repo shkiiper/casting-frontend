@@ -27,6 +27,7 @@ import {
   REQUIRED_PROFILE_PHOTO_MESSAGE,
   useRequiredPhotoGuard,
 } from "@/shared/lib/useRequiredPhotoGuard";
+import { useUnsavedChangesGuard } from "@/shared/lib/useUnsavedChangesGuard";
 import {
   getApiErrorMessage,
   sanitizeEmail,
@@ -78,6 +79,17 @@ const mapToForm = (p: CustomerProfileResponse): CustomerProfileForm => ({
   mainPhotoUrl: trimToNull(p.mainPhotoUrl, 1500) ?? "",
 });
 
+const getCustomerFormSnapshot = (form: CustomerProfileForm | null) =>
+  JSON.stringify({
+    displayName: trimToNull(form?.displayName, 120),
+    description: trimMultilineToNull(form?.description, 2000),
+    city: trimToNull(form?.city, 120),
+    contactPhone: sanitizePhone(form?.contactPhone),
+    contactEmail: sanitizeEmail(form?.contactEmail),
+    contactTelegram: sanitizeTelegram(form?.contactTelegram),
+    mainPhotoUrl: trimToNull(form?.mainPhotoUrl, 1500),
+  });
+
 const toPercent = (used: number, limit: number) =>
   limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
 
@@ -100,6 +112,7 @@ export const CustomerAccountPage = () => {
   const { logout: clearSession } = useSession();
   const photoInputRef = useRef<HTMLInputElement>(null);
   const photoSectionRef = useRef<HTMLDivElement>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
 
   const [form, setForm] = useState<CustomerProfileForm | null>(null);
 
@@ -147,6 +160,7 @@ export const CustomerAccountPage = () => {
           ]);
 
         setForm(mapToForm(profileRes.data));
+        lastSavedSnapshotRef.current = getCustomerFormSnapshot(mapToForm(profileRes.data));
         setSubscription(subscriptionRes);
         setViewedContacts(viewedRes.content ?? []);
       } catch {
@@ -174,6 +188,12 @@ export const CustomerAccountPage = () => {
     enabled: !loading && Boolean(form),
     hasPhoto: hasRequiredPhoto,
     onBlocked: revealPhotoRequirement,
+  });
+
+  useUnsavedChangesGuard({
+    enabled: !loading && Boolean(form),
+    hasUnsavedChanges:
+      Boolean(form) && getCustomerFormSnapshot(form) !== lastSavedSnapshotRef.current,
   });
 
   /* ---------- UPLOAD PHOTO ---------- */
@@ -233,6 +253,7 @@ export const CustomerAccountPage = () => {
       );
 
       setForm(mapToForm(res.data));
+      lastSavedSnapshotRef.current = getCustomerFormSnapshot(mapToForm(res.data));
       window.dispatchEvent(new Event("profile-updated"));
       setSaveNotice(successMessage);
       window.setTimeout(() => setSaveNotice(null), 2500);

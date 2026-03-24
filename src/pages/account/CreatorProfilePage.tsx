@@ -13,7 +13,6 @@ import { Container } from "@/shared/ui/Container";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
 import { InlineNav } from "@/shared/ui/InlineNav";
-import { UrlListInput } from "@/shared/ui/UrlListInput";
 import { HeaderPublishSwitch } from "@/shared/ui/HeaderPublishSwitch";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
@@ -25,6 +24,7 @@ import {
   REQUIRED_PROFILE_PHOTO_MESSAGE,
   useRequiredPhotoGuard,
 } from "@/shared/lib/useRequiredPhotoGuard";
+import { useUnsavedChangesGuard } from "@/shared/lib/useUnsavedChangesGuard";
 import {
   PHOTO_TYPES,
   VIDEO_ACCEPT,
@@ -141,7 +141,8 @@ type CreatorProfileForm = {
   contactEmail: string;
   contactWhatsapp: string;
   contactTelegram: string;
-  socialLinks: string[];
+  websiteUrl: string;
+  instagramUrl: string;
   photoUrls: string[];
   videoUrls: string[];
 };
@@ -228,6 +229,9 @@ const CASE_HIGHLIGHT_OPTIONS = [
 const getErrorStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
 
+const getCreatorFormSnapshot = (form: CreatorProfileForm | null) =>
+  JSON.stringify(normalize(form ?? emptyForm()));
+
 /* ================= PAGE ================= */
 
 export const CreatorProfilePage = () => {
@@ -236,6 +240,9 @@ export const CreatorProfilePage = () => {
   const queryClient = useQueryClient();
   const [form, setForm] = useState<CreatorProfileForm | null>(null);
   const currentFormRef = useRef<CreatorProfileForm | null>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const manualVisibilityOverrideRef = useRef(false);
+  const lastHasPhotoRef = useRef(false);
   const [profileData, setProfileData] = useState<CreatorProfile | null>(null);
   const [pageState, setPageState] = useState<PageState>("LOADING");
   const [hasProfile, setHasProfile] = useState(false);
@@ -255,12 +262,18 @@ export const CreatorProfilePage = () => {
         const nextForm = mapToForm(res.data);
         setProfileData(res.data);
         setForm(nextForm);
+        lastSavedSnapshotRef.current = getCreatorFormSnapshot(nextForm);
+        manualVisibilityOverrideRef.current = Boolean(nextForm.photoUrls.length) && !nextForm.published;
+        lastHasPhotoRef.current = Boolean(nextForm.photoUrls.length);
         setHasProfile(true);
       } catch (error: unknown) {
         const status = getErrorStatus(error);
         if (status === 404 || status === 400) {
           const nextForm = emptyForm();
           setForm(nextForm);
+          lastSavedSnapshotRef.current = getCreatorFormSnapshot(nextForm);
+          manualVisibilityOverrideRef.current = false;
+          lastHasPhotoRef.current = false;
           setHasProfile(false);
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль");
@@ -360,6 +373,8 @@ export const CreatorProfilePage = () => {
       const nextForm = mapToForm(res.data);
       currentFormRef.current = nextForm;
       setForm(nextForm);
+      lastSavedSnapshotRef.current = getCreatorFormSnapshot(nextForm);
+      lastHasPhotoRef.current = Boolean(nextForm.photoUrls.length);
       setHasProfile(true);
       window.dispatchEvent(new Event("profile-updated"));
       queryClient.invalidateQueries({ queryKey: ["catalog"] });
@@ -390,7 +405,14 @@ export const CreatorProfilePage = () => {
         { label: "Фото", done: hasListValue(form?.photoUrls) },
         { label: "Контакты", done: hasTextValue(form?.contactPhone) || hasTextValue(form?.contactEmail) || hasTextValue(form?.contactTelegram) },
         { label: "Ставка", done: hasNumberValue(form?.minRate) },
-        { label: "Кейсы или навыки", done: hasListValue(form?.caseHighlights) || hasListValue(form?.skills) },
+        {
+          label: "Кейсы или навыки",
+          done:
+            hasListValue(form?.caseHighlights) ||
+            hasListValue(form?.skills) ||
+            hasTextValue(form?.websiteUrl) ||
+            hasTextValue(form?.instagramUrl),
+        },
       ]),
     [form]
   );
@@ -414,7 +436,13 @@ export const CreatorProfilePage = () => {
     onBlocked: revealPhotoRequirement,
   });
 
-  const savePublished = async (next: boolean) => {
+  useUnsavedChangesGuard({
+    enabled: pageState !== "LOADING" && Boolean(form),
+    hasUnsavedChanges:
+      Boolean(form) && getCreatorFormSnapshot(form) !== lastSavedSnapshotRef.current,
+  });
+
+  const savePublished = async (next: boolean, options?: { auto?: boolean }) => {
     if (!form) return;
     if (next && !hasRequiredPhoto) {
       revealPhotoRequirement();
@@ -436,9 +464,15 @@ export const CreatorProfilePage = () => {
       setProfileData(res.data);
       const nextFormFromServer = mapToForm(res.data);
       setForm(nextFormFromServer);
+      currentFormRef.current = nextFormFromServer;
+      lastSavedSnapshotRef.current = getCreatorFormSnapshot(nextFormFromServer);
+      lastHasPhotoRef.current = Boolean(nextFormFromServer.photoUrls.length);
       setHasProfile(true);
       window.dispatchEvent(new Event("profile-updated"));
-      showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
+      if (!options?.auto) {
+        manualVisibilityOverrideRef.current = !next;
+        showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
+      }
     } catch (error: unknown) {
       setForm(form);
       if (getErrorStatus(error) !== 401) {
@@ -448,6 +482,23 @@ export const CreatorProfilePage = () => {
       setPublishSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (pageState === "LOADING" || !form || saving || publishSaving) return;
+
+    const hasPhoto = Boolean(form.photoUrls.length);
+    const hadPhoto = lastHasPhotoRef.current;
+    lastHasPhotoRef.current = hasPhoto;
+
+    if (!hadPhoto && hasPhoto && !form.published && !manualVisibilityOverrideRef.current) {
+      void savePublished(true, { auto: true });
+      return;
+    }
+
+    if (hadPhoto && !hasPhoto && form.published) {
+      void savePublished(false, { auto: true });
+    }
+  }, [form, pageState, publishSaving, saving]);
 
   if (pageState === "LOADING") {
     return (
@@ -966,11 +1017,25 @@ const EditForm = ({
         </div>
       </div>
 
-      <UrlListInput
-        label="Ссылки на соцсети / портфолио"
-        values={form.socialLinks}
-        onChange={(values) => setForm({ ...form, socialLinks: values })}
-      />
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <FieldLabel>Ссылка на ваш сайт</FieldLabel>
+          <Input
+            placeholder="https://your-site.com"
+            value={form.websiteUrl}
+            onChange={(value) => setForm({ ...form, websiteUrl: value })}
+          />
+        </div>
+
+        <div>
+          <FieldLabel>Instagram</FieldLabel>
+          <Input
+            placeholder="https://instagram.com/username"
+            value={form.instagramUrl}
+            onChange={(value) => setForm({ ...form, instagramUrl: value })}
+          />
+        </div>
+      </div>
     </div>
   </div>
 );
@@ -1054,6 +1119,22 @@ const buildExperienceBundle = (f: CreatorProfileForm) => {
   return parts.join("\n\n").trim();
 };
 
+const normalizeWebsiteUrl = (value: unknown) => sanitizeHttpUrl(value);
+
+const normalizeInstagramUrl = (value: unknown) => {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return sanitizeHttpUrl(trimmed);
+  }
+
+  const username = trimmed.replace(/^@+/, "").replace(/^instagram\.com\//i, "").replace(/^www\.instagram\.com\//i, "").replace(/^\/+|\/+$/g, "");
+  if (!username) return null;
+  return `https://www.instagram.com/${username}/`;
+};
+
 const emptyForm = (): CreatorProfileForm => ({
   published: false,
   firstName: "",
@@ -1073,13 +1154,15 @@ const emptyForm = (): CreatorProfileForm => ({
   contactEmail: "",
   contactWhatsapp: "",
   contactTelegram: "",
-  socialLinks: [],
+  websiteUrl: "",
+  instagramUrl: "",
   photoUrls: [],
   videoUrls: [],
 });
 
 const mapToForm = (p: CreatorProfile): CreatorProfileForm => {
   const parsed = parseExperienceBundle(p.experienceText);
+  const links = parseSocialLinks(p.socialLinksJson);
   return {
     published: Boolean(p.published),
     firstName: trimToNull(p.firstName, 80) ?? "",
@@ -1099,41 +1182,69 @@ const mapToForm = (p: CreatorProfile): CreatorProfileForm => {
     contactEmail: sanitizeEmail(p.contactEmail) ?? "",
     contactWhatsapp: sanitizePhone(p.contactWhatsapp) ?? "",
     contactTelegram: sanitizeTelegram(p.contactTelegram) ?? "",
-    socialLinks: parseSocialLinks(p.socialLinksJson),
+    websiteUrl: links.websiteUrl,
+    instagramUrl: links.instagramUrl,
     photoUrls: mergeUniqueUrls([], p.photoUrls ?? [], { maxItems: 20 }),
     videoUrls: mergeUniqueUrls([], p.videoUrls ?? [], { maxItems: 12 }),
   };
 };
 
-const parseSocialLinks = (raw?: string | null): string[] => {
-  if (!raw) return [];
+const parseSocialLinks = (raw?: string | null) => {
+  if (!raw) {
+    return {
+      websiteUrl: "",
+      instagramUrl: "",
+    };
+  }
 
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed
-        .map((x) => sanitizeHttpUrl(String(x)))
-        .filter((value): value is string => Boolean(value));
-    }
     if (parsed && typeof parsed === "object") {
-      return Object.values(parsed)
+      const websiteUrl =
+        normalizeWebsiteUrl(
+          (parsed as Record<string, unknown>).websiteUrl ??
+            (parsed as Record<string, unknown>).website ??
+            (parsed as Record<string, unknown>).site
+        ) ?? "";
+      const instagramUrl =
+        normalizeInstagramUrl(
+          (parsed as Record<string, unknown>).instagramUrl ??
+            (parsed as Record<string, unknown>).instagram
+        ) ?? "";
+
+      if (websiteUrl || instagramUrl) {
+        return { websiteUrl, instagramUrl };
+      }
+    }
+    if (Array.isArray(parsed)) {
+      const normalized = parsed
         .map((x) => sanitizeHttpUrl(String(x)))
         .filter((value): value is string => Boolean(value));
+      return {
+        websiteUrl: normalized[0] ?? "",
+        instagramUrl: normalized.find((value) => /instagram\.com/i.test(value)) ?? "",
+      };
     }
-    return [];
   } catch {
-    return raw
+    const normalized = raw
       .split(",")
       .map((x) => sanitizeHttpUrl(x))
       .filter((value): value is string => Boolean(value));
+    return {
+      websiteUrl: normalized[0] ?? "",
+      instagramUrl: normalized.find((value) => /instagram\.com/i.test(value)) ?? "",
+    };
   }
+
+  return {
+    websiteUrl: "",
+    instagramUrl: "",
+  };
 };
 
 const normalize = (f: CreatorProfileForm) => {
-  const socialLinks = f.socialLinks
-    .map((x) => sanitizeHttpUrl(x))
-    .filter((value): value is string => Boolean(value))
-    .slice(0, 10);
+  const websiteUrl = normalizeWebsiteUrl(f.websiteUrl);
+  const instagramUrl = normalizeInstagramUrl(f.instagramUrl);
   const experienceText = buildExperienceBundle(f);
 
   return {
@@ -1152,7 +1263,13 @@ const normalize = (f: CreatorProfileForm) => {
     contactEmail: sanitizeEmail(f.contactEmail),
     contactWhatsapp: sanitizePhone(f.contactWhatsapp),
     contactTelegram: sanitizeTelegram(f.contactTelegram),
-    socialLinksJson: socialLinks.length ? JSON.stringify(socialLinks) : null,
+    socialLinksJson:
+      websiteUrl || instagramUrl
+        ? JSON.stringify({
+            websiteUrl,
+            instagramUrl,
+          })
+        : null,
     photoUrls: mergeUniqueUrls([], f.photoUrls, { maxItems: 20 }),
     videoUrls: mergeUniqueUrls([], f.videoUrls, { maxItems: 12 }),
   };

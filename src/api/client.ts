@@ -3,6 +3,7 @@ import {
   getStoredAccessToken,
   logoutSession,
 } from "@/entities/user/model/authStore";
+import { getLastUserActivityAt } from "@/shared/lib/activityTracker";
 
 type WindowWithApiBase = Window & {
   __API_BASE_URL__?: string;
@@ -48,6 +49,16 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const lastActivityAt = getLastUserActivityAt();
+  if (lastActivityAt) {
+    config.headers["X-Client-Last-Activity-At"] = lastActivityAt;
+  }
+
+  if (typeof window !== "undefined") {
+    config.headers["X-Client-Path"] = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  }
+
   return config;
 });
 

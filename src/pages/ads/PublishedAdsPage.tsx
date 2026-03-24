@@ -5,6 +5,7 @@ import { useSession } from "@/entities/user/model/authStore";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { PublicFooter } from "@/shared/ui/PublicFooter";
 import type { PageResponse } from "@/types/common";
 import { Input } from "@/shared/ui/Input";
 import { addCastingApplication } from "@/shared/lib/castingApplications";
@@ -359,6 +360,9 @@ export const PublishedAdsPage = () => {
           </div>
         </div>
         </Container>
+      </div>
+      <div className="relative z-10">
+        <PublicFooter />
       </div>
     </div>
   );

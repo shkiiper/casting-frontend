@@ -1,11 +1,13 @@
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { markUserActivity } from "@/shared/lib/activityTracker";
 
 const LoginPage = lazy(() =>
   import("../../features/auth/LoginPage").then((m) => ({ default: m.LoginPage }))
@@ -91,10 +93,26 @@ const PaymentStatusPage = lazy(() =>
     default: m.PaymentStatusPage,
   }))
 );
+const LegalPage = lazy(() =>
+  import("../../pages/public/LegalPage").then((m) => ({
+    default: m.LegalPage,
+  }))
+);
+const PaymentInfoPage = lazy(() =>
+  import("../../pages/public/PaymentInfoPage").then((m) => ({
+    default: m.PaymentInfoPage,
+  }))
+);
+const ContactsPage = lazy(() =>
+  import("../../pages/public/ContactsPage").then((m) => ({
+    default: m.ContactsPage,
+  }))
+);
 
 export function AppRouter() {
   return (
     <BrowserRouter>
+      <ActivityRouteTracker />
       <Suspense
         fallback={
           <div className="min-h-screen grid place-items-center text-slate-500">
@@ -112,6 +130,9 @@ export function AppRouter() {
           <Route path="/profiles/:id" element={<ProfileDetailsPage />} />
 
           <Route path="/ads" element={<PublishedAdsPage />} />
+          <Route path="/legal" element={<LegalPage />} />
+          <Route path="/payment-info" element={<PaymentInfoPage />} />
+          <Route path="/contacts" element={<ContactsPage />} />
           <Route
             path="/ads/manage"
             element={
@@ -209,4 +230,14 @@ export function AppRouter() {
       </Suspense>
     </BrowserRouter>
   );
+}
+
+function ActivityRouteTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    markUserActivity();
+  }, [location.pathname, location.search, location.hash]);
+
+  return null;
 }

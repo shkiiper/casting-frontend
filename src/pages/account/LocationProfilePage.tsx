@@ -23,6 +23,7 @@ import {
   REQUIRED_PROFILE_PHOTO_MESSAGE,
   useRequiredPhotoGuard,
 } from "@/shared/lib/useRequiredPhotoGuard";
+import { useUnsavedChangesGuard } from "@/shared/lib/useUnsavedChangesGuard";
 import {
   PHOTO_TYPES,
   PHOTO_UPLOAD_HINT,
@@ -137,6 +138,9 @@ type Mode = "LOADING" | "EMPTY" | "VIEW";
 const getErrorStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
 
+const getLocationFormSnapshot = (form: LocationProfileForm | null) =>
+  JSON.stringify(normalize(form ?? emptyForm()));
+
 /* ================= PAGE ================= */
 
 export const LocationProfilePage = () => {
@@ -144,6 +148,9 @@ export const LocationProfilePage = () => {
   const { logout: clearSession } = useSession();
   const [form, setForm] = useState<LocationProfileForm | null>(null);
   const currentFormRef = useRef<LocationProfileForm | null>(null);
+  const lastSavedSnapshotRef = useRef<string | null>(null);
+  const manualVisibilityOverrideRef = useRef(false);
+  const lastHasPhotoRef = useRef(false);
   const [profileData, setProfileData] = useState<LocationProfile | null>(null);
   const [mode, setMode] = useState<Mode>("LOADING");
   const [saving, setSaving] = useState(false);
@@ -164,12 +171,18 @@ export const LocationProfilePage = () => {
         const nextForm = mapToForm(hydrated);
         setProfileData(hydrated);
         setForm(nextForm);
+        lastSavedSnapshotRef.current = getLocationFormSnapshot(nextForm);
+        manualVisibilityOverrideRef.current = Boolean(nextForm.photoUrls.length) && !nextForm.published;
+        lastHasPhotoRef.current = Boolean(nextForm.photoUrls.length);
         setMode("VIEW");
       } catch (e: unknown) {
         const status = getErrorStatus(e);
         if (status === 404 || status === 400) {
           const nextForm = emptyForm();
           setForm(nextForm);
+          lastSavedSnapshotRef.current = getLocationFormSnapshot(nextForm);
+          manualVisibilityOverrideRef.current = false;
+          lastHasPhotoRef.current = false;
           setMode("EMPTY");
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль локации");
@@ -246,6 +259,8 @@ export const LocationProfilePage = () => {
       persistLocationFallback(merged);
       currentFormRef.current = nextForm;
       setForm(nextForm);
+      lastSavedSnapshotRef.current = getLocationFormSnapshot(nextForm);
+      lastHasPhotoRef.current = Boolean(nextForm.photoUrls.length);
       setMode("VIEW");
       window.dispatchEvent(new Event("profile-updated"));
       setSaveNotice(successMessage);
@@ -300,7 +315,13 @@ export const LocationProfilePage = () => {
     onBlocked: revealPhotoRequirement,
   });
 
-  const savePublished = async (next: boolean) => {
+  useUnsavedChangesGuard({
+    enabled: mode !== "LOADING" && Boolean(form),
+    hasUnsavedChanges:
+      Boolean(form) && getLocationFormSnapshot(form) !== lastSavedSnapshotRef.current,
+  });
+
+  const savePublished = async (next: boolean, options?: { auto?: boolean }) => {
     if (!form) return;
     if (next && !hasRequiredPhoto) {
       revealPhotoRequirement();
@@ -326,8 +347,14 @@ export const LocationProfilePage = () => {
       setForm(nextFormFromServer);
       setMode("VIEW");
       window.dispatchEvent(new Event("profile-updated"));
-      setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
-      window.setTimeout(() => setSaveNotice(null), 2200);
+      currentFormRef.current = nextFormFromServer;
+      lastSavedSnapshotRef.current = getLocationFormSnapshot(nextFormFromServer);
+      lastHasPhotoRef.current = Boolean(nextFormFromServer.photoUrls.length);
+      if (!options?.auto) {
+        manualVisibilityOverrideRef.current = !next;
+        setSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога");
+        window.setTimeout(() => setSaveNotice(null), 2200);
+      }
     } catch (e: unknown) {
       setForm(form);
       if (getErrorStatus(e) !== 401) {
@@ -337,6 +364,23 @@ export const LocationProfilePage = () => {
       setPublishSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (mode === "LOADING" || !form || saving || publishSaving) return;
+
+    const hasPhoto = Boolean(form.photoUrls.length);
+    const hadPhoto = lastHasPhotoRef.current;
+    lastHasPhotoRef.current = hasPhoto;
+
+    if (!hadPhoto && hasPhoto && !form.published && !manualVisibilityOverrideRef.current) {
+      void savePublished(true, { auto: true });
+      return;
+    }
+
+    if (hadPhoto && !hasPhoto && form.published) {
+      void savePublished(false, { auto: true });
+    }
+  }, [form, mode, publishSaving, saving]);
 
   /* ---------- RENDER ---------- */
 

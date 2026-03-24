@@ -4,6 +4,7 @@ import { type AdminUser } from "@/api/admin";
 import { useSession } from "@/entities/user/model/authStore";
 import { useAdminUsersData } from "@/pages/admin/hooks/useAdminUsersData";
 import { getApiErrorMessage } from "@/shared/lib/safety";
+import { pickProfilePhoto, resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { HeaderPublishSwitch } from "@/shared/ui/HeaderPublishSwitch";
@@ -519,6 +520,8 @@ const UserDrawer = ({
   user: AdminUser;
   onClose: () => void;
 }) => {
+  const gallery = getUserPhotos(user);
+  const heroPhoto = resolveMediaUrl(pickProfilePhoto(user) ?? gallery[0] ?? null);
   const contacts =
     [
       user.contactPhone || user.phone ? `Тел: ${user.contactPhone || user.phone}` : null,
@@ -550,6 +553,44 @@ const UserDrawer = ({
         </div>
 
         <div className="mt-5 space-y-3 text-sm">
+          <div>
+            <div className="text-xs text-slate-500">Фото профиля</div>
+            {heroPhoto ? (
+              <div className="mt-2 space-y-3">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                  <img
+                    src={heroPhoto}
+                    alt={userName(user)}
+                    className="h-64 w-full object-cover"
+                  />
+                </div>
+                {gallery.length > 1 ? (
+                  <div className="grid grid-cols-4 gap-2">
+                    {gallery.map((url, index) => {
+                      const src = resolveMediaUrl(url);
+                      if (!src) return null;
+                      return (
+                        <div
+                          key={`${url}-${index}`}
+                          className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                        >
+                          <img
+                            src={src}
+                            alt={`${userName(user)} ${index + 1}`}
+                            className="h-20 w-full object-cover"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="mt-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+                У пользователя нет фото
+              </div>
+            )}
+          </div>
           <Row label="ID" value={String(user.id)} />
           <Row label="Роль" value={roleLabel(user.role)} />
           <Row label="Имя" value={userName(user)} />
@@ -633,4 +674,10 @@ const roleLabel = (role: string) => {
   if (role === "CUSTOMER") return "Кастомер";
   if (role === "ADMIN") return "Админ";
   return role;
+};
+
+const getUserPhotos = (user: AdminUser) => {
+  const primary = user.mainPhotoUrl ? [user.mainPhotoUrl] : [];
+  const extras = Array.isArray(user.photoUrls) ? user.photoUrls : [];
+  return Array.from(new Set([...primary, ...extras].filter(Boolean))) as string[];
 };

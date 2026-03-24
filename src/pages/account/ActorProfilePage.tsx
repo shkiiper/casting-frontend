@@ -23,6 +23,7 @@ import {
   REQUIRED_PROFILE_PHOTO_MESSAGE,
   useRequiredPhotoGuard,
 } from "@/shared/lib/useRequiredPhotoGuard";
+import { useUnsavedChangesGuard } from "@/shared/lib/useUnsavedChangesGuard";
 import {
   PHOTO_TYPES,
   VIDEO_ACCEPT,
@@ -249,6 +250,12 @@ const ACTOR_AUTO_SAVE_DELAY_MS = 1500;
 const getErrorStatus = (error: unknown): number | undefined =>
   (error as { response?: { status?: number } })?.response?.status;
 
+const getActorManualSnapshot = (form: ActorProfileForm | null) =>
+  JSON.stringify({
+    ...pickActorMainData(form ?? emptyForm()),
+    ...pickActorContactsData(form ?? emptyForm()),
+  });
+
 /* ================= PAGE ================= */
 
 export const ActorProfilePage = () => {
@@ -264,6 +271,9 @@ export const ActorProfilePage = () => {
   const currentFormRef = useRef<ActorProfileForm | null>(null);
   const lastPersistedFormRef = useRef<ActorProfileForm | null>(null);
   const lastSavedAutoSnapshotRef = useRef<string | null>(null);
+  const lastSavedManualSnapshotRef = useRef<string | null>(null);
+  const manualVisibilityOverrideRef = useRef(false);
+  const lastHasPhotoRef = useRef(false);
   const saveNoticeTimeoutRef = useRef<number | null>(null);
   const photoSectionRef = useRef<HTMLDivElement>(null);
   const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
@@ -281,6 +291,9 @@ export const ActorProfilePage = () => {
         currentFormRef.current = nextForm;
         lastPersistedFormRef.current = nextForm;
         lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(nextForm);
+        lastSavedManualSnapshotRef.current = getActorManualSnapshot(nextForm);
+        manualVisibilityOverrideRef.current = Boolean(nextForm.photoUrls.length) && !nextForm.published;
+        lastHasPhotoRef.current = Boolean(nextForm.photoUrls.length);
         setMode("VIEW");
       } catch (e: unknown) {
         const status = getErrorStatus(e);
@@ -290,6 +303,9 @@ export const ActorProfilePage = () => {
           currentFormRef.current = nextForm;
           lastPersistedFormRef.current = nextForm;
           lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(nextForm);
+          lastSavedManualSnapshotRef.current = getActorManualSnapshot(nextForm);
+          manualVisibilityOverrideRef.current = false;
+          lastHasPhotoRef.current = false;
           setMode("EMPTY");
         } else if (!status || status >= 500) {
           setError("Не удалось загрузить профиль");
@@ -405,6 +421,8 @@ export const ActorProfilePage = () => {
       }
       lastPersistedFormRef.current = persistedForm;
       lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(persistedForm);
+      lastSavedManualSnapshotRef.current = getActorManualSnapshot(persistedForm);
+      lastHasPhotoRef.current = Boolean(persistedForm.photoUrls.length);
 
       setMode("VIEW");
       if (!isBackgroundSave && successMessage) {
@@ -505,7 +523,13 @@ export const ActorProfilePage = () => {
     onBlocked: revealPhotoRequirement,
   });
 
-  const savePublished = async (next: boolean) => {
+  useUnsavedChangesGuard({
+    enabled: mode !== "LOADING" && Boolean(form),
+    hasUnsavedChanges:
+      Boolean(form) && getActorManualSnapshot(form) !== lastSavedManualSnapshotRef.current,
+  });
+
+  const savePublished = async (next: boolean, options?: { auto?: boolean }) => {
     if (!form) return;
     if (next && !hasRequiredPhoto) {
       revealPhotoRequirement();
@@ -531,9 +555,14 @@ export const ActorProfilePage = () => {
       currentFormRef.current = nextFormFromServer;
       lastPersistedFormRef.current = nextFormFromServer;
       lastSavedAutoSnapshotRef.current = getActorAutoSnapshot(nextFormFromServer);
+      lastSavedManualSnapshotRef.current = getActorManualSnapshot(nextFormFromServer);
+      lastHasPhotoRef.current = Boolean(nextFormFromServer.photoUrls.length);
       setMode("VIEW");
       window.dispatchEvent(new Event("profile-updated"));
-      showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
+      if (!options?.auto) {
+        manualVisibilityOverrideRef.current = !next;
+        showSaveNotice(next ? "Профиль виден в каталоге" : "Профиль скрыт из каталога", 2200);
+      }
     } catch (e: unknown) {
       setForm(form);
       if (getErrorStatus(e) !== 401) {
@@ -543,6 +572,23 @@ export const ActorProfilePage = () => {
       setPublishSaving(false);
     }
   };
+
+  useEffect(() => {
+    if (mode === "LOADING" || !form || saving || publishSaving) return;
+
+    const hasPhoto = Boolean(form.photoUrls.length);
+    const hadPhoto = lastHasPhotoRef.current;
+    lastHasPhotoRef.current = hasPhoto;
+
+    if (!hadPhoto && hasPhoto && !form.published && !manualVisibilityOverrideRef.current) {
+      void savePublished(true, { auto: true });
+      return;
+    }
+
+    if (hadPhoto && !hasPhoto && form.published) {
+      void savePublished(false, { auto: true });
+    }
+  }, [form, mode, publishSaving, saving]);
 
   /* ---------- RENDER ---------- */
 
