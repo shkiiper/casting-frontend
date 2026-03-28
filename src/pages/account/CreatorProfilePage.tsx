@@ -105,6 +105,7 @@ type CreatorProfile = {
   bio?: string | null;
   experienceText?: string | null;
   activityType?: string | null;
+  activityTypes?: string[] | null;
   minRate?: number | null;
   rateUnit?: string | null;
   contactPhone?: string | null;
@@ -134,7 +135,7 @@ type CreatorProfileForm = {
   projectFormats: string[];
   caseHighlights: string[];
   skills: string[];
-  activityType: string;
+  activityTypes: string[];
   minRate: number | "";
   rateUnit: string;
   contactPhone: string;
@@ -400,7 +401,7 @@ export const CreatorProfilePage = () => {
       buildProfileCompletion([
         { label: "Имя", done: hasTextValue(form?.firstName) || hasTextValue(form?.lastName) },
         { label: "Город", done: hasTextValue(form?.city) },
-        { label: "Специализация", done: hasTextValue(form?.activityType) },
+        { label: "Специализация", done: hasListValue(form?.activityTypes) },
         { label: "Описание", done: hasTextValue(form?.description) || hasTextValue(form?.bio) },
         { label: "Фото", done: hasListValue(form?.photoUrls) },
         { label: "Контакты", done: hasTextValue(form?.contactPhone) || hasTextValue(form?.contactEmail) || hasTextValue(form?.contactTelegram) },
@@ -802,21 +803,36 @@ const EditForm = ({
 
         <div className="md:col-span-2">
           <FieldLabel>Тип деятельности</FieldLabel>
-          <select
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm"
-            value={form.activityType}
-            onChange={(e) => setForm({ ...form, activityType: e.target.value })}
-          >
-            <option value="">Не выбрано</option>
-            {form.activityType && !ACTIVITY_TYPE_OPTIONS.includes(form.activityType) && (
-              <option value={form.activityType}>{form.activityType}</option>
-            )}
-            {ACTIVITY_TYPE_OPTIONS.map((item) => (
-              <option key={item} value={item}>
-                {item}
-              </option>
-            ))}
-          </select>
+          <div className="rounded-xl border border-white/60 bg-white/30 p-4 space-y-3">
+            <div className="text-xs text-slate-500">Можно выбрать несколько вариантов</div>
+            <div className="flex flex-wrap gap-2">
+              {resolveActivityTypeOptions(form.activityTypes).map((item) => {
+                const selected = form.activityTypes.includes(item);
+                return (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        activityTypes: selected
+                          ? form.activityTypes.filter((value) => value !== item)
+                          : [...form.activityTypes, item],
+                      })
+                    }
+                    className={[
+                      "px-3 py-1.5 rounded-full border text-sm transition-colors",
+                      selected
+                        ? "bg-slate-900 text-white border-slate-900"
+                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
+                    ].join(" ")}
+                  >
+                    {item}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
       </div>
@@ -1135,6 +1151,38 @@ const normalizeInstagramUrl = (value: unknown) => {
   return `https://www.instagram.com/${username}/`;
 };
 
+const parseActivityTypes = (
+  rawActivityType?: string | null,
+  rawActivityTypes?: string[] | null
+) => {
+  const directValues = Array.isArray(rawActivityTypes)
+    ? rawActivityTypes
+    : typeof rawActivityTypes === "string"
+    ? [rawActivityTypes]
+    : [];
+
+  const legacyValues =
+    typeof rawActivityType === "string"
+      ? rawActivityType
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
+
+  return Array.from(
+    new Set(
+      [...directValues, ...legacyValues]
+        .map((value) => trimToNull(value, 120))
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+};
+
+const resolveActivityTypeOptions = (selectedValues: string[]) =>
+  Array.from(new Set([...ACTIVITY_TYPE_OPTIONS, ...selectedValues])).sort((a, b) =>
+    a.localeCompare(b, "ru")
+  );
+
 const emptyForm = (): CreatorProfileForm => ({
   published: false,
   firstName: "",
@@ -1147,7 +1195,7 @@ const emptyForm = (): CreatorProfileForm => ({
   projectFormats: [],
   caseHighlights: [],
   skills: [],
-  activityType: "",
+  activityTypes: [],
   minRate: "",
   rateUnit: "PER_PROJECT",
   contactPhone: "",
@@ -1163,6 +1211,7 @@ const emptyForm = (): CreatorProfileForm => ({
 const mapToForm = (p: CreatorProfile): CreatorProfileForm => {
   const parsed = parseExperienceBundle(p.experienceText);
   const links = parseSocialLinks(p.socialLinksJson);
+  const activityTypes = parseActivityTypes(p.activityType, p.activityTypes);
   return {
     published: Boolean(p.published),
     firstName: trimToNull(p.firstName, 80) ?? "",
@@ -1175,7 +1224,7 @@ const mapToForm = (p: CreatorProfile): CreatorProfileForm => {
     projectFormats: parsed.projectFormats,
     caseHighlights: parsed.caseHighlights,
     skills: parsed.skills,
-    activityType: trimToNull(p.activityType, 120) ?? "",
+    activityTypes,
     minRate: p.minRate ?? "",
     rateUnit: p.rateUnit ?? "PER_PROJECT",
     contactPhone: sanitizePhone(p.contactPhone) ?? "",
@@ -1246,6 +1295,13 @@ const normalize = (f: CreatorProfileForm) => {
   const websiteUrl = normalizeWebsiteUrl(f.websiteUrl);
   const instagramUrl = normalizeInstagramUrl(f.instagramUrl);
   const experienceText = buildExperienceBundle(f);
+  const activityTypes = Array.from(
+    new Set(
+      f.activityTypes
+        .map((value) => trimToNull(value, 120))
+        .filter((value): value is string => Boolean(value))
+    )
+  );
 
   return {
     published: f.published,
@@ -1256,7 +1312,8 @@ const normalize = (f: CreatorProfileForm) => {
     description: trimMultilineToNull(f.description, 2000),
     bio: trimMultilineToNull(f.bio, 4000),
     experienceText: trimMultilineToNull(experienceText, 5000),
-    activityType: trimToNull(f.activityType, 120),
+    activityType: activityTypes.length ? activityTypes.join(", ") : null,
+    activityTypes: activityTypes.length ? activityTypes : null,
     minRate: toOptionalNumber(f.minRate, { min: 0, max: 100000000 }),
     rateUnit: trimToNull(f.rateUnit, 40),
     contactPhone: sanitizePhone(f.contactPhone),

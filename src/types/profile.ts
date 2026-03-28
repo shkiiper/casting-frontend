@@ -15,6 +15,7 @@ export interface ProfileResponse {
 
   description?: string | null;
   activityType?: string | null;
+  activityTypes?: string[] | null;
   minRate?: number | null;
   rateUnit?: string | null;
   locationName?: string | null;

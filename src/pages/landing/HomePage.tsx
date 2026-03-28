@@ -40,16 +40,19 @@ const profileDirections = [
     title: 'Актёры',
     description: 'Подбор по типажу, возрасту, городу и опыту.',
     icon: actorIcon,
+    to: '/actors',
   },
   {
     title: 'Креаторы',
     description: 'Операторы, режиссёры, монтажеры, SMM и продакшен-команды.',
     icon: directorIcon,
+    to: '/creators',
   },
   {
     title: 'Локации',
     description: 'Студии, интерьеры и площадки с условиями аренды.',
     icon: locationIcon,
+    to: '/locations',
   },
 ];
 
@@ -226,18 +229,21 @@ export const HomePage = () => {
 
               <div className="mt-8 grid md:grid-cols-3 gap-4">
                 {profileDirections.map((item) => (
-                  <div
+                  <Link
                     key={item.title}
-                    className="hero-glass-card rounded-[28px] p-6 transition-shadow"
+                    to={item.to}
+                    className="group hero-glass-card block rounded-[28px] p-6 transition-shadow hover:shadow-[0_14px_32px_rgba(15,23,42,0.14)] focus:outline-none focus:ring-2 focus:ring-slate-300/70"
                   >
                     <div className="h-10 w-10 rounded-xl bg-slate-900/5 grid place-items-center">
                       <img src={item.icon} alt="" className="h-6 w-6 opacity-80" />
                     </div>
-                    <div className="mt-5 text-lg font-semibold">{item.title}</div>
+                    <div className="mt-5 text-lg font-semibold underline-offset-4 group-hover:underline">
+                      {item.title}
+                    </div>
                     <div className="mt-2 text-sm text-slate-600 leading-relaxed">
                       {item.description}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </section>

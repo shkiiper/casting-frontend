@@ -35,6 +35,7 @@ type ProfilePublic = {
   age?: number | null;
   gender?: string | null;
   activityType?: string | null;
+  activityTypes?: string[] | null;
   locationName?: string | null;
   photoUrls?: string[] | null;
   ethnicity?: string | null;
@@ -207,6 +208,19 @@ function buildName(p: ProfilePublic) {
   return n;
 }
 
+function getActivityTypes(profile: Pick<ProfilePublic, 'activityType' | 'activityTypes'>) {
+  const arrayValues = Array.isArray(profile.activityTypes) ? profile.activityTypes : [];
+  const legacyValues =
+    typeof profile.activityType === 'string'
+      ? profile.activityType
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+  return Array.from(new Set([...arrayValues, ...legacyValues]));
+}
+
 function buildEndpoint(tab: Tab) {
   if (tab === 'ACTOR') return '/api/catalog/actors';
   if (tab === 'CREATOR') return '/api/catalog/creators';
@@ -316,6 +330,7 @@ export const CatalogPage = () => {
         if (tab === 'CREATOR') {
           if (serverFilters.activityType.trim()) {
             params.activityType = serverFilters.activityType.trim();
+            params.activityTypes = serverFilters.activityType.trim();
           }
         }
 
@@ -424,8 +439,9 @@ export const CatalogPage = () => {
   const creatorActivityOptions = useMemo(() => {
     const set = new Set(CREATOR_ACTIVITY_OPTIONS);
     data.forEach((item) => {
-      const activity = item.activityType?.trim();
-      if (activity) set.add(activity);
+      getActivityTypes(item).forEach((activity) => {
+        if (activity) set.add(activity);
+      });
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b, 'ru'));
   }, [data]);
@@ -909,7 +925,7 @@ export const CatalogPage = () => {
                                   p.bio ??
                                   (p.type === 'LOCATION'
                                     ? p.locationName
-                                    : p.activityType) ??
+                                    : getActivityTypes(p).join(', ')) ??
                                   '—'}
                               </div>
 

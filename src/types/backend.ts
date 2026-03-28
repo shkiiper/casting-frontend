@@ -22,6 +22,7 @@ export interface ProfileResponse {
   contactWhatsapp?: string;
   contactTelegram?: string;
   activityType?: string;
+  activityTypes?: string[];
   minRate?: number;
   rateUnit?: string;
   locationName?: string;

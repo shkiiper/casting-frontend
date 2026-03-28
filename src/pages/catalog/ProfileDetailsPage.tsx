@@ -25,6 +25,7 @@ type PublicProfile = {
   gender?: string | null;
   description?: string | null;
   activityType?: string | null;
+  activityTypes?: string[] | null;
   locationName?: string | null;
   contactPhone?: string | null;
   contactEmail?: string | null;
@@ -68,6 +69,21 @@ type ProfileLocationState = {
   from?: string;
   profilePreview?: PublicProfile;
 } | null;
+
+const getActivityTypes = (profile?: Pick<PublicProfile, "activityType" | "activityTypes"> | null) => {
+  if (!profile) return [];
+
+  const arrayValues = Array.isArray(profile.activityTypes) ? profile.activityTypes : [];
+  const legacyValues =
+    typeof profile.activityType === "string"
+      ? profile.activityType
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean)
+      : [];
+
+  return Array.from(new Set([...arrayValues, ...legacyValues]));
+};
 
 const profileTypeLabel: Record<ProfileType, string> = {
   ACTOR: "Актёр",
@@ -446,10 +462,11 @@ export const ProfileDetailsPage = () => {
   const description = profile?.description?.trim() || profile?.bio?.trim() || "";
   const shortDescription =
     description.length > 260 ? `${description.slice(0, 260)}...` : description;
+  const activityTypes = getActivityTypes(profile);
 
   const appearanceRows = [
     { label: "Тип профиля", value: profile ? profileTypeLabel[profile.type] : null },
-    { label: "Тип деятельности", value: profile?.activityType || null },
+    { label: "Тип деятельности", value: activityTypes.length ? activityTypes.join(", ") : null },
     { label: "Возраст", value: profile?.age ? `${profile.age} лет` : null },
     {
       label: "Пол",
