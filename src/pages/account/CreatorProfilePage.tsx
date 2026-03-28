@@ -645,6 +645,87 @@ export const CreatorProfilePage = () => {
 
 /* ================= MEDIA ================= */
 
+const ActivityTypesDropdown = ({
+  selectedValues,
+  onChange,
+}: {
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const options = resolveActivityTypeOptions(selectedValues);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  const toggleValue = (value: string) => {
+    const isSelected = selectedValues.includes(value);
+    onChange(
+      isSelected
+        ? selectedValues.filter((currentValue) => currentValue !== value)
+        : [...selectedValues, value]
+    );
+  };
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((current) => !current)}
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+      >
+        <span className={selectedValues.length ? "text-slate-700" : "text-slate-400"}>
+          {selectedValues.length ? selectedValues.join(", ") : "Выберите тип деятельности"}
+        </span>
+        <span
+          className={[
+            "shrink-0 text-slate-400 transition-transform",
+            open ? "rotate-180" : "",
+          ].join(" ")}
+          aria-hidden="true"
+        >
+          ▾
+        </span>
+      </button>
+
+      {open ? (
+        <div className="absolute left-0 right-0 z-20 mt-2 max-h-72 overflow-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
+          <div className="space-y-1">
+            {options.map((item) => {
+              const checked = selectedValues.includes(item);
+              return (
+                <label
+                  key={item}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={() => toggleValue(item)}
+                    className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-400"
+                  />
+                  <span>{item}</span>
+                </label>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+};
+
 const MediaSection = ({
   title,
   urls,
@@ -805,33 +886,10 @@ const EditForm = ({
           <FieldLabel>Тип деятельности</FieldLabel>
           <div className="rounded-xl border border-white/60 bg-white/30 p-4 space-y-3">
             <div className="text-xs text-slate-500">Можно выбрать несколько вариантов</div>
-            <div className="flex flex-wrap gap-2">
-              {resolveActivityTypeOptions(form.activityTypes).map((item) => {
-                const selected = form.activityTypes.includes(item);
-                return (
-                  <button
-                    key={item}
-                    type="button"
-                    onClick={() =>
-                      setForm({
-                        ...form,
-                        activityTypes: selected
-                          ? form.activityTypes.filter((value) => value !== item)
-                          : [...form.activityTypes, item],
-                      })
-                    }
-                    className={[
-                      "px-3 py-1.5 rounded-full border text-sm transition-colors",
-                      selected
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
-                    ].join(" ")}
-                  >
-                    {item}
-                  </button>
-                );
-              })}
-            </div>
+            <ActivityTypesDropdown
+              selectedValues={form.activityTypes}
+              onChange={(activityTypes) => setForm({ ...form, activityTypes })}
+            />
           </div>
         </div>
 
