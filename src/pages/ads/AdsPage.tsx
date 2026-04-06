@@ -4,6 +4,7 @@ import api from "@/api/client";
 import { Container } from "@/shared/ui/Container";
 import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
+import { CityMultiSelect } from "@/shared/ui/CityMultiSelect";
 import { InlineNav } from "@/shared/ui/InlineNav";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
@@ -150,9 +151,9 @@ export const AdsPage = () => {
                       setForm({ ...form, title: value })
                     }
                   />
-                  <Input
+                  <CityMultiSelect
                     value={form.city}
-                    placeholder="Город"
+                    placeholder="Выберите города"
                     onChange={(value) => setForm({ ...form, city: value })}
                   />
                   <Input

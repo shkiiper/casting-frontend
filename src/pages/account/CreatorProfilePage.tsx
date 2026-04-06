@@ -17,6 +17,7 @@ import { HeaderPublishSwitch } from "@/shared/ui/HeaderPublishSwitch";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { DismissibleNotice } from "@/shared/ui/DismissibleNotice";
+import { CityMultiSelect } from "@/shared/ui/CityMultiSelect";
 import { extractProfilePremiumInfo } from "@/shared/lib/profilePremium";
 import { ProfilePremiumPanel } from "@/shared/ui/ProfilePremiumPanel";
 import { ProfileCompletionCard } from "@/shared/ui/ProfileCompletionCard";
@@ -875,8 +876,8 @@ const EditForm = ({
 
         <div>
           <FieldLabel>Город</FieldLabel>
-          <Input
-            placeholder="Бишкек"
+          <CityMultiSelect
+            placeholder="Выберите города"
             value={form.city}
             onChange={(value) => setForm({ ...form, city: value })}
           />

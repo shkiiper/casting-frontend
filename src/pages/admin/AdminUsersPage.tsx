@@ -62,6 +62,10 @@ export const AdminUsersPage = () => {
   const totalElements = usersQuery.data?.totalElements ?? 0;
   const totalPages = Math.max(1, usersQuery.data?.totalPages ?? 1);
   const loading = usersQuery.isLoading;
+  const pageInfo = {
+    from: filteredItems.length === 0 ? 0 : page * PAGE_SIZE + 1,
+    to: Math.min(page * PAGE_SIZE + filteredItems.length, totalElements),
+  };
 
   const showToast = (message: string) => {
     setToast(message);
@@ -198,14 +202,6 @@ export const AdminUsersPage = () => {
       setProcessingId(null);
     }
   };
-
-  const pageInfo = useMemo(
-    () => ({
-      from: filteredItems.length === 0 ? 0 : page * PAGE_SIZE + 1,
-      to: Math.min(page * PAGE_SIZE + filteredItems.length, totalElements),
-    }),
-    [filteredItems.length, page, totalElements]
-  );
 
   return (
     <div className="min-h-screen bg-[#eef2f7] text-slate-900">
@@ -381,7 +377,7 @@ export const AdminUsersPage = () => {
                           </div>
                         </div>
                         <div className="text-xs">
-                          <div>{Boolean(user.active) ? "Активен" : "Неактивен"}</div>
+                          <div>{user.active ? "Активен" : "Неактивен"}</div>
                           {typeof user.published === "boolean" ? (
                             <div
                               className={[
@@ -631,7 +627,7 @@ const UserDrawer = ({
             label="Последняя активность"
             value={formatAdminDate(user.lastActivityAt || user.updatedAt)}
           />
-          <Row label="Статус" value={Boolean(user.active) ? "Активен" : "Неактивен"} />
+          <Row label="Статус" value={user.active ? "Активен" : "Неактивен"} />
           <Row label="Бан" value={user.banned ? "Забанен" : "Не забанен"} />
           <Row label="Создан" value={user.createdAt || "—"} />
           <Row label="Обновлен" value={user.updatedAt || "—"} />

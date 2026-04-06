@@ -287,6 +287,22 @@ export type AdminUsersQuery = {
   sortDir?: "asc" | "desc";
 };
 
+const normalizeAdminRole = (role?: string | null) => {
+  const normalized = String(role ?? "").toUpperCase();
+  if (normalized === "LOCATION") return "LOCATION_OWNER";
+  return normalized || "CUSTOMER";
+};
+
+const normalizeAdminUser = (user: AdminUser): AdminUser => ({
+  ...user,
+  role: normalizeAdminRole(user.role),
+  photoUrls: Array.isArray(user.photoUrls) ? user.photoUrls.filter(Boolean) : [],
+  hasPhoto:
+    typeof user.hasPhoto === "boolean"
+      ? user.hasPhoto
+      : Boolean(user.mainPhotoUrl || user.photoUrls?.length),
+});
+
 const toComparable = (value: unknown): string | number => {
   if (value === null || value === undefined) return "";
   if (typeof value === "number") return value;
@@ -400,7 +416,10 @@ export async function getAdminUsers(params: AdminUsersQuery) {
       params,
     });
     if (data && Array.isArray(data.content)) {
-      return data;
+      return {
+        ...data,
+        content: data.content.map(normalizeAdminUser),
+      };
     }
     throw new Error("Unexpected admin users page shape");
   } catch {
@@ -417,7 +436,13 @@ export async function getAdminUsers(params: AdminUsersQuery) {
         }
       );
       if (Array.isArray(data)) {
-        const filtered = filterUsers(data, params.role, params.query, params.visibility);
+        const normalizedUsers = data.map(normalizeAdminUser);
+        const filtered = filterUsers(
+          normalizedUsers,
+          params.role,
+          params.query,
+          params.visibility
+        );
         const sorted = sortUsers(
           filtered,
           params.sortBy ?? "createdAt",
@@ -426,7 +451,13 @@ export async function getAdminUsers(params: AdminUsersQuery) {
         return paginateUsers(sorted, params.page, params.size);
       }
       if (data && Array.isArray(data.content)) {
-        const filtered = filterUsers(data.content, params.role, params.query, params.visibility);
+        const normalizedUsers = data.content.map(normalizeAdminUser);
+        const filtered = filterUsers(
+          normalizedUsers,
+          params.role,
+          params.query,
+          params.visibility
+        );
         const sorted = sortUsers(
           filtered,
           params.sortBy ?? "createdAt",
@@ -443,10 +474,12 @@ export async function getAdminUsers(params: AdminUsersQuery) {
       getAdminCustomers().catch(() => [] as AdminCustomerUser[]),
     ]);
 
-    const performerUsers = performers.map(performerToAdminUser);
+    const performerUsers = performers.map((performer) =>
+      normalizeAdminUser(performerToAdminUser(performer))
+    );
     const customerUsers: AdminUser[] = customers.map((user) => ({
       id: user.id,
-      role: user.role || "CUSTOMER",
+      role: normalizeAdminRole(user.role),
       email: user.email ?? user.contactEmail ?? null,
       phone: user.phone ?? user.contactPhone ?? null,
       city: user.city ?? null,
@@ -472,14 +505,14 @@ export async function getAdminUsers(params: AdminUsersQuery) {
       published: null,
       active: true,
       banned: false,
-    }));
+    })).map(normalizeAdminUser);
 
     const mergedById = new Map<number, AdminUser>();
     [...performerUsers, ...customerUsers].forEach((user) => {
       mergedById.set(user.id, { ...(mergedById.get(user.id) || {}), ...user });
     });
 
-    const merged = Array.from(mergedById.values());
+    const merged = Array.from(mergedById.values()).map(normalizeAdminUser);
     const filtered = filterUsers(merged, params.role, params.query, params.visibility);
     const sorted = sortUsers(
       filtered,

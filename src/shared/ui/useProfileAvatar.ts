@@ -50,15 +50,12 @@ export const pickProfilePhoto = (
 ) => {
   if (!profile) return null;
 
+  if (profile.mainPhotoUrl) return profile.mainPhotoUrl;
+
   if ("photoUrls" in profile && Array.isArray(profile.photoUrls)) {
-    if (profile.photoUrls.length === 0) return null;
-    if (profile.mainPhotoUrl && profile.photoUrls.includes(profile.mainPhotoUrl)) {
-      return profile.mainPhotoUrl;
-    }
     return profile.photoUrls[0] || null;
   }
 
-  if (profile.mainPhotoUrl) return profile.mainPhotoUrl;
   return null;
 };
 
