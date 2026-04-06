@@ -9,6 +9,7 @@ import {
   unbanAdminUser,
   type AdminUser,
 } from "@/api/admin";
+import { getProfile } from "@/api/profile";
 
 export type AdminUsersFilters = {
   page: number;
@@ -22,12 +23,62 @@ export type AdminUsersFilters = {
 
 const USERS_QUERY_KEY = "admin-users";
 
+const canHavePerformerProfile = (role?: string) =>
+  role === "ACTOR" || role === "CREATOR" || role === "LOCATION_OWNER" || role === "LOCATION";
+
+const enrichAdminUsers = async (users: AdminUser[]) => {
+  const enriched = await Promise.all(
+    users.map(async (user) => {
+      if (!canHavePerformerProfile(user.role)) return user;
+      if (user.mainPhotoUrl || (Array.isArray(user.photoUrls) && user.photoUrls.length > 0)) {
+        return user;
+      }
+
+      try {
+        const profile = await getProfile(user.id);
+        return {
+          ...user,
+          role:
+            profile.type === "LOCATION"
+              ? "LOCATION_OWNER"
+              : profile.type === "ACTOR"
+              ? "ACTOR"
+              : "CREATOR",
+          city: profile.city ?? user.city ?? null,
+          description: profile.description ?? user.description ?? null,
+          firstName: profile.firstName ?? user.firstName ?? null,
+          lastName: profile.lastName ?? user.lastName ?? null,
+          displayName: profile.displayName ?? user.displayName ?? null,
+          contactPhone: profile.contactPhone ?? user.contactPhone ?? null,
+          contactEmail: profile.contactEmail ?? user.contactEmail ?? null,
+          contactTelegram: profile.contactTelegram ?? user.contactTelegram ?? null,
+          contactWhatsapp: profile.contactWhatsapp ?? user.contactWhatsapp ?? null,
+          mainPhotoUrl: profile.mainPhotoUrl ?? user.mainPhotoUrl ?? null,
+          photoUrls: profile.photoUrls ?? user.photoUrls ?? [],
+          published: profile.published ?? user.published ?? null,
+          hasPhoto: Boolean(profile.mainPhotoUrl || profile.photoUrls?.length || user.hasPhoto),
+        } satisfies AdminUser;
+      } catch {
+        return user;
+      }
+    })
+  );
+
+  return enriched;
+};
+
 export function useAdminUsersData(filters: AdminUsersFilters) {
   const queryClient = useQueryClient();
 
   const usersQuery = useQuery({
     queryKey: [USERS_QUERY_KEY, filters],
-    queryFn: () => getAdminUsers(filters),
+    queryFn: async () => {
+      const page = await getAdminUsers(filters);
+      return {
+        ...page,
+        content: await enrichAdminUsers(page.content ?? []),
+      };
+    },
   });
 
   const refreshUsers = async () => {
