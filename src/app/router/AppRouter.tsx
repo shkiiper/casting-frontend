@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -7,103 +7,104 @@ import {
   useLocation,
 } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { lazyWithRetry } from "./lazyWithRetry";
 import { markUserActivity } from "@/shared/lib/activityTracker";
 
-const LoginPage = lazy(() =>
+const LoginPage = lazyWithRetry(() =>
   import("../../features/auth/LoginPage").then((m) => ({ default: m.LoginPage }))
 );
-const RegisterPage = lazy(() =>
+const RegisterPage = lazyWithRetry(() =>
   import("../../features/auth/RegisterPage").then((m) => ({
     default: m.RegisterPage,
   }))
 );
-const CheckEmailPage = lazy(() =>
+const CheckEmailPage = lazyWithRetry(() =>
   import("../../pages/auth/CheckEmailPage").then((m) => ({
     default: m.CheckEmailPage,
   }))
 );
-const VerifyEmailPage = lazy(() =>
+const VerifyEmailPage = lazyWithRetry(() =>
   import("../../pages/auth/VerifyEmailPage").then((m) => ({
     default: m.VerifyEmailPage,
   }))
 );
-const ResetPasswordPage = lazy(() =>
+const ResetPasswordPage = lazyWithRetry(() =>
   import("../../pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
   }))
 );
-const HomePage = lazy(() =>
+const HomePage = lazyWithRetry(() =>
   import("../../pages/landing/HomePage").then((m) => ({ default: m.HomePage }))
 );
-const CatalogPage = lazy(() =>
+const CatalogPage = lazyWithRetry(() =>
   import("../../pages/catalog/CatalogPage").then((m) => ({
     default: m.CatalogPage,
   }))
 );
-const ProfileDetailsPage = lazy(() =>
+const ProfileDetailsPage = lazyWithRetry(() =>
   import("../../pages/catalog/ProfileDetailsPage").then((m) => ({
     default: m.ProfileDetailsPage,
   }))
 );
-const AccountPage = lazy(() =>
+const AccountPage = lazyWithRetry(() =>
   import("../../pages/account/AccountPage").then((m) => ({
     default: m.AccountPage,
   }))
 );
-const AccountLayout = lazy(() =>
+const AccountLayout = lazyWithRetry(() =>
   import("../../pages/account/AccountLayout").then((m) => ({
     default: m.AccountLayout,
   }))
 );
-const CastingApplicationsPage = lazy(() =>
+const CastingApplicationsPage = lazyWithRetry(() =>
   import("../../pages/account/CastingApplicationsPage").then((m) => ({
     default: m.CastingApplicationsPage,
   }))
 );
-const CustomerCastingResponsesPage = lazy(() =>
+const CustomerCastingResponsesPage = lazyWithRetry(() =>
   import("../../pages/account/CustomerCastingResponsesPage").then((m) => ({
     default: m.CustomerCastingResponsesPage,
   }))
 );
-const CustomerMyCastingsPage = lazy(() =>
+const CustomerMyCastingsPage = lazyWithRetry(() =>
   import("../../pages/account/CustomerMyCastingsPage").then((m) => ({
     default: m.CustomerMyCastingsPage,
   }))
 );
-const AdsPage = lazy(() =>
+const AdsPage = lazyWithRetry(() =>
   import("../../pages/ads/AdsPage").then((m) => ({ default: m.AdsPage }))
 );
-const PublishedAdsPage = lazy(() =>
+const PublishedAdsPage = lazyWithRetry(() =>
   import("../../pages/ads/PublishedAdsPage").then((m) => ({
     default: m.PublishedAdsPage,
   }))
 );
-const AdminPage = lazy(() =>
+const AdminPage = lazyWithRetry(() =>
   import("../../pages/admin/AdminPage").then((m) => ({
     default: m.AdminPage,
   }))
 );
-const AdminUsersPage = lazy(() =>
+const AdminUsersPage = lazyWithRetry(() =>
   import("../../pages/admin/AdminUsersPage").then((m) => ({
     default: m.AdminUsersPage,
   }))
 );
-const PaymentStatusPage = lazy(() =>
+const PaymentStatusPage = lazyWithRetry(() =>
   import("../../pages/payment/PaymentStatusPage").then((m) => ({
     default: m.PaymentStatusPage,
   }))
 );
-const LegalPage = lazy(() =>
+const LegalPage = lazyWithRetry(() =>
   import("../../pages/public/LegalPage").then((m) => ({
     default: m.LegalPage,
   }))
 );
-const PaymentInfoPage = lazy(() =>
+const PaymentInfoPage = lazyWithRetry(() =>
   import("../../pages/public/PaymentInfoPage").then((m) => ({
     default: m.PaymentInfoPage,
   }))
 );
-const ContactsPage = lazy(() =>
+const ContactsPage = lazyWithRetry(() =>
   import("../../pages/public/ContactsPage").then((m) => ({
     default: m.ContactsPage,
   }))

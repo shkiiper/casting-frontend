@@ -255,6 +255,7 @@ export const CatalogPage = () => {
   const [filters, setFilters] = useState<Filters>(() => initialState.filters);
   const [page, setPage] = useState(() => initialState.page);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const effectiveTab = routeTab ?? filters.tab;
 
   useEffect(() => {
     setFilters((prev) => {
@@ -288,7 +289,7 @@ export const CatalogPage = () => {
 
   const serverFilters = useMemo(
     () => ({
-      tab: filters.tab,
+      tab: effectiveTab,
       city: filters.city,
       minAge: filters.minAge,
       maxAge: filters.maxAge,
@@ -301,7 +302,7 @@ export const CatalogPage = () => {
       maxRentPrice: filters.maxRentPrice,
     }),
     [
-      filters.tab,
+      effectiveTab,
       filters.city,
       filters.minAge,
       filters.maxAge,
@@ -599,13 +600,13 @@ export const CatalogPage = () => {
                   {shareNotice ? <span className="text-emerald-700">{shareNotice}</span> : null}
                 </div>
 
-                {filters.tab !== 'ALL' && (
+                {effectiveTab !== 'ALL' && (
                   <div className="mt-4 border-t border-white/60 pt-3">
                     <div className="text-xs font-semibold tracking-wide uppercase text-slate-500">
                       Параметры категории
                     </div>
 
-                    {filters.tab === 'ACTOR' && (
+                    {effectiveTab === 'ACTOR' && (
                       <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                         <div>
                           <label className="text-xs text-slate-500">Возраст от</label>
@@ -721,7 +722,7 @@ export const CatalogPage = () => {
                       </div>
                     )}
 
-                    {filters.tab === 'CREATOR' && (
+                    {effectiveTab === 'CREATOR' && (
                       <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                         <div className="lg:col-span-2">
                           <label className="text-xs text-slate-500">Тип деятельности</label>
@@ -755,7 +756,7 @@ export const CatalogPage = () => {
                       </div>
                     )}
 
-                    {filters.tab === 'LOCATION' && (
+                    {effectiveTab === 'LOCATION' && (
                       <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
                           <label className="text-xs text-slate-500">Аренда от</label>
