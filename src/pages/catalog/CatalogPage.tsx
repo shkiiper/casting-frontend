@@ -139,17 +139,6 @@ const readCatalogState = (routeTab: Tab | null, search: string) => {
   const searchParams = new URLSearchParams(search);
   const hasSearchState = Array.from(searchParams.keys()).length > 0;
 
-  const fromStorage = !hasSearchState
-    ? (() => {
-        try {
-          const raw = localStorage.getItem(CATALOG_FILTERS_STORAGE_KEY);
-          return raw ? (JSON.parse(raw) as { filters?: Partial<Filters>; page?: number }) : null;
-        } catch {
-          return null;
-        }
-      })()
-    : null;
-
   const sourceFilters = hasSearchState
     ? {
         tab: (searchParams.get('tab') as Tab | null) ?? undefined,
@@ -165,11 +154,11 @@ const readCatalogState = (routeTab: Tab | null, search: string) => {
         minRentPrice: searchParams.get('minRentPrice') ?? undefined,
         maxRentPrice: searchParams.get('maxRentPrice') ?? undefined,
       }
-    : fromStorage?.filters ?? {};
+    : {};
 
   const pageCandidate = hasSearchState
     ? Number(searchParams.get('page') ?? '0')
-    : Number(fromStorage?.page ?? 0);
+    : 0;
 
   const normalizedFilters: Filters = {
     ...defaults,
@@ -445,6 +434,13 @@ export const CatalogPage = () => {
   const isLoading = query.isLoading;
   const isError = query.isError;
 
+  useEffect(() => {
+    const totalPages = query.data?.totalPages ?? 0;
+    if (totalPages > 0 && page >= totalPages) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, query.data?.totalPages]);
+
   const filtered = useMemo(() => {
     const s = filters.search.trim().toLowerCase();
     if (!s) return data;
@@ -584,7 +580,6 @@ export const CatalogPage = () => {
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
-                  <span>Фильтры сохраняются автоматически.</span>
                   <button
                     type="button"
                     onClick={async () => {
