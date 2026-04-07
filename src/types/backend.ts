@@ -15,6 +15,7 @@ export interface ProfileResponse {
   gender?: 'MALE' | 'FEMALE' | 'OTHER';
   mainPhotoUrl?: string;
   photoUrls?: string[];
+  portfolioPhotoUrls?: string[];
   videoUrls?: string[];
   description?: string;
   contactPhone?: string;

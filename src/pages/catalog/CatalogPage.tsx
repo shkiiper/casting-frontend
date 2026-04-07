@@ -111,6 +111,8 @@ const RENT_PRICE_OPTIONS = [
 ];
 const CATALOG_FILTERS_STORAGE_KEY = 'catalog-filters:v1';
 
+const normalizePageContent = <T,>(value: unknown): T[] => (Array.isArray(value) ? value : []);
+
 const createDefaultFilters = (tab: Tab): Filters => ({
   tab,
   city: '',
@@ -265,13 +267,17 @@ export const CatalogPage = () => {
       navigate({ pathname: location.pathname, search: nextSearch }, { replace: true });
     }
 
-    localStorage.setItem(
-      CATALOG_FILTERS_STORAGE_KEY,
-      JSON.stringify({
-        filters,
-        page,
-      })
-    );
+    try {
+      localStorage.setItem(
+        CATALOG_FILTERS_STORAGE_KEY,
+        JSON.stringify({
+          filters,
+          page,
+        })
+      );
+    } catch (error) {
+      console.warn('Unable to persist catalog filters', error);
+    }
   }, [filters, page, routeTab, location.pathname, location.search, navigate]);
 
   const serverFilters = useMemo(
@@ -359,7 +365,11 @@ export const CatalogPage = () => {
         const creators = c.status === 'fulfilled' ? (c.value.data?.content ?? []) : [];
         const locations = l.status === 'fulfilled' ? (l.value.data?.content ?? []) : [];
 
-        const merged = [...actors, ...creators, ...locations];
+        const merged = [
+          ...normalizePageContent<ProfilePublic>(actors),
+          ...normalizePageContent<ProfilePublic>(creators),
+          ...normalizePageContent<ProfilePublic>(locations),
+        ];
         const order: Record<ProfileType, number> = {
           ACTOR: 0,
           CREATOR: 1,
@@ -401,7 +411,7 @@ export const CatalogPage = () => {
       });
 
       return {
-        content: res.data?.content ?? [],
+        content: normalizePageContent<ProfilePublic>(res.data?.content),
         number: res.data?.number ?? page,
         size: res.data?.size ?? PAGE_SIZE,
         totalElements: res.data?.totalElements ?? 0,
@@ -411,7 +421,10 @@ export const CatalogPage = () => {
     },
   });
 
-  const data = useMemo(() => query.data?.content ?? [], [query.data?.content]);
+  const data = useMemo(
+    () => normalizePageContent<ProfilePublic>(query.data?.content),
+    [query.data?.content]
+  );
   const isLoading = query.isLoading;
   const isError = query.isError;
 
@@ -558,8 +571,13 @@ export const CatalogPage = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      await navigator.clipboard.writeText(window.location.href);
-                      setShareNotice('Ссылка на каталог скопирована');
+                      try {
+                        await navigator.clipboard.writeText(window.location.href);
+                        setShareNotice('Ссылка на каталог скопирована');
+                      } catch (error) {
+                        console.warn('Unable to copy catalog URL', error);
+                        setShareNotice('Не удалось скопировать ссылку');
+                      }
                       window.setTimeout(() => setShareNotice(null), 2200);
                     }}
                     className="rounded-full border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 hover:border-slate-500"

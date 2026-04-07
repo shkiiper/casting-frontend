@@ -33,6 +33,7 @@ type PublicProfile = {
   contactTelegram?: string | null;
   mainPhotoUrl?: string | null;
   photoUrls?: string[] | null;
+  portfolioPhotoUrls?: string[] | null;
   videoUrls?: string[] | null;
   minRate?: number | null;
   rateUnit?: string | null;
@@ -288,6 +289,7 @@ const deriveCreatorExperience = (profile?: PublicProfile | null) => {
 const normalizeProfile = (profile: PublicProfile): PublicProfile => ({
   ...profile,
   photoUrls: Array.isArray(profile.photoUrls) ? profile.photoUrls : [],
+  portfolioPhotoUrls: Array.isArray(profile.portfolioPhotoUrls) ? profile.portfolioPhotoUrls : [],
   videoUrls: Array.isArray(profile.videoUrls) ? profile.videoUrls : [],
   skills: parseSkillsValue(profile.skillsJson).length
     ? parseSkillsValue(profile.skillsJson)
@@ -350,6 +352,7 @@ export const ProfileDetailsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [activePhoto, setActivePhoto] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [portfolioLightboxUrl, setPortfolioLightboxUrl] = useState<string | null>(null);
   const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
   const [videoModalTitle, setVideoModalTitle] = useState<string>("");
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -443,6 +446,7 @@ export const ProfileDetailsPage = () => {
   const galleryPhotos = photos.slice(0, 5);
   const sidePhotos = galleryPhotos.slice(1, 5);
   const videoList = (profile?.videoUrls ?? []).slice(0, 3);
+  const portfolioPhotos = (profile?.portfolioPhotoUrls ?? []).slice(0, 8);
   const showPrev = () => {
     if (!photos.length) return;
     setActivePhoto((prev) => (prev - 1 + photos.length) % photos.length);
@@ -797,6 +801,32 @@ export const ProfileDetailsPage = () => {
                           <EmptyBlock text="Видеоматериалы пока не добавлены" />
                         )}
                       </div>
+
+                      {profile.type === "CREATOR" ? (
+                        <>
+                          <SectionTitle title="Портфолио" />
+                          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                            {portfolioPhotos.length > 0 ? (
+                              portfolioPhotos.map((url, index) => (
+                                <button
+                                  key={`${url}-${index}`}
+                                  type="button"
+                                  onClick={() => setPortfolioLightboxUrl(resolveMediaUrl(url))}
+                                  className="overflow-hidden rounded-2xl border border-black/10 bg-slate-200 aspect-square"
+                                >
+                                  <img
+                                    src={resolveMediaUrl(url) ?? undefined}
+                                    alt={`Портфолио ${index + 1}`}
+                                    className="h-full w-full object-cover"
+                                  />
+                                </button>
+                              ))
+                            ) : (
+                              <EmptyBlock text="Портфолио пока не добавлено" />
+                            )}
+                          </div>
+                        </>
+                      ) : null}
                     </div>
 
                     <aside className="space-y-6">
@@ -865,6 +895,31 @@ export const ProfileDetailsPage = () => {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {portfolioLightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4"
+          onClick={() => setPortfolioLightboxUrl(null)}
+        >
+          <div
+            className="relative flex h-full w-full max-w-6xl items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={portfolioLightboxUrl}
+              alt="Портфолио"
+              className="max-h-full max-w-full rounded-xl object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => setPortfolioLightboxUrl(null)}
+              className="absolute right-2 top-2 h-9 w-9 rounded-full bg-white/90 text-slate-900"
+            >
+              ✕
+            </button>
           </div>
         </div>
       )}

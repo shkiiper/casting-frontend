@@ -115,6 +115,7 @@ type CreatorProfile = {
   contactTelegram?: string | null;
   socialLinksJson?: string | null;
   photoUrls?: string[] | null;
+  portfolioPhotoUrls?: string[] | null;
   videoUrls?: string[] | null;
   premiumActive?: boolean | null;
   premiumExpiresAt?: string | null;
@@ -146,6 +147,7 @@ type CreatorProfileForm = {
   websiteUrl: string;
   instagramUrl: string;
   photoUrls: string[];
+  portfolioPhotoUrls: string[];
   videoUrls: string[];
 };
 
@@ -309,7 +311,10 @@ export const CreatorProfilePage = () => {
     }, timeout);
   };
 
-  const uploadFiles = async (files: File[], type: "photo" | "video") => {
+  const uploadFiles = async (
+    files: File[],
+    type: "photo" | "video" | "portfolio"
+  ) => {
     try {
       const currentForm = currentFormRef.current;
       if (!currentForm) return;
@@ -318,7 +323,7 @@ export const CreatorProfilePage = () => {
 
       for (const file of files) {
         const preparedFile =
-          type === "photo"
+          type === "photo" || type === "portfolio"
             ? await preparePhotoFile(file)
             : (assertVideoSize(file), file);
         const fd = new FormData();
@@ -331,9 +336,14 @@ export const CreatorProfilePage = () => {
         type === "photo"
           ? mergeUniqueUrls(currentForm.photoUrls, uploaded, { maxItems: 20 })
           : currentForm.photoUrls;
+      const nextPortfolioPhotoUrls =
+        type === "portfolio"
+          ? mergeUniqueUrls(currentForm.portfolioPhotoUrls, uploaded, { maxItems: 20 })
+          : currentForm.portfolioPhotoUrls;
       const nextForm = {
         ...currentForm,
         photoUrls: nextPhotoUrls,
+        portfolioPhotoUrls: nextPortfolioPhotoUrls,
         videoUrls:
           type === "video"
             ? mergeUniqueUrls(currentForm.videoUrls, uploaded, { maxItems: 12 })
@@ -346,10 +356,17 @@ export const CreatorProfilePage = () => {
 
       currentFormRef.current = nextForm;
       setForm(nextForm);
-      await saveProfile(nextForm, type === "photo" ? "Фото сохранены" : "Видео сохранены");
+      await saveProfile(
+        nextForm,
+        type === "photo"
+          ? "Фото сохранены"
+          : type === "portfolio"
+          ? "Портфолио сохранено"
+          : "Видео сохранены"
+      );
     } catch (error: unknown) {
       if (getErrorStatus(error) !== 401) {
-        setError(getUploadErrorMessage(error, type));
+        setError(getUploadErrorMessage(error, type === "video" ? "video" : "photo"));
       }
     }
   };
@@ -614,6 +631,27 @@ export const CreatorProfilePage = () => {
                     currentFormRef.current = nextForm;
                     setForm(nextForm);
                     void saveProfile(nextForm, "Видео сохранены");
+                  }}
+                />
+
+                <MediaSection
+                  title="Портфолио"
+                  urls={form.portfolioPhotoUrls}
+                  accept={PHOTO_TYPES.join(",")}
+                  hint={PHOTO_UPLOAD_HINT}
+                  showModerationWarning={showModerationWarning}
+                  onDismissModerationWarning={() => setShowModerationWarning(false)}
+                  onAdd={(files) => uploadFiles(files, "portfolio")}
+                  onRemove={(url) => {
+                    const currentForm = currentFormRef.current;
+                    if (!currentForm) return;
+                    const nextForm = {
+                      ...currentForm,
+                      portfolioPhotoUrls: currentForm.portfolioPhotoUrls.filter((u) => u !== url),
+                    };
+                    currentFormRef.current = nextForm;
+                    setForm(nextForm);
+                    void saveProfile(nextForm, "Портфолио сохранено");
                   }}
                 />
 
@@ -1264,6 +1302,7 @@ const emptyForm = (): CreatorProfileForm => ({
   websiteUrl: "",
   instagramUrl: "",
   photoUrls: [],
+  portfolioPhotoUrls: [],
   videoUrls: [],
 });
 
@@ -1293,6 +1332,7 @@ const mapToForm = (p: CreatorProfile): CreatorProfileForm => {
     websiteUrl: links.websiteUrl,
     instagramUrl: links.instagramUrl,
     photoUrls: mergeUniqueUrls([], p.photoUrls ?? [], { maxItems: 20 }),
+    portfolioPhotoUrls: mergeUniqueUrls([], p.portfolioPhotoUrls ?? [], { maxItems: 20 }),
     videoUrls: mergeUniqueUrls([], p.videoUrls ?? [], { maxItems: 12 }),
   };
 };
@@ -1387,6 +1427,7 @@ const normalize = (f: CreatorProfileForm) => {
           })
         : null,
     photoUrls: mergeUniqueUrls([], f.photoUrls, { maxItems: 20 }),
+    portfolioPhotoUrls: mergeUniqueUrls([], f.portfolioPhotoUrls, { maxItems: 20 }),
     videoUrls: mergeUniqueUrls([], f.videoUrls, { maxItems: 12 }),
   };
 };

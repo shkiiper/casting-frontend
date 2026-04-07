@@ -11,6 +11,7 @@ export interface ProfileResponse {
 
   mainPhotoUrl?: string | null;
   photoUrls?: string[] | null;
+  portfolioPhotoUrls?: string[] | null;
   videoUrls?: string[] | null;
 
   description?: string | null;
