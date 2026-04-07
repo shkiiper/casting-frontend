@@ -112,6 +112,11 @@ const RENT_PRICE_OPTIONS = [
 const CATALOG_FILTERS_STORAGE_KEY = 'catalog-filters:v1';
 
 const normalizePageContent = <T,>(value: unknown): T[] => (Array.isArray(value) ? value : []);
+const toFilterString = (value: unknown) => (typeof value === 'string' ? value : '');
+const toTabValue = (value: unknown, fallback: Tab): Tab =>
+  value === 'ALL' || value === 'ACTOR' || value === 'CREATOR' || value === 'LOCATION'
+    ? value
+    : fallback;
 
 const createDefaultFilters = (tab: Tab): Filters => ({
   tab,
@@ -166,12 +171,24 @@ const readCatalogState = (routeTab: Tab | null, search: string) => {
     ? Number(searchParams.get('page') ?? '0')
     : Number(fromStorage?.page ?? 0);
 
+  const normalizedFilters: Filters = {
+    ...defaults,
+    tab: toTabValue(routeTab ?? sourceFilters.tab, defaults.tab),
+    city: toFilterString(sourceFilters.city),
+    search: toFilterString(sourceFilters.search),
+    minAge: toFilterString(sourceFilters.minAge),
+    maxAge: toFilterString(sourceFilters.maxAge),
+    gender: toFilterString(sourceFilters.gender),
+    ethnicity: toFilterString(sourceFilters.ethnicity),
+    minRate: toFilterString(sourceFilters.minRate),
+    maxRate: toFilterString(sourceFilters.maxRate),
+    activityType: toFilterString(sourceFilters.activityType),
+    minRentPrice: toFilterString(sourceFilters.minRentPrice),
+    maxRentPrice: toFilterString(sourceFilters.maxRentPrice),
+  };
+
   return {
-    filters: {
-      ...defaults,
-      ...sourceFilters,
-      tab: routeTab ?? sourceFilters.tab ?? defaults.tab,
-    },
+    filters: normalizedFilters,
     page: Number.isFinite(pageCandidate) && pageCandidate >= 0 ? pageCandidate : 0,
   };
 };

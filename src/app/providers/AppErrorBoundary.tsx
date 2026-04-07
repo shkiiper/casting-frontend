@@ -35,8 +35,8 @@ export class AppErrorBoundary extends Component<Props, State> {
             </div>
             <h1 className="text-2xl font-bold">Страница временно не загрузилась</h1>
             <p className="text-sm leading-6 text-slate-600">
-              Мы поймали ошибку интерфейса до того, как она превратилась в белый экран.
-              Попробуйте перезагрузить страницу.
+              Попробуйте обновить страницу. Если проблема повторится, мы уже записали
+              ошибку в консоль браузера для диагностики.
             </p>
             <button
               type="button"
