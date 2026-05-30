@@ -5,6 +5,7 @@ import {
   deleteAdminUser,
   getAdminUsers,
   notifyAdminUserMissingPhoto,
+  resendAdminUserVerificationCode,
   setAdminUserProfileVisibility,
   unbanAdminUser,
   type AdminUser,
@@ -83,6 +84,16 @@ export function useAdminUsersData(filters: AdminUsersFilters) {
     },
   });
 
+  const resendVerificationCodeMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      await resendAdminUserVerificationCode(userId);
+      return userId;
+    },
+    onSuccess: async () => {
+      await refreshUsers();
+    },
+  });
+
   return {
     usersQuery,
     banToggleUser: banToggleMutation.mutateAsync,
@@ -90,6 +101,7 @@ export function useAdminUsersData(filters: AdminUsersFilters) {
     updateVisibility: visibilityMutation.mutateAsync,
     deleteUser: deleteUserMutation.mutateAsync,
     notifyMissingPhoto: notifyMissingPhotoMutation.mutateAsync,
+    resendVerificationCode: resendVerificationCodeMutation.mutateAsync,
     refetchUsers: usersQuery.refetch,
   };
 }

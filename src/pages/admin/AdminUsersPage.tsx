@@ -35,7 +35,15 @@ export const AdminUsersPage = () => {
   const [processingId, setProcessingId] = useState<number | null>(null);
 
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
-  const { usersQuery, banToggleUser, deactivateUser, updateVisibility, deleteUser, notifyMissingPhoto } =
+  const {
+    usersQuery,
+    banToggleUser,
+    deactivateUser,
+    updateVisibility,
+    deleteUser,
+    notifyMissingPhoto,
+    resendVerificationCode,
+  } =
     useAdminUsersData({
       page,
       size: PAGE_SIZE,
@@ -198,6 +206,29 @@ export const AdminUsersPage = () => {
       showToast("Напоминание о фото отправлено");
     } catch (error: unknown) {
       setError(getApiErrorMessage(error, "Не удалось отправить напоминание о фото"));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const onResendVerificationCode = async (user: AdminUser) => {
+    if (user.emailVerified === true) {
+      setError("Email пользователя уже подтверждён");
+      return;
+    }
+
+    if (!user.email && !user.contactEmail) {
+      setError("У пользователя нет email для отправки кода");
+      return;
+    }
+
+    try {
+      setProcessingId(user.id);
+      setError(null);
+      await resendVerificationCode(user.id);
+      showToast("Код подтверждения отправлен");
+    } catch (error: unknown) {
+      setError(getApiErrorMessage(error, "Не удалось отправить код подтверждения"));
     } finally {
       setProcessingId(null);
     }
@@ -435,6 +466,16 @@ export const AdminUsersPage = () => {
                               className="rounded-lg px-3 py-1.5 text-xs border border-sky-300 text-sky-700 disabled:opacity-60"
                             >
                               Напомнить о фото
+                            </button>
+                          ) : null}
+                          {user.emailVerified === false ? (
+                            <button
+                              type="button"
+                              disabled={processingId === user.id}
+                              onClick={() => void onResendVerificationCode(user)}
+                              className="rounded-lg px-3 py-1.5 text-xs border border-indigo-300 text-indigo-700 disabled:opacity-60"
+                            >
+                              Отправить код
                             </button>
                           ) : null}
                           <button

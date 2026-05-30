@@ -46,6 +46,7 @@ import {
   sanitizeTelegram,
   toOptionalNumber,
   trimMultilineToNull,
+  trimMultilineToString,
   trimToNull,
 } from "@/shared/lib/safety";
 
@@ -1408,8 +1409,8 @@ const normalize = (f: CreatorProfileForm) => {
     lastName: trimToNull(f.lastName, 80),
     city: trimToNull(f.city, 120),
     mainPhotoUrl: trimToNull(f.mainPhotoUrl || f.photoUrls[0], 1500),
-    description: trimMultilineToNull(f.description, 2000),
-    bio: trimMultilineToNull(f.bio, 4000),
+    description: trimMultilineToString(f.description, 2000),
+    bio: trimMultilineToString(f.bio, 4000),
     experienceText: trimMultilineToNull(experienceText, 5000),
     activityType: activityTypes.length ? activityTypes.join(", ") : null,
     activityTypes: activityTypes.length ? activityTypes : null,

@@ -16,6 +16,11 @@ export const trimMultilineToNull = (value: unknown, maxLength = MAX_DEFAULT_TEXT
   return trimmed.slice(0, maxLength);
 };
 
+export const trimMultilineToString = (value: unknown, maxLength = MAX_DEFAULT_TEXT) => {
+  if (typeof value !== "string") return "";
+  return value.trim().slice(0, maxLength);
+};
+
 export const toOptionalNumber = (
   value: unknown,
   { min, max, integer = false }: { min?: number; max?: number; integer?: boolean } = {}

@@ -24,6 +24,12 @@ body {
   font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+@media (max-width: 1023px) {
+  body.has-mobile-app-nav {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+
 /* marquee */
 @keyframes marquee {
   0% { transform: translateX(0); }

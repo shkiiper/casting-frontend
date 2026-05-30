@@ -539,6 +539,10 @@ export async function notifyAdminUserMissingPhoto(userId: number) {
   await api.post(`/api/admin/users/${userId}/notify-missing-photo`);
 }
 
+export async function resendAdminUserVerificationCode(userId: number) {
+  await api.post(`/api/admin/users/${userId}/resend-verification-code`);
+}
+
 export async function setAdminUserProfileVisibility(
   userId: number,
   published: boolean

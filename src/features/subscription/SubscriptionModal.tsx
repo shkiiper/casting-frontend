@@ -46,9 +46,7 @@ export function SubscriptionModal({
 
     getCustomerPlans()
       .then((list) => {
-        const normalizedPlans = Array.isArray(list) ? list.filter((item) => item?.id) : [];
-        const activePlans = normalizedPlans.filter((plan) => plan.active);
-        const visiblePlans = activePlans.length ? activePlans : normalizedPlans;
+        const visiblePlans = getVisibleCustomerPlans(list);
         setPlans(visiblePlans);
         setSelectedPlanId(visiblePlans[0]?.id ?? null);
       })
@@ -204,3 +202,9 @@ export function SubscriptionModal({
     </div>
   );
 }
+
+const getVisibleCustomerPlans = (list: CustomerPlanResponse[]) => {
+  const normalizedPlans = Array.isArray(list) ? list.filter((item) => item?.id) : [];
+  const activePlans = normalizedPlans.filter((plan) => plan.active);
+  return activePlans.length ? activePlans : normalizedPlans;
+};

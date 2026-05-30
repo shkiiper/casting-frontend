@@ -1,5 +1,5 @@
 import { FormEvent, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../../api/auth";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { getApiErrorMessage, trimToNull } from "@/shared/lib/safety";
@@ -7,9 +7,11 @@ import "./ResetPasswordPage.css";
 
 export function ResetPasswordPage() {
   const [params] = useSearchParams();
+  const routeParams = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
-  const token = params.get("token") || "";
+  const token = resolveResetToken(params, routeParams.token, location.hash);
 
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,7 +52,7 @@ export function ResetPasswordPage() {
       <div className="reset-card relative z-10">
         <h1 className="reset-title">Новый пароль</h1>
         {!token ? (
-          <div className="reset-error">В ссылке нет token</div>
+          <div className="reset-error">Ссылка для сброса пароля некорректна или устарела.</div>
         ) : (
           <form className="reset-form" onSubmit={onSubmit}>
             <label className="reset-label">
@@ -89,3 +91,21 @@ export function ResetPasswordPage() {
     </div>
   );
 }
+
+const resolveResetToken = (
+  params: URLSearchParams,
+  routeToken: string | undefined,
+  hash: string
+) => {
+  const hashParams = new URLSearchParams(hash.replace(/^#\/?/, "").split("?").pop() ?? "");
+  return (
+    params.get("token") ||
+    params.get("resetToken") ||
+    params.get("code") ||
+    hashParams.get("token") ||
+    hashParams.get("resetToken") ||
+    hashParams.get("code") ||
+    routeToken ||
+    ""
+  );
+};

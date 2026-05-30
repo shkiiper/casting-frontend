@@ -36,6 +36,7 @@ import {
   sanitizePhone,
   sanitizeTelegram,
   trimMultilineToNull,
+  trimMultilineToString,
   trimToNull,
 } from "@/shared/lib/safety";
 
@@ -244,7 +245,7 @@ export const CustomerAccountPage = () => {
         "/api/customer/me",
         {
           displayName: trimToNull(formToSave.displayName, 120),
-          description: trimMultilineToNull(formToSave.description, 2000),
+          description: trimMultilineToString(formToSave.description, 2000),
           city: trimToNull(formToSave.city, 120),
           contactPhone: sanitizePhone(formToSave.contactPhone),
           contactEmail: sanitizeEmail(formToSave.contactEmail),

@@ -1,5 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
+import {
+  Clapperboard,
+  Home,
+  MapPin,
+  Shield,
+  Sparkles,
+  UsersRound,
+} from "lucide-react";
 import { useSession } from "@/entities/user/model/authStore";
 import { resolveMediaUrl, useProfileAvatar } from "@/shared/ui/useProfileAvatar";
 
@@ -32,7 +40,6 @@ export const InlineNav = ({
   const { avatarUrl, isAuthed } = useProfileAvatar();
   const { isAdmin, logout } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
   const effectiveProfileMenu =
     profileMenu ??
@@ -78,9 +85,14 @@ export const InlineNav = ({
   }, []);
 
   useEffect(() => {
-    setMobileNavOpen(false);
     setMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    document.body.classList.add("has-mobile-app-nav");
+    return () => document.body.classList.remove("has-mobile-app-nav");
+  }, []);
+
   const resolvedActive: ActiveKey | undefined =
     active ??
     (location.pathname.startsWith("/ads")
@@ -107,10 +119,20 @@ export const InlineNav = ({
         {label}
       </Link>
     );
+  const mobileItems = [
+    { key: "home" as ActiveKey, label: "Главная", to: "/", icon: Home },
+    { key: "actors" as ActiveKey, label: "Актёры", to: "/actors", icon: UsersRound },
+    { key: "creators" as ActiveKey, label: "Креаторы", to: "/creators", icon: Sparkles },
+    { key: "locations" as ActiveKey, label: "Локации", to: "/locations", icon: MapPin },
+    isAdmin
+      ? { key: "admin" as ActiveKey, label: "Админ", to: "/admin", icon: Shield }
+      : { key: "ads" as ActiveKey, label: "Кастинги", to: "/ads", icon: Clapperboard },
+  ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 px-4 py-4 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:px-6 md:px-8 md:py-5">
-      <div className="flex items-center justify-between gap-4 md:gap-6">
+    <>
+    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:px-6 md:px-8 md:py-5">
+      <div className="flex items-center justify-between gap-3 md:gap-6">
         <Link to="/" className="flex items-center gap-3">
           <img src="/logo.jpeg" alt="onset" className="h-9 w-9 rounded-xl object-cover" />
           <div className="leading-tight">
@@ -195,73 +217,41 @@ export const InlineNav = ({
               </div>
             )
           )}
-          <button
-            type="button"
-            onClick={() => setMobileNavOpen((value) => !value)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 lg:hidden"
-            aria-label="Открыть навигацию"
-            aria-expanded={mobileNavOpen}
-          >
-            <span className="text-lg leading-none">{mobileNavOpen ? "✕" : "☰"}</span>
-          </button>
+          {!isAuthed ? (
+            <Link
+              to="/login"
+              className="inline-flex rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white lg:hidden"
+            >
+              Войти
+            </Link>
+          ) : null}
         </div>
       </div>
-
-      {mobileNavOpen ? (
-        <div className="mt-4 rounded-2xl border border-black/5 bg-white/90 p-4 shadow-sm lg:hidden">
-          <nav className="flex flex-col gap-3 text-sm">
-            {resolvedActive === "home" ? (
-              <span className={navItemActiveClass}>Главная</span>
-            ) : (
-              <Link to="/" className={navItemClass}>
-                Главная
-              </Link>
-            )}
-            {resolvedActive === "actors" ? (
-              <span className={navItemActiveClass}>Актёры</span>
-            ) : (
-              <Link to="/actors" className={navItemClass}>
-                Актёры
-              </Link>
-            )}
-            {resolvedActive === "creators" ? (
-              <span className={navItemActiveClass}>Креаторы</span>
-            ) : (
-              <Link to="/creators" className={navItemClass}>
-                Креаторы
-              </Link>
-            )}
-            {resolvedActive === "locations" ? (
-              <span className={navItemActiveClass}>Локации</span>
-            ) : (
-              <Link to="/locations" className={navItemClass}>
-                Локации
-              </Link>
-            )}
-            {resolvedActive === "ads" ? (
-              <span className={navItemActiveClass}>Объявления</span>
-            ) : (
-              <Link to="/ads" className={navItemClass}>
-                Объявления
-              </Link>
-            )}
-            {isAdmin ? (
-              resolvedActive === "admin" ? (
-                <span className={navItemActiveClass}>Админка</span>
-              ) : (
-                <Link to="/admin" className={navItemClass}>
-                  Админка
-                </Link>
-              )
-            ) : null}
-            {!isAuthed ? (
-              <Link to="/login" className="pt-2 font-semibold text-slate-900">
-                Войти / Регистрация
-              </Link>
-            ) : null}
-          </nav>
-        </div>
-      ) : null}
     </header>
+    <nav className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-5 rounded-[28px] border border-white/70 bg-white/[0.92] p-1.5 shadow-[0_16px_42px_rgba(15,23,42,0.18)] backdrop-blur">
+        {mobileItems.map((item) => {
+          const Icon = item.icon;
+          const selected = resolvedActive === item.key;
+          return (
+            <Link
+              key={item.key}
+              to={item.to}
+              className={[
+                "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-[22px] px-1 text-[10px] font-semibold transition-colors",
+                selected
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 active:bg-slate-100",
+              ].join(" ")}
+              aria-current={selected ? "page" : undefined}
+            >
+              <Icon size={20} strokeWidth={2.2} />
+              <span className="leading-none">{item.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+    </>
   );
 };

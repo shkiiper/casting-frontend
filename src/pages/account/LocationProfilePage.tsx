@@ -40,6 +40,7 @@ import {
   sanitizeTelegram,
   toOptionalNumber,
   trimMultilineToNull,
+  trimMultilineToString,
   trimToNull,
 } from "@/shared/lib/safety";
 
@@ -783,7 +784,7 @@ const mapToForm = (p: LocationProfile): LocationProfileForm => ({
 const normalize = (f: LocationProfileForm) => ({
   published: f.published,
   locationName: trimToNull(f.locationName, 120),
-  description: trimMultilineToNull(f.description, 4000),
+  description: trimMultilineToString(f.description, 4000),
   city: trimToNull(f.city, 120),
   rentPrice: toOptionalNumber(f.rentPrice, { min: 0, max: 100000000 }),
   address: trimToNull(f.address, 200),
