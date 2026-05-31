@@ -14,7 +14,7 @@ export const Header = () => {
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-[96rem] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-3">
           <img src="/logo.jpeg" alt="onset" className="w-9 h-9 rounded-xl object-cover" />
           <span className="text-sm font-semibold tracking-[0.12em] text-slate-900">

@@ -33,7 +33,7 @@ export const CastingApplicationsPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-        <div className="mx-auto max-w-7xl mt-10 rounded-[36px] bg-white shadow border border-black/5 overflow-visible">
+        <div className="mx-auto max-w-[96rem] mt-10 rounded-[36px] bg-white shadow border border-black/5 overflow-visible">
           <InlineNav />
 
           <header className="px-8 py-7 border-b flex flex-wrap justify-between items-center gap-4">

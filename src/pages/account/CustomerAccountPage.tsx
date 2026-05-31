@@ -343,7 +343,7 @@ export const CustomerAccountPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-          <div className="glass-object mx-auto mt-6 max-w-7xl overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
+          <div className="glass-object mx-auto mt-6 max-w-[96rem] overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
           <InlineNav
             profileMenu={[
               {
@@ -558,8 +558,8 @@ export const CustomerAccountPage = () => {
                         value={toPercent(contactsUsed, subscription.totalLimit)}
                       />
 
-                      <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-3">
-                        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-700">
+                      <div className="rounded-2xl border border-slate-200 bg-white/75 p-3">
+                        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
                           Промокод
                         </div>
                         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -573,14 +573,14 @@ export const CustomerAccountPage = () => {
                               }
                             }}
                             placeholder="CUST-FREE-0001"
-                            className="min-h-11 flex-1 rounded-xl border border-sky-100 bg-white px-3 text-sm font-semibold uppercase text-slate-900 outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                            className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold uppercase text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                             disabled={promoRedeeming}
                           />
                           <button
                             type="button"
                             onClick={() => void redeemPromoCode()}
                             disabled={promoRedeeming}
-                            className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {promoRedeeming ? "Проверяем..." : "Активировать"}
                           </button>

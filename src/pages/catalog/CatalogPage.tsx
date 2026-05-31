@@ -255,6 +255,7 @@ export const CatalogPage = () => {
   const [filters, setFilters] = useState<Filters>(() => initialState.filters);
   const [page, setPage] = useState(() => initialState.page);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [mobileCategoryOpen, setMobileCategoryOpen] = useState(false);
   const effectiveTab = routeTab ?? filters.tab;
 
   useEffect(() => {
@@ -482,7 +483,7 @@ export const CatalogPage = () => {
       ? 'Каталог локаций'
       : 'Каталог профилей';
   const glassInputClass =
-    'mt-1 w-full rounded-xl border border-slate-300/85 bg-white/82 px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] outline-none focus:ring-2 focus:ring-slate-300/70 focus:border-slate-500';
+    'mt-1 w-full rounded-xl border border-slate-300/85 bg-white/82 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] outline-none focus:border-slate-500 focus:ring-2 focus:ring-slate-300/70 sm:px-3.5 sm:py-2.5';
   const glassPanelClass =
     'glass-object rounded-2xl';
 
@@ -497,28 +498,28 @@ export const CatalogPage = () => {
   return (
     <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
-      <div className="relative z-10 pt-10 pb-16">
+      <div className="relative z-10 pb-16 pt-4 sm:pt-10">
         <Container>
-          <div className="glass-object mx-auto max-w-7xl overflow-visible rounded-[30px] sm:rounded-[36px] lg:rounded-[44px]">
+          <div className="glass-object mx-auto max-w-[96rem] overflow-visible rounded-[22px] sm:rounded-[36px] lg:rounded-[44px]">
             <InlineNav active={navActive} />
 
             {/* HEADER каталога */}
-            <header className="glass-object-soft flex flex-col gap-6 border-b border-white/50 px-4 pb-6 pt-6 sm:px-6 md:flex-row md:items-end md:justify-between md:px-8 md:pt-8">
+            <header className="glass-object-soft flex flex-col gap-2 border-b border-white/50 px-4 py-4 sm:gap-6 sm:px-6 sm:pb-6 sm:pt-6 md:flex-row md:items-end md:justify-between md:px-8 md:pt-8">
               <div>
-                <div className="text-sm text-slate-500">Onset / каталог</div>
-                <h1 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">
+                <div className="text-xs text-slate-500 sm:text-sm">Onset / каталог</div>
+                <h1 className="mt-1 text-2xl font-extrabold tracking-tight sm:mt-2 sm:text-3xl md:text-4xl">
                   {title}
                 </h1>
-                <p className="mt-2 text-slate-600">
+                <p className="mt-1 text-sm text-slate-600 sm:mt-2 sm:text-base">
                   Фильтруйте по типу, городу и параметрам — и открывайте профиль.
                 </p>
               </div>
             </header>
 
-            <div className="px-4 pb-8 pt-6 sm:px-6 md:px-8 md:pb-10 md:pt-8">
+            <div className="px-3 pb-8 pt-3 sm:px-6 sm:pt-6 md:px-8 md:pb-10 md:pt-8">
               {/* FILTERS */}
-              <div className={`${glassPanelClass} p-4`}>
-                <div className="grid gap-3 lg:grid-cols-12">
+              <div className={`${glassPanelClass} p-3 sm:p-4`}>
+                <div className="grid gap-2 sm:gap-3 lg:grid-cols-12">
                   <div className="lg:col-span-5">
                     <label className="text-xs text-slate-500">Поиск</label>
                     <input
@@ -573,14 +574,14 @@ export const CatalogPage = () => {
                         });
                         setPage(0);
                       }}
-                      className="w-full rounded-xl px-4 py-2.5 text-sm font-semibold border border-slate-300/85 bg-white/82 text-slate-700 hover:bg-white"
+                      className="w-full rounded-xl border border-slate-300/85 bg-white/82 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-white sm:py-2.5"
                     >
                       Сбросить фильтры
                     </button>
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500 sm:mt-3 sm:gap-3">
                   <button
                     type="button"
                     onClick={async () => {
@@ -601,13 +602,27 @@ export const CatalogPage = () => {
                 </div>
 
                 {effectiveTab !== 'ALL' && (
-                  <div className="mt-4 border-t border-white/60 pt-3">
-                    <div className="text-xs font-semibold tracking-wide uppercase text-slate-500">
+                  <div className="mt-3 border-t border-white/60 pt-2 sm:mt-4 sm:pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setMobileCategoryOpen((value) => !value)}
+                      className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-white/70 px-3 py-2 text-left md:hidden"
+                    >
+                      <span className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                        Параметры категории
+                      </span>
+                      <span className="text-xs font-semibold text-slate-500">
+                        {mobileCategoryOpen ? 'Скрыть' : 'Открыть'}
+                      </span>
+                    </button>
+                    <div className="hidden text-xs font-semibold uppercase tracking-wide text-slate-500 md:block">
                       Параметры категории
                     </div>
 
+                    <div className={mobileCategoryOpen ? 'block' : 'hidden md:block'}>
+
                     {effectiveTab === 'ACTOR' && (
-                      <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                      <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-2.5 sm:gap-3 lg:grid-cols-5">
                         <div>
                           <label className="text-xs text-slate-500">Возраст от</label>
                           <select
@@ -672,7 +687,7 @@ export const CatalogPage = () => {
                           </select>
                         </div>
 
-                        <div>
+                        <div className="col-span-2 sm:col-span-1">
                           <label className="text-xs text-slate-500">Ставка от</label>
                           <input
                             value={filters.minRate}
@@ -688,7 +703,7 @@ export const CatalogPage = () => {
                           />
                         </div>
 
-                        <div>
+                        <div className="col-span-2 sm:col-span-1">
                           <label className="text-xs text-slate-500">Этничность</label>
                           <input
                             value={filters.ethnicity}
@@ -704,7 +719,7 @@ export const CatalogPage = () => {
                           />
                         </div>
 
-                        <div>
+                        <div className="col-span-2 sm:col-span-1">
                           <label className="text-xs text-slate-500">Ставка до</label>
                           <input
                             value={filters.maxRate}
@@ -723,7 +738,7 @@ export const CatalogPage = () => {
                     )}
 
                     {effectiveTab === 'CREATOR' && (
-                      <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      <div className="mt-2 grid gap-2 sm:mt-2.5 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
                         <div className="lg:col-span-2">
                           <label className="text-xs text-slate-500">Тип деятельности</label>
                           <div className="relative">
@@ -757,7 +772,7 @@ export const CatalogPage = () => {
                     )}
 
                     {effectiveTab === 'LOCATION' && (
-                      <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="mt-2 grid grid-cols-2 gap-2 sm:mt-2.5 sm:gap-3 lg:grid-cols-4">
                         <div>
                           <label className="text-xs text-slate-500">Аренда от</label>
                           <select
@@ -803,6 +818,7 @@ export const CatalogPage = () => {
                         </div>
                       </div>
                     )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -816,7 +832,7 @@ export const CatalogPage = () => {
               {/* GRID / STATES */}
               <div className="mt-8">
                 {isLoading ? (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                     {Array.from({ length: 9 }).map((_, i) => (
                       <div
                         key={i}
@@ -882,7 +898,7 @@ export const CatalogPage = () => {
                       </span>
                     </div>
 
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                       {filtered.map((p) => {
                         const name = buildName(p);
                         const subtitle =

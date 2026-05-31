@@ -443,8 +443,8 @@ export const ProfileDetailsPage = () => {
 
   const currentPhoto = photos[activePhoto] ?? photos[0] ?? null;
   const hasManyPhotos = photos.length > 1;
-  const galleryPhotos = photos.slice(0, 5);
-  const sidePhotos = galleryPhotos.slice(1, 5);
+  const primaryGalleryPhoto = photos[0] ?? null;
+  const sidePhotos = photos.slice(1);
   const videoList = (profile?.videoUrls ?? []).slice(0, 3);
   const portfolioPhotos = (profile?.portfolioPhotoUrls ?? []).slice(0, 8);
   const showPrev = () => {
@@ -456,6 +456,35 @@ export const ProfileDetailsPage = () => {
     if (!photos.length) return;
     setActivePhoto((prev) => (prev + 1) % photos.length);
   };
+
+  useEffect(() => {
+    if (!lightboxOpen && !portfolioLightboxUrl && !videoModalUrl) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setLightboxOpen(false);
+        setPortfolioLightboxUrl(null);
+        setVideoModalUrl(null);
+        return;
+      }
+
+      if (!lightboxOpen || !hasManyPhotos) return;
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        showPrev();
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        showNext();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxOpen, portfolioLightboxUrl, videoModalUrl, hasManyPhotos, photos.length]);
+
   const openVideoModal = (url?: string | null, title?: string) => {
     const resolved = resolveMediaUrl(url ?? null);
     if (!resolved) return;
@@ -585,7 +614,7 @@ export const ProfileDetailsPage = () => {
         <Container>
           <div
             className={[
-              "mx-auto max-w-[1280px] overflow-visible rounded-[26px] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:rounded-[30px]",
+              "mx-auto max-w-[96rem] overflow-visible rounded-[26px] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:rounded-[30px]",
               premium.active
                 ? "border-amber-300/80 shadow-[0_20px_54px_rgba(217,119,6,0.18)]"
                 : "border-black/5",
@@ -657,7 +686,7 @@ export const ProfileDetailsPage = () => {
                       <div className="space-y-3">
                         <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-slate-200 shadow-[0_22px_70px_rgba(15,23,42,0.16)]">
                           <div className="aspect-[3/4]">
-                            {galleryPhotos[0] ? (
+                            {primaryGalleryPhoto ? (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -667,7 +696,7 @@ export const ProfileDetailsPage = () => {
                                 className="h-full w-full"
                               >
                                 <img
-                                  src={resolveMediaUrl(galleryPhotos[0]) ?? undefined}
+                                  src={resolveMediaUrl(primaryGalleryPhoto) ?? undefined}
                                   alt={name}
                                   className="h-full w-full object-cover"
                                 />
@@ -677,22 +706,6 @@ export const ProfileDetailsPage = () => {
                                 Фото отсутствует
                               </div>
                             )}
-                          </div>
-
-                          <div className="absolute inset-x-3 bottom-3 rounded-[22px] border border-white/80 bg-white/86 p-4 text-slate-900 shadow-[0_14px_40px_rgba(15,23,42,0.14)] backdrop-blur">
-                            <div className="flex flex-wrap items-end justify-between gap-3">
-                              <div>
-                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                  {profileTypeLabel[profile.type]}
-                                </div>
-                                <div className="mt-1 text-3xl font-black leading-none">{name}</div>
-                              </div>
-                              {premium.active ? (
-                                <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-amber-950">
-                                  Premium
-                                </span>
-                              ) : null}
-                            </div>
                           </div>
 
                           {videoList[0] && (
@@ -706,7 +719,25 @@ export const ProfileDetailsPage = () => {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="rounded-[24px] border border-white/80 bg-white/88 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.10)] backdrop-blur">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                {profileTypeLabel[profile.type]}
+                              </div>
+                              <div className="mt-1 text-3xl font-black leading-none text-slate-900">
+                                {name}
+                              </div>
+                            </div>
+                            {premium.active ? (
+                              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">
+                                Premium
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-4 sm:overflow-visible sm:pb-0 xl:grid-cols-5">
                           {sidePhotos.length > 0 ? (
                             sidePhotos.map((url, index) => (
                               <button
@@ -716,7 +747,7 @@ export const ProfileDetailsPage = () => {
                                   setActivePhoto(index + 1);
                                   setLightboxOpen(true);
                                 }}
-                                className="overflow-hidden rounded-2xl border border-white/80 bg-slate-200 aspect-square shadow-sm"
+                                className="aspect-square h-20 shrink-0 overflow-hidden rounded-2xl border border-white/80 bg-slate-200 shadow-sm sm:h-auto"
                               >
                                 <img
                                   src={resolveMediaUrl(url) ?? undefined}
@@ -726,7 +757,7 @@ export const ProfileDetailsPage = () => {
                               </button>
                             ))
                           ) : (
-                            <div className="col-span-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-5 text-center text-sm text-slate-500">
+                            <div className="w-full rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-5 text-center text-sm text-slate-500 sm:col-span-4 xl:col-span-5">
                               Дополнительные медиа отсутствуют
                             </div>
                           )}
@@ -802,7 +833,7 @@ export const ProfileDetailsPage = () => {
                               {heroTags.map((tag, index) => (
                                 <span
                                   key={`${tag}-${index}`}
-                                  className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-800"
+                                  className="rounded-full border border-neutral-300 bg-white px-3 py-1.5 text-sm font-semibold text-neutral-900 shadow-sm"
                                 >
                                   {tag}
                                 </span>
@@ -1088,37 +1119,37 @@ const AppearancePassport = ({
   playingAge: string | null;
   ethnicity: string | null;
 }) => (
-  <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-4 md:p-6">
-    <div className="flex flex-wrap items-end justify-between gap-3 pb-4 border-b border-slate-200">
+  <section className="mt-4 rounded-[28px] border border-white/80 bg-white/76 p-3 shadow-[0_14px_44px_rgba(15,23,42,0.07)] backdrop-blur sm:p-4 md:p-5">
+    <div className="flex flex-wrap items-center justify-between gap-2">
       <div>
-        <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
-          Внешность
+        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Параметры профиля
         </div>
-        <div className="mt-1 text-lg md:text-xl font-semibold text-slate-900">
-          Паспорт параметров
-        </div>
+        <div className="mt-1 text-sm text-slate-500">Коротко для кастинга</div>
       </div>
-      <div className="text-xs text-slate-500">Публичные данные профиля</div>
+      <div className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600">
+        Публично
+      </div>
     </div>
 
     {playingAge || ethnicity ? (
-      <div className="mt-4 grid sm:grid-cols-2 gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3">
         {playingAge ? (
-          <div className="rounded-2xl border border-black/10 bg-black/[0.03] backdrop-blur-sm px-4 py-4">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-slate-600">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3 sm:px-4 sm:py-4">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
               Игровой возраст
             </div>
-            <div className="mt-2 text-3xl md:text-[34px] leading-none font-semibold text-slate-900">
+            <div className="mt-1 text-2xl font-black leading-none text-slate-900 sm:text-3xl">
               {playingAge}
             </div>
           </div>
         ) : null}
         {ethnicity ? (
-          <div className="rounded-2xl border border-black/10 bg-black/[0.03] backdrop-blur-sm px-4 py-4">
-            <div className="text-[11px] uppercase tracking-[0.14em] text-slate-600">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 px-3 py-3 sm:px-4 sm:py-4">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">
               Этничность
             </div>
-            <div className="mt-2 text-base md:text-lg font-medium text-slate-900 leading-tight">
+            <div className="mt-1 text-base font-bold leading-tight text-slate-900 sm:text-lg">
               {ethnicity}
             </div>
           </div>
@@ -1127,19 +1158,21 @@ const AppearancePassport = ({
     ) : null}
 
     <div className="mt-4">
-      <div className="text-xs uppercase tracking-[0.18em] text-slate-500 mb-2">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
         Детальные параметры
       </div>
-      <div className="rounded-2xl border border-slate-200 bg-slate-50 overflow-hidden">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {rows.map((row, index) => (
           <div
             key={`${row.label}-${index}`}
-            className="grid gap-1 border-b border-slate-200 px-4 py-3 last:border-b-0 sm:grid-cols-[160px_1fr] sm:gap-3 md:grid-cols-[220px_1fr]"
+            className="min-h-[76px] rounded-2xl border border-slate-200 bg-white/82 px-3 py-3 shadow-sm"
           >
-            <div className="text-xs md:text-sm uppercase tracking-[0.08em] text-slate-500">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500">
               {row.label}
             </div>
-            <div className="text-sm md:text-base text-slate-900 font-medium">{row.value}</div>
+            <div className="mt-1 text-sm font-bold leading-snug text-slate-900 sm:text-base">
+              {row.value}
+            </div>
           </div>
         ))}
       </div>
@@ -1303,7 +1336,7 @@ const ActionPanel = ({
         type="button"
         onClick={onUnlock}
         disabled={!hasRemainingContacts || unlocking}
-        className="mt-4 w-full rounded-xl bg-sky-500 py-3 text-base font-semibold text-white shadow-sm shadow-sky-200 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 w-full rounded-xl bg-slate-900 py-3 text-base font-semibold text-white shadow-sm shadow-slate-200 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {unlocking ? "Открываем..." : hasRemainingContacts ? "Открыть контакты (1 токен)" : "Нет доступных токенов"}
       </button>

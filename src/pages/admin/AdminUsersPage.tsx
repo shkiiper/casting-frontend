@@ -367,7 +367,7 @@ export const AdminUsersPage = () => {
                     className={[
                       "rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
                       active
-                        ? "border-sky-500 bg-sky-500 text-white shadow-[0_8px_20px_rgba(14,165,233,0.24)]"
+                        ? "border-slate-900 bg-slate-900 text-white shadow-[0_8px_20px_rgba(15,23,42,0.18)]"
                         : "border-slate-300 bg-white text-slate-600 hover:border-slate-500",
                     ].join(" ")}
                   >
@@ -491,7 +491,7 @@ export const AdminUsersPage = () => {
                               type="button"
                               disabled={processingId === user.id}
                               onClick={() => void onNotifyMissingPhoto(user)}
-                              className="rounded-lg px-3 py-1.5 text-xs border border-sky-300 text-sky-700 disabled:opacity-60"
+                              className="rounded-lg px-3 py-1.5 text-xs border border-slate-300 text-slate-700 disabled:opacity-60"
                             >
                               Напомнить о фото
                             </button>
@@ -708,7 +708,7 @@ const UserMobileCard = ({
               type="button"
               disabled={processing}
               onClick={() => void onNotifyMissingPhoto(user)}
-              className="rounded-xl border border-sky-300 px-3 py-2.5 text-sm font-semibold text-sky-700 disabled:opacity-60"
+              className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-60"
             >
               Напомнить о фото
             </button>
