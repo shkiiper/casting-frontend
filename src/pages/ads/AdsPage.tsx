@@ -116,7 +116,7 @@ export const AdsPage = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#f6f6f4] text-slate-900">
+    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
@@ -176,7 +176,7 @@ export const AdsPage = () => {
                           className={[
                             "rounded-xl border px-3 py-2 text-sm transition-colors",
                             form.days === days
-                              ? "border-slate-900 bg-slate-900 text-white"
+                              ? "border-slate-300 bg-white/85 text-slate-900"
                               : "border-black/10 bg-white text-slate-700 hover:bg-slate-50",
                           ].join(" ")}
                         >
@@ -198,7 +198,7 @@ export const AdsPage = () => {
                   <button
                     onClick={requestPayment}
                     disabled={saving}
-                    className="px-6 py-3 bg-slate-900 text-white rounded-xl"
+                    className="px-6 py-3 bg-white/85 text-slate-900 rounded-xl"
                   >
                     {saving ? "Готовим оплату..." : "Оплатить и создать"}
                   </button>
@@ -333,7 +333,7 @@ const PayModal = ({
             Отмена
           </button>
           <button
-            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm"
+            className="px-4 py-2 rounded-xl bg-white/85 text-slate-900 text-sm"
             onClick={onConfirm}
             disabled={saving}
           >

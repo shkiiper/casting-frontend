@@ -50,10 +50,10 @@ export const CityMultiSelect = ({
         onClick={() => setOpen((current) => !current)}
         className="flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-left text-sm text-slate-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-900/30 focus:border-slate-400"
       >
-        <span className={selectedValues.length ? "text-slate-700" : "text-slate-400"}>
+        <span className={selectedValues.length ? "text-slate-700" : "text-slate-600"}>
           {selectedValues.length ? selectedValues.join(", ") : placeholder}
         </span>
-        <span className="shrink-0 text-slate-400" aria-hidden="true">
+        <span className="shrink-0 text-slate-600" aria-hidden="true">
           ▾
         </span>
       </button>

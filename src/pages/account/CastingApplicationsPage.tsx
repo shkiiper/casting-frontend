@@ -29,7 +29,7 @@ export const CastingApplicationsPage = () => {
   );
 
   return (
-    <div className="relative min-h-screen bg-[#f6f6f4] text-slate-900">
+    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>

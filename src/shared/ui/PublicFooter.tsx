@@ -16,7 +16,7 @@ const productLinks = [
 
 export function PublicFooter() {
   return (
-    <footer className="border-t border-black/10 bg-white/88 backdrop-blur">
+    <footer className="border-t border-black/10 bg-white/88 text-slate-900 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:px-8">
         <div className="grid gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
@@ -37,7 +37,7 @@ export function PublicFooter() {
             </div>
             <div className="mt-3 flex flex-col gap-2">
               {legalLinks.map((item) => (
-                <Link key={item.to} to={item.to} className="text-sm text-slate-700 hover:text-slate-900">
+                <Link key={item.to} to={item.to} className="text-sm text-slate-600 hover:text-slate-900">
                   {item.label}
                 </Link>
               ))}
@@ -50,7 +50,7 @@ export function PublicFooter() {
             </div>
             <div className="mt-3 flex flex-col gap-2">
               {productLinks.map((item) => (
-                <Link key={item.to} to={item.to} className="text-sm text-slate-700 hover:text-slate-900">
+                <Link key={item.to} to={item.to} className="text-sm text-slate-600 hover:text-slate-900">
                   {item.label}
                 </Link>
               ))}
@@ -61,7 +61,7 @@ export function PublicFooter() {
           </div>
         </div>
 
-        <div className="mt-8 border-t border-black/5 pt-4 text-xs text-slate-500">
+        <div className="mt-8 border-t border-black/10 pt-4 text-xs text-slate-500">
           Все ссылки на документы и способы связи доступны без авторизации.
         </div>
       </div>

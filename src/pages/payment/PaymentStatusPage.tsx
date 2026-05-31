@@ -131,7 +131,7 @@ export const PaymentStatusPage = () => {
                 {paymentUrl && !isFinal && (
                   <a
                     href={paymentUrl}
-                    className="rounded-xl px-4 py-2.5 text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800"
+                    className="rounded-xl px-4 py-2.5 text-sm font-semibold bg-white/85 text-slate-900 hover:bg-white"
                   >
                     Открыть страницу оплаты
                   </a>

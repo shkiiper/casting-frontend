@@ -15,14 +15,14 @@ export const ProfileCompletionCard = ({
           Заполнено {completion.completed} из {completion.total} ключевых блоков
         </div>
       </div>
-      <div className="rounded-full bg-slate-900 px-3 py-1 text-sm font-semibold text-white">
+      <div className="rounded-full bg-white/85 px-3 py-1 text-sm font-semibold text-slate-900">
         {completion.percent}%
       </div>
     </div>
 
     <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200">
       <div
-        className="h-full rounded-full bg-slate-900 transition-[width]"
+        className="h-full rounded-full bg-white/85 transition-[width]"
         style={{ width: `${completion.percent}%` }}
       />
     </div>

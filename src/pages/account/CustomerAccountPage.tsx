@@ -353,7 +353,7 @@ export const CustomerAccountPage = () => {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="text-xs text-slate-400 text-center px-2">
+                            <div className="text-xs text-slate-600 text-center px-2">
                               Нет фото
                             </div>
                           )}
@@ -466,7 +466,7 @@ export const CustomerAccountPage = () => {
                         <button
                           onClick={() => void saveProfile()}
                           disabled={saving}
-                          className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto"
+                          className="w-full rounded-xl bg-white/85 px-6 py-3 text-slate-900 sm:w-auto"
                         >
                           {saving ? "Сохраняем..." : "Сохранить изменения"}
                         </button>
@@ -510,7 +510,7 @@ export const CustomerAccountPage = () => {
                             setModalMode("SUBSCRIPTION");
                             setModalOpen(true);
                           }}
-                          className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm"
+                          className="px-4 py-2 rounded-xl bg-white/85 text-slate-900 text-sm"
                         >
                           Обновить тариф
                         </button>
@@ -597,7 +597,7 @@ const Info = ({
 const Progress = ({ value }: { value: number }) => (
   <div className="h-2 bg-slate-200 rounded-full mt-2">
     <div
-      className="h-full bg-slate-900 rounded-full"
+      className="h-full bg-white/85 rounded-full"
       style={{ width: `${value}%` }}
     />
   </div>

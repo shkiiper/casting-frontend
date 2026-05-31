@@ -495,7 +495,7 @@ export const CatalogPage = () => {
       ? 'locations'
       : undefined;
   return (
-    <div className="relative min-h-screen bg-[#f4f6fa] text-slate-900">
+    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
       <div className="relative z-10 pt-10 pb-16">
         <Container>
@@ -855,7 +855,7 @@ export const CatalogPage = () => {
                           });
                           setPage(0);
                         }}
-                        className="rounded-xl px-6 py-3 font-semibold bg-slate-900 text-white hover:bg-slate-800 transition-colors"
+                        className="rounded-xl px-6 py-3 font-semibold bg-white/85 text-slate-900 hover:bg-white transition-colors"
                       >
                         Очистить
                       </button>
@@ -932,7 +932,7 @@ export const CatalogPage = () => {
                                       className="h-full w-full object-cover"
                                     />
                                   ) : (
-                                    <div className="h-full w-full grid place-items-center text-slate-400">
+                                    <div className="h-full w-full grid place-items-center text-slate-600">
                                       Фото
                                     </div>
                                   );
@@ -966,7 +966,7 @@ export const CatalogPage = () => {
                                     "rounded-xl px-4 py-3 text-center font-semibold",
                                     p.premiumActive
                                       ? "bg-amber-500 text-slate-950"
-                                      : "bg-slate-900 text-white",
+                                      : "bg-white/85 text-slate-900",
                                   ].join(" ")}
                                 >
                                   Открыть профиль
@@ -992,7 +992,7 @@ export const CatalogPage = () => {
                         className={[
                           'rounded-xl px-5 py-2 text-sm font-semibold border transition-colors',
                           page === 0
-                            ? 'bg-white/60 text-slate-400 border-black/10 cursor-not-allowed'
+                            ? 'bg-white/60 text-slate-600 border-black/10 cursor-not-allowed'
                             : 'bg-white/80 text-slate-800 border-black/10 hover:bg-white',
                         ].join(' ')}
                       >
@@ -1006,8 +1006,8 @@ export const CatalogPage = () => {
                         className={[
                           'rounded-xl px-5 py-2 text-sm font-semibold border transition-colors',
                           query.data?.last
-                            ? 'bg-white/60 text-slate-400 border-black/10 cursor-not-allowed'
-                            : 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800',
+                            ? 'bg-white/60 text-slate-600 border-black/10 cursor-not-allowed'
+                            : 'bg-white/85 text-slate-900 border-slate-300 hover:bg-white',
                         ].join(' ')}
                       >
                         Вперёд →

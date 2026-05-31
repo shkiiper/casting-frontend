@@ -245,15 +245,15 @@ export const AdminPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f7f9fc_0%,#edf2f8_45%,#e8eef6_100%)] text-slate-900">
-      <div className="border-b border-black/10 bg-white/90 backdrop-blur">
+    <div className="min-h-screen bg-[#f3f4f7] text-slate-900">
+      <div className="border-b border-black/10 bg-[#f3f4f7]/88 backdrop-blur">
         <InlineNav
           active="admin"
           profileMenu={[{ label: "Выйти", onClick: logout, danger: true }]}
         />
       </div>
 
-      <header className="border-b border-black/10 bg-white">
+      <header className="border-b border-black/10 bg-white text-slate-900">
         <div className="w-full px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_420px]">
             <div>
@@ -268,7 +268,7 @@ export const AdminPage = () => {
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
                   to="/admin/users"
-                  className="rounded-2xl px-5 py-3 text-sm font-semibold bg-slate-900 text-white hover:bg-slate-800"
+                  className="rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100"
                 >
                   Открыть пользователей →
                 </Link>
@@ -451,7 +451,7 @@ export const AdminPage = () => {
                       type="button"
                       onClick={onCreatePlan}
                       disabled={savingId === "new"}
-                      className="rounded-xl px-5 py-2.5 bg-slate-900 text-white disabled:opacity-60"
+                      className="rounded-xl px-5 py-2.5 bg-white/85 text-slate-900 disabled:opacity-60"
                     >
                       {savingId === "new" ? "Создаём..." : "Создать"}
                     </button>
@@ -573,7 +573,7 @@ export const AdminPage = () => {
                               type="button"
                               onClick={() => void onSavePlanBase(plan.id, planDrafts[plan.id] ?? plan)}
                               disabled={savingId === plan.id}
-                              className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                              className="rounded-xl bg-white/85 px-4 py-2.5 text-sm font-semibold text-slate-900 disabled:opacity-60"
                             >
                               {savingId === plan.id ? "Сохраняем..." : "Сохранить тариф"}
                             </button>
@@ -776,7 +776,7 @@ const AdminDashboardSectionNav = ({
   active: AdminDashboardSection;
   onChange: (section: AdminDashboardSection) => void;
 }) => (
-  <div className="sticky top-[65px] z-30 -mx-4 bg-[#eef2f7]/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 md:-mx-8 md:px-8 xl:-mx-10 xl:px-10">
+  <div className="sticky top-[65px] z-30 -mx-4 bg-[#f3f4f7]/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 md:-mx-8 md:px-8 xl:-mx-10 xl:px-10">
     <div className="grid gap-2 md:grid-cols-3">
       {ADMIN_DASHBOARD_SECTIONS.map((item) => {
         const Icon = item.icon;
@@ -789,7 +789,7 @@ const AdminDashboardSectionNav = ({
             className={[
               "flex min-h-[64px] items-center gap-3 rounded-2xl border px-4 text-left transition-colors",
               selected
-                ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                ? "border-slate-300 bg-white/85 text-slate-900 shadow-sm"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
             ].join(" ")}
             aria-pressed={selected}
@@ -807,7 +807,7 @@ const AdminDashboardSectionNav = ({
               <span
                 className={[
                   "mt-0.5 block truncate text-xs",
-                  selected ? "text-white/70" : "text-slate-500",
+                  selected ? "text-slate-900/70" : "text-slate-500",
                 ].join(" ")}
               >
                 {item.description}
@@ -1089,7 +1089,7 @@ const ToggleField = ({
       <span
         className={[
           "relative inline-flex h-7 w-12 items-center rounded-full transition-colors",
-          checked ? "bg-slate-900" : "bg-slate-300",
+          checked ? "bg-white/85" : "bg-slate-300",
         ].join(" ")}
       >
         <input
@@ -1133,12 +1133,12 @@ const Field = ({
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className={[
-          "w-full min-w-0 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3.5 text-base font-medium text-slate-900 shadow-sm outline-none transition [appearance:textfield] placeholder:text-slate-400 focus:border-slate-900 focus:bg-white focus:ring-4 focus:ring-slate-200/70",
+          "w-full min-w-0 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3.5 text-base font-medium text-slate-900 shadow-sm outline-none transition [appearance:textfield] placeholder:text-slate-600 focus:border-slate-300 focus:bg-white focus:ring-4 focus:ring-slate-200/70",
           suffix ? "pr-20" : "",
         ].join(" ")}
       />
       {suffix ? (
-        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 whitespace-nowrap text-sm font-semibold text-slate-400">
+        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 whitespace-nowrap text-sm font-semibold text-slate-600">
           {suffix}
         </span>
       ) : null}

@@ -28,7 +28,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#f4f6fa] px-4 py-12 text-slate-900">
+        <div className="min-h-screen bg-[#f3f4f7] px-4 py-12 text-slate-900">
           <div className="mx-auto flex max-w-xl flex-col items-start gap-4 rounded-3xl border border-slate-200 bg-white/95 p-8 shadow-sm">
             <div className="text-sm font-medium uppercase tracking-[0.18em] text-slate-500">
               Onset
@@ -41,7 +41,7 @@ export class AppErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={this.handleReload}
-              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+              className="rounded-xl bg-white/85 px-5 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-white"
             >
               Перезагрузить страницу
             </button>

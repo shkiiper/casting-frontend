@@ -68,7 +68,7 @@ export const ProfilePremiumPanel = ({
                 "rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors",
                 !premium.canPurchase
                   ? "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                  : "bg-slate-900 text-white hover:bg-slate-800",
+                  : "bg-white/85 text-slate-900 hover:bg-white",
               ].join(" ")}
             >
               {premium.active ? "Premium уже активен" : "Купить premium"}

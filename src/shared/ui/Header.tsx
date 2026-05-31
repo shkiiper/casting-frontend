@@ -13,16 +13,16 @@ export const Header = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-black/5">
+    <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-3">
           <img src="/logo.jpeg" alt="onset" className="w-9 h-9 rounded-xl object-cover" />
-          <span className="text-sm font-semibold tracking-[0.12em] text-slate-700">
+          <span className="text-sm font-semibold tracking-[0.12em] text-slate-900">
             ONSET
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-8 text-sm font-medium text-slate-700 md:flex">
+        <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
           <Link to="/actors">Актёры</Link>
           <Link to="/creators">Креаторы</Link>
           <Link to="/locations">Локации</Link>
@@ -31,14 +31,14 @@ export const Header = () => {
 
         <div className="flex items-center gap-3">
           {!isAuthed ? (
-            <Link to="/login" className="text-sm text-slate-700">
+            <Link to="/login" className="text-sm text-slate-700 hover:text-slate-900">
               Войти/Регистрация
             </Link>
           ) : (
             <>
               <button
                 onClick={() => navigate("/account")}
-                className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-black/5"
+                className="h-10 w-10 overflow-hidden rounded-full border border-black/5 bg-slate-200"
                 aria-label="Профиль"
               >
                 {avatarUrl ? (

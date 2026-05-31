@@ -19,9 +19,21 @@ html {
 
 body {
   margin: 0;
-  background: #f6f6f4;
+  background: #f3f4f7;
   color: #0f172a;
   font-family: "Montserrat", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(191, 219, 254, 0.68), transparent 34%),
+    radial-gradient(circle at 84% 8%, rgba(255, 255, 255, 0.78), transparent 30%),
+    linear-gradient(180deg, #f3f4f7 0%, #f8fafc 48%, #eef2f7 100%);
 }
 
 @media (max-width: 1023px) {
@@ -175,11 +187,11 @@ body {
 .home-live-card {
   position: absolute;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(8, 9, 13, 0.58);
+  background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   box-shadow:
-    0 20px 70px rgba(0, 0, 0, 0.28),
+    0 20px 70px rgba(15, 23, 42, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
@@ -305,8 +317,8 @@ body {
 .glass-object {
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.34),
-    rgba(255, 255, 255, 0.16)
+    rgba(255, 255, 255, 0.94),
+    rgba(238, 242, 247, 0.88)
   ) !important;
   border: 1px solid rgba(255, 255, 255, 0.72) !important;
   backdrop-filter: blur(6px);
@@ -321,8 +333,8 @@ body {
 .glass-object-soft {
   background: linear-gradient(
     145deg,
-    rgba(255, 255, 255, 0.28),
-    rgba(255, 255, 255, 0.12)
+    rgba(255, 255, 255, 0.86),
+    rgba(241, 245, 249, 0.72)
   ) !important;
   border: 1px solid rgba(255, 255, 255, 0.68) !important;
   backdrop-filter: blur(4px);

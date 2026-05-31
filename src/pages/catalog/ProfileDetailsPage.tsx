@@ -537,7 +537,7 @@ export const ProfileDetailsPage = () => {
   const premium = extractProfilePremiumInfo(profile);
 
   return (
-    <div className="relative min-h-screen bg-[#eff1f4] text-[#111827]">
+    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
       <div className="relative z-10 pt-8 pb-16">
         <Container>
@@ -611,7 +611,7 @@ export const ProfileDetailsPage = () => {
               {!loading && !error && profile && (
                 <div>
                   <div className="text-center mb-6">
-                    <div className="inline-flex border-b-2 border-slate-900 text-slate-800 font-semibold text-sm md:text-base pb-2">
+                    <div className="inline-flex border-b-2 border-slate-300 text-slate-800 font-semibold text-sm md:text-base pb-2">
                       Детали и медиа
                     </div>
                   </div>
@@ -643,7 +643,7 @@ export const ProfileDetailsPage = () => {
                         <button
                           type="button"
                           onClick={() => openVideoModal(videoList[0], "Интро-видео")}
-                          className="absolute left-4 bottom-4 px-4 py-2 rounded-xl bg-black/80 text-white text-sm font-medium hover:bg-black"
+                          className="absolute left-4 bottom-4 px-4 py-2 rounded-xl bg-white/90 text-slate-900 text-sm font-medium hover:bg-black"
                         >
                           ▶ Смотреть интро-видео
                         </button>
@@ -858,7 +858,7 @@ export const ProfileDetailsPage = () => {
 
       {lightboxOpen && currentPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 p-3 sm:p-4"
           onClick={() => setLightboxOpen(false)}
         >
           <div
@@ -901,7 +901,7 @@ export const ProfileDetailsPage = () => {
 
       {portfolioLightboxUrl && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-3 sm:p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 p-3 sm:p-4"
           onClick={() => setPortfolioLightboxUrl(null)}
         >
           <div
@@ -926,14 +926,14 @@ export const ProfileDetailsPage = () => {
 
       {videoModalUrl && (
         <div
-          className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-white/90 z-50 flex items-center justify-center p-4"
           onClick={() => setVideoModalUrl(null)}
         >
           <div
             className="relative max-w-5xl w-full rounded-2xl bg-black p-3"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between text-white px-2 pb-2">
+            <div className="flex items-center justify-between text-slate-900 px-2 pb-2">
               <div className="text-sm md:text-base">{videoModalTitle}</div>
               <button
                 type="button"
@@ -953,7 +953,7 @@ export const ProfileDetailsPage = () => {
               playsInline
               className="w-full max-h-[75vh] rounded-xl bg-black"
             />
-            <div className="mt-3 text-xs text-slate-300 px-2">
+            <div className="mt-3 text-xs text-slate-600 px-2">
               Воспроизведение внутри страницы
             </div>
           </div>
@@ -968,7 +968,7 @@ export const ProfileDetailsPage = () => {
 
 const SectionTitle = ({ title }: { title: string }) => (
   <div className="mt-10 border-b border-black/10 relative">
-    <div className="absolute left-0 bottom-0 h-[3px] w-28 bg-slate-900" />
+    <div className="absolute left-0 bottom-0 h-[3px] w-28 bg-white/85" />
     <h3 className="text-2xl md:text-[30px] font-bold pb-3">{title}</h3>
   </div>
 );
@@ -1094,7 +1094,7 @@ const VideoCard = ({
     className="rounded-2xl border border-black/10 p-3 bg-white block hover:shadow-md transition-shadow"
   >
     <div className="text-lg font-semibold mb-2">{title}</div>
-    <div className="rounded-xl overflow-hidden bg-slate-900 aspect-video relative">
+    <div className="rounded-xl overflow-hidden bg-white/85 aspect-video relative">
       {preview ? (
         <img
           src={resolveMediaUrl(preview) ?? undefined}
@@ -1102,7 +1102,7 @@ const VideoCard = ({
           className="w-full h-full object-cover opacity-70"
         />
       ) : null}
-      <div className="absolute inset-0 grid place-items-center text-white text-2xl">▶</div>
+      <div className="absolute inset-0 grid place-items-center text-slate-900 text-2xl">▶</div>
     </div>
     <div className="text-sm mt-2 text-slate-800">{subtitle}</div>
     {year && <div className="text-sm text-slate-500">{year}</div>}
@@ -1141,7 +1141,7 @@ const ActionPanel = ({
     {!isAuthed && (
       <Link
         to="/login"
-        className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-black/85 text-white py-3 text-base font-semibold hover:bg-black"
+        className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-white/90 text-slate-900 py-3 text-base font-semibold hover:bg-black"
       >
         Войти как заказчик
       </Link>
@@ -1158,7 +1158,7 @@ const ActionPanel = ({
         type="button"
         onClick={onUnlock}
         disabled={!hasRemainingContacts || unlocking}
-        className="mt-4 w-full rounded-xl bg-black/85 text-white py-3 text-base font-semibold hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-4 w-full rounded-xl bg-white/90 text-slate-900 py-3 text-base font-semibold hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {unlocking ? "Открываем..." : hasRemainingContacts ? "Открыть контакты (1 токен)" : "Нет доступных токенов"}
       </button>

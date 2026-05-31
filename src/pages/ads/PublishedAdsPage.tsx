@@ -341,7 +341,7 @@ export const PublishedAdsPage = () => {
                             <button
                               type="button"
                               onClick={() => submitApplication(c)}
-                              className="rounded-xl px-4 py-2 bg-slate-900 text-white text-sm hover:bg-slate-800 transition-colors"
+                              className="rounded-xl px-4 py-2 bg-white/85 text-slate-900 text-sm hover:bg-white transition-colors"
                             >
                               Откликнуться
                             </button>

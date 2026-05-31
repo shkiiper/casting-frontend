@@ -131,7 +131,7 @@ export const InlineNav = ({
 
   return (
     <>
-    <header className="sticky top-0 z-40 border-b border-black/5 bg-white/90 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:px-6 md:px-8 md:py-5">
+    <header className="sticky top-0 z-40 border-b border-white/70 bg-white/80 px-4 py-3 text-slate-900 shadow-[0_12px_36px_rgba(15,23,42,0.08)] backdrop-blur supports-[backdrop-filter]:bg-white/72 sm:px-6 md:px-8 md:py-5">
       <div className="flex items-center justify-between gap-3 md:gap-6">
         <Link to="/" className="flex items-center gap-3">
           <img src="/logo.jpeg" alt="onset" className="h-9 w-9 rounded-xl object-cover" />
@@ -180,7 +180,7 @@ export const InlineNav = ({
                     navigate("/account");
                   }}
                   onFocus={openMenu}
-                  className="h-10 w-10 rounded-full bg-slate-300 hover:ring-2 hover:ring-slate-300 transition-shadow overflow-hidden border border-black/10"
+                  className="h-10 w-10 overflow-hidden rounded-full border border-black/10 bg-slate-200 transition-shadow hover:ring-2 hover:ring-slate-300"
                   aria-label="Профиль"
                 >
                   {avatarUrl ? (
@@ -193,7 +193,7 @@ export const InlineNav = ({
                 </button>
                 {effectiveProfileMenu && menuOpen && (
                   <div
-                    className="absolute right-0 mt-2 min-w-[160px] rounded-xl border border-black/10 bg-white shadow-lg p-1.5"
+                    className="absolute right-0 mt-2 min-w-[160px] rounded-xl border border-black/10 bg-white p-1.5 shadow-lg"
                     onMouseEnter={openMenu}
                     onMouseLeave={closeMenuSoon}
                   >
@@ -205,7 +205,7 @@ export const InlineNav = ({
                           item.onClick();
                         }}
                         className={[
-                          "w-full whitespace-nowrap text-left px-3 py-2.5 rounded-lg text-sm hover:bg-slate-100",
+                          "w-full whitespace-nowrap rounded-lg px-3 py-2.5 text-left text-sm text-slate-700 hover:bg-slate-100",
                           item.danger ? "text-red-600 hover:bg-red-50" : "",
                         ].join(" ")}
                       >
@@ -220,7 +220,7 @@ export const InlineNav = ({
           {!isAuthed ? (
             <Link
               to="/login"
-              className="inline-flex rounded-full bg-slate-900 px-3 py-2 text-xs font-semibold text-white lg:hidden"
+              className="inline-flex rounded-full border border-white/80 bg-white/85 px-3 py-2 text-xs font-semibold text-slate-900 shadow-sm lg:hidden"
             >
               Войти
             </Link>
@@ -240,7 +240,7 @@ export const InlineNav = ({
               className={[
                 "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-[22px] px-1 text-[10px] font-semibold transition-colors",
                 selected
-                  ? "bg-slate-900 text-white shadow-sm"
+                  ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
                   : "text-slate-500 active:bg-slate-100",
               ].join(" ")}
               aria-current={selected ? "page" : undefined}

@@ -815,15 +815,15 @@ const MobileProfileHero = ({
           className="h-full w-full object-cover"
         />
       ) : (
-        <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white">
+        <div className="flex h-full w-full items-center justify-center bg-white/85 text-slate-900">
           <UserRound size={48} strokeWidth={1.8} />
         </div>
       )}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-4 pt-16 text-white">
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-4 pt-16 text-slate-900">
         <div className="flex items-end justify-between gap-3">
           <div className="min-w-0">
             <h2 className="truncate text-2xl font-bold">{name}</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-white/85">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-900/85">
               {city ? <span>{city}</span> : <span>Город не указан</span>}
               <span className="h-1 w-1 rounded-full bg-white/60" />
               <span>{published ? "В каталоге" : "Скрыт"}</span>
@@ -864,7 +864,7 @@ const MobileSectionNav = ({
             className={[
               "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-colors",
               selected
-                ? "border-slate-900 bg-slate-900 text-white"
+                ? "border-slate-300 bg-white/85 text-slate-900"
                 : "border-slate-200 bg-white text-slate-600 active:bg-slate-100",
             ].join(" ")}
             aria-pressed={selected}
@@ -1031,7 +1031,7 @@ const MediaSection = ({
             )}
 
             {!isVideo && onReorder ? (
-              <div className="absolute left-1 top-1 rounded-full bg-black/70 px-2 py-1 text-[11px] text-white">
+              <div className="absolute left-1 top-1 rounded-full bg-white/90 px-2 py-1 text-[11px] text-slate-900">
                 Перетащить
               </div>
             ) : null}
@@ -1043,7 +1043,7 @@ const MediaSection = ({
                 className={[
                   "absolute left-1 bottom-1 rounded-full px-2 py-1 text-[11px]",
                   mainUrl === url
-                    ? "bg-slate-900 text-white"
+                    ? "bg-white/85 text-slate-900"
                     : "bg-white/90 text-slate-700",
                 ].join(" ")}
               >
@@ -1053,7 +1053,7 @@ const MediaSection = ({
             <button
               type="button"
               onClick={() => onRemove(url)}
-              className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100"
+              className="absolute top-1 right-1 bg-white/90 text-slate-900 rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100"
             >
               ✕
             </button>
@@ -1133,7 +1133,7 @@ const EditForm = ({
           type="button"
           onClick={onSaveMain}
           disabled={saving}
-          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm text-white disabled:opacity-60"
+          className="rounded-xl bg-white/85 px-5 py-2.5 text-sm text-slate-900 disabled:opacity-60"
         >
           Сохранить основные данные
         </button>
@@ -1390,7 +1390,7 @@ const EditForm = ({
               className={[
                 "px-3 py-1.5 rounded-full border text-sm transition-colors",
                 selected
-                  ? "bg-slate-900 text-white border-slate-900"
+                  ? "bg-white/85 text-slate-900 border-slate-300"
                   : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
               ].join(" ")}
             >
@@ -1459,7 +1459,7 @@ const EditForm = ({
           type="button"
           onClick={onSaveContacts}
           disabled={saving}
-          className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm text-white disabled:opacity-60"
+          className="rounded-xl bg-white/85 px-5 py-2.5 text-sm text-slate-900 disabled:opacity-60"
         >
           Сохранить о себе и контакты
         </button>

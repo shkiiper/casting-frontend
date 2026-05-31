@@ -468,7 +468,7 @@ export const LocationProfilePage = () => {
                 <button
                   onClick={() => void saveProfile()}
                   disabled={saving}
-                  className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white sm:w-auto disabled:opacity-60"
+                  className="w-full rounded-xl bg-white/85 px-6 py-3 text-slate-900 sm:w-auto disabled:opacity-60"
                 >
                   {saving ? "Сохраняем..." : "Сохранить"}
                 </button>
@@ -569,7 +569,7 @@ const MediaSection = ({
             />
             <button
               onClick={() => onRemove(url)}
-              className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100"
+              className="absolute top-1 right-1 bg-white/90 text-slate-900 rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100"
             >
               ✕
             </button>

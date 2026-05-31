@@ -29,7 +29,7 @@ export const PublishToggle = ({
           disabled={disabled}
           className={[
             "relative inline-flex h-8 w-14 items-center rounded-full transition-colors",
-            checked ? "bg-slate-900" : "bg-slate-300",
+            checked ? "bg-white/85" : "bg-slate-300",
             disabled ? "opacity-60 cursor-not-allowed" : "",
           ].join(" ")}
         >

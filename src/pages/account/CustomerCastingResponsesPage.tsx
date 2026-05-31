@@ -55,7 +55,7 @@ export const CustomerCastingResponsesPage = () => {
   }, [castings]);
 
   return (
-    <div className="relative min-h-screen bg-[#f6f6f4] text-slate-900">
+    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
@@ -134,7 +134,7 @@ const ApplicationItem = ({ item }: { item: CastingApplication }) => (
       <Link
         to={`/profiles/${item.applicantProfileId}`}
         state={{ from: "casting-responses" }}
-        className="inline-flex rounded-xl px-3 py-2 bg-slate-900 text-white text-sm hover:bg-slate-800"
+        className="inline-flex rounded-xl px-3 py-2 bg-white/85 text-slate-900 text-sm hover:bg-white"
       >
         Открыть профиль
       </Link>

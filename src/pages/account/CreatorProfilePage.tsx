@@ -660,7 +660,7 @@ export const CreatorProfilePage = () => {
                   <button
                     onClick={() => void saveProfile()}
                     disabled={saving}
-                    className="w-full rounded-xl bg-slate-900 px-6 py-3 text-white disabled:opacity-60 sm:min-w-44 sm:w-auto"
+                    className="w-full rounded-xl bg-white/85 px-6 py-3 text-slate-900 disabled:opacity-60 sm:min-w-44 sm:w-auto"
                   >
                     {saving ? "Сохраняем..." : hasProfile ? "Сохранить изменения" : "Сохранить профиль"}
                   </button>
@@ -725,12 +725,12 @@ const ActivityTypesDropdown = ({
         onClick={() => setOpen((current) => !current)}
         className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-300 bg-white px-4 py-3 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
       >
-        <span className={selectedValues.length ? "text-slate-700" : "text-slate-400"}>
+        <span className={selectedValues.length ? "text-slate-700" : "text-slate-600"}>
           {selectedValues.length ? selectedValues.join(", ") : "Выберите тип деятельности"}
         </span>
         <span
           className={[
-            "shrink-0 text-slate-400 transition-transform",
+            "shrink-0 text-slate-600 transition-transform",
             open ? "rotate-180" : "",
           ].join(" ")}
           aria-hidden="true"
@@ -870,7 +870,7 @@ const MediaSection = ({
             <button
               type="button"
               onClick={() => onRemove(url)}
-              className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100"
+              className="absolute top-1 right-1 bg-white/90 text-slate-900 rounded-full w-6 h-6 text-xs opacity-0 group-hover:opacity-100"
             >
               ✕
             </button>
@@ -988,7 +988,7 @@ const EditForm = ({
                 className={[
                   "px-3 py-1.5 rounded-full border text-sm transition-colors",
                   selected
-                    ? "bg-slate-900 text-white border-slate-900"
+                    ? "bg-white/85 text-slate-900 border-slate-300"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
                 ].join(" ")}
               >
@@ -1019,7 +1019,7 @@ const EditForm = ({
                 className={[
                   "px-3 py-1.5 rounded-full border text-sm transition-colors",
                   selected
-                    ? "bg-slate-900 text-white border-slate-900"
+                    ? "bg-white/85 text-slate-900 border-slate-300"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
                 ].join(" ")}
               >
@@ -1050,7 +1050,7 @@ const EditForm = ({
                 className={[
                   "px-3 py-1.5 rounded-full border text-sm transition-colors",
                   selected
-                    ? "bg-slate-900 text-white border-slate-900"
+                    ? "bg-white/85 text-slate-900 border-slate-300"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
                 ].join(" ")}
               >
