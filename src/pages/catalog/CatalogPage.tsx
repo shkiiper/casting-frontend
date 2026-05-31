@@ -912,6 +912,12 @@ export const CatalogPage = () => {
                             : p.type === 'CREATOR'
                             ? 'Креатор'
                             : 'Локация';
+                        const compactFacts = [
+                          p.city,
+                          p.type === 'ACTOR' && p.age ? `${p.age} лет` : null,
+                          p.type === 'CREATOR' ? getActivityTypes(p)[0] : null,
+                          p.type === 'LOCATION' ? p.locationName : null,
+                        ].filter(Boolean).slice(0, 2);
 
                         return (
                           <button
@@ -969,13 +975,21 @@ export const CatalogPage = () => {
                               </div>
                               <div className="mt-1 truncate text-xs text-slate-600 sm:text-sm">{subtitle}</div>
 
-                              <div className="mt-4 hidden min-h-[40px] text-sm text-slate-700 line-clamp-2 sm:block">
-                                {p.description ??
-                                  p.bio ??
-                                  (p.type === 'LOCATION'
-                                    ? p.locationName
-                                    : getActivityTypes(p).join(', ')) ??
-                                  '—'}
+                              <div className="mt-3 flex min-h-[28px] flex-wrap gap-1.5 sm:min-h-[32px]">
+                                {compactFacts.length > 0 ? (
+                                  compactFacts.map((fact, index) => (
+                                    <span
+                                      key={`${p.id}-${fact}-${index}`}
+                                      className="max-w-full truncate rounded-full border border-neutral-200 bg-white px-2 py-1 text-[10px] font-semibold text-neutral-700 sm:text-xs"
+                                    >
+                                      {fact}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="rounded-full border border-neutral-200 bg-white px-2 py-1 text-[10px] font-semibold text-neutral-500 sm:text-xs">
+                                    Профиль
+                                  </span>
+                                )}
                               </div>
 
                               <div className="mt-3 sm:mt-5">
@@ -988,11 +1002,6 @@ export const CatalogPage = () => {
                                   ].join(" ")}
                                 >
                                   Открыть
-                                </div>
-                                <div className="mt-2 hidden text-center text-xs text-slate-500 sm:block">
-                                  {p.premiumActive
-                                    ? "Профиль продвигается и выделен в каталоге"
-                                    : "Контакты доступны в профиле по подписке"}
                                 </div>
                               </div>
                             </button>

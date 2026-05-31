@@ -609,12 +609,12 @@ export const ProfileDetailsPage = () => {
       : activityTypes.slice(0, 8);
 
   return (
-    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#f3f4f7] text-slate-900">
       <div className="relative z-10 pt-8 pb-16">
         <Container>
           <div
             className={[
-              "mx-auto max-w-[1280px] overflow-visible rounded-[26px] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:rounded-[30px]",
+              "mx-auto w-full max-w-[1280px] overflow-hidden rounded-[26px] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:rounded-[30px] xl:overflow-visible",
               premium.active
                 ? "border-amber-300/80 shadow-[0_20px_54px_rgba(217,119,6,0.18)]"
                 : "border-black/5",
@@ -630,11 +630,11 @@ export const ProfileDetailsPage = () => {
                   : "border-black/10 bg-slate-50/70",
               ].join(" ")}
             >
-              <div>
+              <div className="min-w-0">
                 <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
                   Casting card
                 </div>
-                <h1 className="text-2xl md:text-3xl font-bold mt-1">{name}</h1>
+                <h1 className="mt-1 break-words text-2xl font-bold md:text-3xl">{name}</h1>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
                   <span>{topLine.join(" · ")}</span>
                   {premium.active ? (
@@ -650,7 +650,7 @@ export const ProfileDetailsPage = () => {
                 ) : null}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
                 {fromCastingResponses && (
                   <Link
                     to="/account/casting-responses"
@@ -668,7 +668,7 @@ export const ProfileDetailsPage = () => {
               </div>
             </header>
 
-            <section className="px-4 py-6 sm:px-6 md:px-8 md:py-8">
+            <section className="overflow-hidden px-3 py-5 sm:px-6 sm:py-6 md:px-8 md:py-8">
               {loading && (
                 <div className="text-sm text-slate-500">Загрузка профиля...</div>
               )}
@@ -680,11 +680,11 @@ export const ProfileDetailsPage = () => {
               )}
 
               {!loading && !error && profile && (
-                <div className="space-y-8">
-                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-                    <div className="grid gap-5 lg:grid-cols-[minmax(280px,0.78fr)_minmax(0,1fr)]">
-                      <div className="space-y-3">
-                        <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-slate-200 shadow-[0_22px_70px_rgba(15,23,42,0.16)]">
+                <div className="min-w-0 space-y-8">
+                  <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+                    <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(280px,0.78fr)_minmax(0,1fr)]">
+                      <div className="min-w-0 space-y-3">
+                        <div className="relative w-full max-w-full overflow-hidden rounded-[28px] border border-white/80 bg-slate-200 shadow-[0_22px_70px_rgba(15,23,42,0.16)]">
                           <div className="aspect-[3/4]">
                             {primaryGalleryPhoto ? (
                               <button
@@ -721,11 +721,11 @@ export const ProfileDetailsPage = () => {
 
                         <div className="rounded-[24px] border border-white/80 bg-white/88 p-4 shadow-[0_14px_40px_rgba(15,23,42,0.10)] backdrop-blur">
                           <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div>
+                            <div className="min-w-0">
                               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                                 {profileTypeLabel[profile.type]}
                               </div>
-                              <div className="mt-1 text-3xl font-black leading-none text-slate-900">
+                              <div className="mt-1 break-words text-2xl font-black leading-none text-slate-900 sm:text-3xl">
                                 {name}
                               </div>
                             </div>
@@ -764,7 +764,7 @@ export const ProfileDetailsPage = () => {
                         </div>
                       </div>
 
-                      <div className="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_18px_56px_rgba(15,23,42,0.09)] backdrop-blur md:p-6">
+                      <div className="min-w-0 rounded-[28px] border border-white/80 bg-white/82 p-4 shadow-[0_18px_56px_rgba(15,23,42,0.09)] backdrop-blur sm:p-5 md:p-6">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
                             {profileTypeLabel[profile.type]}
@@ -781,7 +781,7 @@ export const ProfileDetailsPage = () => {
                           ) : null}
                         </div>
 
-                        <h2 className="mt-5 text-3xl font-black leading-tight md:text-5xl">{name}</h2>
+                        <h2 className="mt-5 break-words text-3xl font-black leading-tight md:text-5xl">{name}</h2>
                         {topLine.length > 0 ? (
                           <div className="mt-3 text-base font-medium text-slate-600">
                             {topLine.join(" · ")}
@@ -844,7 +844,7 @@ export const ProfileDetailsPage = () => {
                       </div>
                     </div>
 
-                    <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+                    <aside className="min-w-0 space-y-4 xl:sticky xl:top-24 xl:self-start">
                       <ActionPanel
                         isAuthed={isAuthenticated}
                         isCustomer={isCustomer}

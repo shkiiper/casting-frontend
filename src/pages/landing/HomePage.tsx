@@ -14,6 +14,7 @@ import {
 import { Container } from '@/shared/ui/Container';
 import { InlineNav } from '@/shared/ui/InlineNav';
 import publicApi from '@/shared/api/publicClient';
+import { PageOctopusDecor } from '@/shared/ui/PageOctopusDecor';
 import { PublicFooter } from '@/shared/ui/PublicFooter';
 import actorIcon from '@/shared/assets/actor-icon.svg';
 import directorIcon from '@/shared/assets/director-icon.svg';
@@ -152,23 +153,24 @@ export const HomePage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#f3f4f7] text-slate-900">
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img
-            src="/production-hero.png"
-            alt=""
-            className="h-full w-full object-cover object-right opacity-55"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.72)_44%,rgba(255,255,255,0.34)_100%)]" />
-          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f3f4f7] to-transparent" />
-        </div>
+    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
+      <PageOctopusDecor />
+      <div className="relative z-10 pb-8 pt-4 sm:pt-10">
+        <Container>
+          <div className="glass-object relative mx-auto max-w-7xl overflow-hidden rounded-[22px] sm:rounded-[36px] lg:rounded-[44px]">
+            <div className="absolute inset-0">
+              <img
+                src="/production-hero.png"
+                alt=""
+                className="h-full w-full object-cover object-right opacity-46"
+              />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.78)_46%,rgba(255,255,255,0.48)_100%)]" />
+            </div>
 
-        <div className="relative z-10">
-          <InlineNav active="home" />
+            <div className="relative z-10">
+              <InlineNav active="home" />
 
-          <Container>
-            <section className="grid min-h-[calc(100svh-132px)] items-center gap-8 py-8 md:grid-cols-[minmax(0,1fr)_520px] md:py-12">
+              <section className="grid min-h-[calc(100svh-220px)] items-center gap-8 px-4 py-8 sm:px-6 md:grid-cols-[minmax(0,1fr)_520px] md:px-8 md:py-12">
               <div className="max-w-4xl">
                 <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/55 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700 backdrop-blur">
                   <Sparkles size={16} />
@@ -258,9 +260,10 @@ export const HomePage = () => {
                   </div>
                 </div>
               </div>
-            </section>
-          </Container>
-        </div>
+              </section>
+            </div>
+          </div>
+        </Container>
       </div>
 
       <main className="relative z-10 bg-[#f3f4f7] pb-16">
