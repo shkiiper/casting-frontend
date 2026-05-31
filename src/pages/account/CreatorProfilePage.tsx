@@ -533,7 +533,7 @@ export const CreatorProfilePage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-          <div className="glass-object mx-auto mt-6 max-w-[96rem] overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
+          <div className="glass-object mx-auto mt-6 max-w-7xl overflow-visible rounded-[30px] sm:mt-8 sm:rounded-[36px] lg:rounded-[44px]">
           <InlineNav
             profileMenu={[
               {

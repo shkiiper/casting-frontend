@@ -185,7 +185,7 @@ export const PublishedAdsPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-        <div className="mx-auto max-w-[96rem] mt-10">
+        <div className="mx-auto max-w-7xl mt-10">
           <div className="glass-object overflow-visible rounded-[28px] sm:rounded-[36px]">
             <InlineNav active="ads" />
 

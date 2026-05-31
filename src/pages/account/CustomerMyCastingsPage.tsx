@@ -54,7 +54,7 @@ export const CustomerMyCastingsPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-        <div className="mx-auto max-w-[96rem] mt-10 bg-white rounded-[36px] shadow border border-black/5 overflow-visible">
+        <div className="mx-auto max-w-7xl mt-10 bg-white rounded-[36px] shadow border border-black/5 overflow-visible">
           <InlineNav />
 
           <header className="px-8 py-7 border-b flex flex-wrap items-center justify-between gap-3">

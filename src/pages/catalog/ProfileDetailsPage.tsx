@@ -614,7 +614,7 @@ export const ProfileDetailsPage = () => {
         <Container>
           <div
             className={[
-              "mx-auto max-w-[96rem] overflow-visible rounded-[26px] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:rounded-[30px]",
+              "mx-auto max-w-[1280px] overflow-visible rounded-[26px] border bg-white shadow-[0_18px_48px_rgba(15,23,42,0.10)] sm:rounded-[30px]",
               premium.active
                 ? "border-amber-300/80 shadow-[0_20px_54px_rgba(217,119,6,0.18)]"
                 : "border-black/5",

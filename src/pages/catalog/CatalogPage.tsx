@@ -500,7 +500,7 @@ export const CatalogPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10 pb-16 pt-4 sm:pt-10">
         <Container>
-          <div className="glass-object mx-auto max-w-[96rem] overflow-visible rounded-[22px] sm:rounded-[36px] lg:rounded-[44px]">
+          <div className="glass-object mx-auto max-w-7xl overflow-visible rounded-[22px] sm:rounded-[36px] lg:rounded-[44px]">
             <InlineNav active={navActive} />
 
             {/* HEADER каталога */}
@@ -832,7 +832,7 @@ export const CatalogPage = () => {
               {/* GRID / STATES */}
               <div className="mt-8">
                 {isLoading ? (
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
                     {Array.from({ length: 9 }).map((_, i) => (
                       <div
                         key={i}
@@ -898,7 +898,7 @@ export const CatalogPage = () => {
                       </span>
                     </div>
 
-                    <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                    <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
                       {filtered.map((p) => {
                         const name = buildName(p);
                         const subtitle =
@@ -923,7 +923,7 @@ export const CatalogPage = () => {
                                 })
                               }
                               className={[
-                                "glass-object text-left rounded-[28px] p-4 transition-shadow sm:p-5",
+                                "glass-object rounded-[22px] p-2.5 text-left transition-shadow sm:rounded-[28px] sm:p-5",
                                 p.premiumActive
                                   ? "border border-amber-300/80 bg-[linear-gradient(180deg,rgba(255,251,235,0.96)_0%,rgba(255,255,255,0.92)_100%)] shadow-[0_18px_42px_rgba(217,119,6,0.18)] hover:shadow-[0_18px_42px_rgba(217,119,6,0.24)]"
                                   : "hover:shadow-[0_14px_32px_rgba(15,23,42,0.14)]",
@@ -954,20 +954,22 @@ export const CatalogPage = () => {
                                   );
                                 })()}
 
-                              <div className="absolute top-3 left-3 rounded-full bg-white/85 border border-white/70 px-3 py-1 text-xs font-semibold text-slate-700">
+                              <div className="absolute left-2 top-2 rounded-full border border-white/70 bg-white/85 px-2 py-0.5 text-[10px] font-semibold text-slate-700 sm:left-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs">
                                   {badge}
                                 </div>
                                 {p.premiumActive ? (
-                                  <div className="absolute right-3 top-3 rounded-full bg-amber-400/95 px-3 py-1 text-xs font-semibold text-slate-900 shadow-sm">
+                                  <div className="absolute right-2 top-2 rounded-full bg-amber-400/95 px-2 py-0.5 text-[10px] font-semibold text-slate-900 shadow-sm sm:right-3 sm:top-3 sm:px-3 sm:py-1 sm:text-xs">
                                     Premium
                                   </div>
                                 ) : null}
                               </div>
 
-                              <div className="mt-5 font-bold text-lg">{name}</div>
-                              <div className="mt-1 text-slate-600 text-sm">{subtitle}</div>
+                              <div className="mt-3 line-clamp-2 text-sm font-bold leading-tight text-slate-900 sm:mt-5 sm:text-lg">
+                                {name}
+                              </div>
+                              <div className="mt-1 truncate text-xs text-slate-600 sm:text-sm">{subtitle}</div>
 
-                              <div className="mt-4 text-sm text-slate-700 line-clamp-2 min-h-[40px]">
+                              <div className="mt-4 hidden min-h-[40px] text-sm text-slate-700 line-clamp-2 sm:block">
                                 {p.description ??
                                   p.bio ??
                                   (p.type === 'LOCATION'
@@ -976,18 +978,18 @@ export const CatalogPage = () => {
                                   '—'}
                               </div>
 
-                              <div className="mt-5">
+                              <div className="mt-3 sm:mt-5">
                                 <div
                                   className={[
-                                    "rounded-xl px-4 py-3 text-center font-semibold",
+                                    "rounded-xl px-2 py-2 text-center text-xs font-semibold sm:px-4 sm:py-3 sm:text-sm",
                                     p.premiumActive
                                       ? "bg-amber-500 text-slate-950"
                                       : "bg-white/85 text-slate-900",
                                   ].join(" ")}
                                 >
-                                  Открыть профиль
+                                  Открыть
                                 </div>
-                                <div className="mt-2 text-xs text-slate-500 text-center">
+                                <div className="mt-2 hidden text-center text-xs text-slate-500 sm:block">
                                   {p.premiumActive
                                     ? "Профиль продвигается и выделен в каталоге"
                                     : "Контакты доступны в профиле по подписке"}

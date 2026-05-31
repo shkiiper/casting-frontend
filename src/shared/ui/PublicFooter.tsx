@@ -17,7 +17,7 @@ const productLinks = [
 export function PublicFooter() {
   return (
     <footer className="border-t border-black/10 bg-white/88 text-slate-900 backdrop-blur">
-      <div className="mx-auto max-w-[96rem] px-4 py-8 sm:px-6 md:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 md:px-8">
         <div className="grid gap-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
             <div className="text-lg font-semibold text-slate-900">{COMPANY_NAME}</div>

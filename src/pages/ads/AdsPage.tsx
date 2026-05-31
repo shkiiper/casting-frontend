@@ -120,7 +120,7 @@ export const AdsPage = () => {
       <PageOctopusDecor />
       <div className="relative z-10">
         <Container>
-        <div className="mx-auto max-w-[96rem] mt-10">
+        <div className="mx-auto max-w-7xl mt-10">
           <div className="glass-object rounded-[28px] sm:rounded-[36px]">
             <InlineNav active="ads" />
             <header className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-5 sm:px-6 md:px-8 md:py-6">
