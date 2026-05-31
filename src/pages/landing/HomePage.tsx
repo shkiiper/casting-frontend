@@ -1,8 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowRight,
+  BadgeCheck,
+  Camera,
+  Clapperboard,
+  MapPin,
+  Play,
+  Radar,
+  Sparkles,
+  UsersRound,
+} from 'lucide-react';
 import { Container } from '@/shared/ui/Container';
 import { InlineNav } from '@/shared/ui/InlineNav';
-import { PageOctopusDecor } from '@/shared/ui/PageOctopusDecor';
 import publicApi from '@/shared/api/publicClient';
 import { PublicFooter } from '@/shared/ui/PublicFooter';
 import actorIcon from '@/shared/assets/actor-icon.svg';
@@ -41,18 +51,21 @@ const profileDirections = [
     description: 'Подбор по типажу, возрасту, городу и опыту.',
     icon: actorIcon,
     to: '/actors',
+    meta: 'Типажи и портфолио',
   },
   {
     title: 'Креаторы',
     description: 'Операторы, режиссёры, монтажеры, SMM и продакшен-команды.',
     icon: directorIcon,
     to: '/creators',
+    meta: 'Команда под задачу',
   },
   {
     title: 'Локации',
     description: 'Студии, интерьеры и площадки с условиями аренды.',
     icon: locationIcon,
     to: '/locations',
+    meta: 'Площадки для съёмок',
   },
 ];
 
@@ -60,18 +73,27 @@ const steps = [
   {
     id: '01',
     title: 'Создайте объявление',
-    text: 'Опишите проект, город, сроки и требования к участникам.',
+    text: 'Опишите проект, город, сроки и требования к участникам. Заявка выглядит понятно для исполнителей.',
+    icon: Clapperboard,
   },
   {
     id: '02',
     title: 'Получайте отклики',
-    text: 'Кандидаты откликаются напрямую, а вы видите их профили.',
+    text: 'Кандидаты откликаются напрямую, а вы видите фото, опыт, контакты и актуальный статус профиля.',
+    icon: Radar,
   },
   {
     id: '03',
     title: 'Соберите команду',
-    text: 'Открывайте контакты и быстро договаривайтесь о работе.',
+    text: 'Открывайте контакты и быстро договаривайтесь о работе без бесконечных чатов и таблиц.',
+    icon: BadgeCheck,
   },
+];
+
+const liveCards = [
+  { title: 'Актёр', text: '25 лет · Бишкек', accent: 'cyan' },
+  { title: 'Оператор', text: 'Reels · клипы · реклама', accent: 'amber' },
+  { title: 'Локация', text: 'Лофт · 120 м² · свет', accent: 'rose' },
 ];
 
 export const HomePage = () => {
@@ -130,190 +152,289 @@ export const HomePage = () => {
   );
 
   return (
-    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
-      <PageOctopusDecor />
-      <div className="relative z-10 pt-10 pb-16">
-        <Container>
-          <div className="relative mx-auto max-w-7xl overflow-visible rounded-[30px] border border-black/5 bg-white/88 shadow-[0_16px_56px_rgba(15,23,42,0.10)] sm:rounded-[36px] lg:rounded-[44px]">
-            <InlineNav active="home" />
+    <div className="min-h-screen bg-[#08090d] text-white">
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            src="/main.png"
+            alt=""
+            className="h-full w-full object-cover object-center opacity-80"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,9,13,0.96)_0%,rgba(8,9,13,0.64)_42%,rgba(8,9,13,0.18)_100%)]" />
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#08090d] to-transparent" />
+        </div>
 
-            <section className="px-4 pb-8 pt-6 sm:px-6 md:px-8 md:pb-10 md:pt-8">
-              <div className="relative">
-                <div className="hero-glass relative rounded-[30px] overflow-hidden">
+        <div className="relative z-10">
+          <InlineNav active="home" />
 
-                  <div className="relative p-5 sm:p-7 md:p-10 lg:p-12">
-                    <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-10 items-center">
-                      <div>
-                        <div className="hero-glass-chip inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-slate-600">
-                          <span className="h-6 w-6 rounded-full bg-slate-900 text-white grid place-items-center text-xs">
-                            O
-                          </span>
-                          Onset platform
-                        </div>
+          <Container>
+            <section className="grid min-h-[calc(100svh-132px)] items-center gap-8 py-8 md:grid-cols-[minmax(0,1fr)_520px] md:py-12">
+              <div className="max-w-4xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-100 backdrop-blur">
+                  <Sparkles size={16} />
+                  Casting operating system
+                </div>
 
-                        <h1 className="mt-6 text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-4xl md:mt-7 md:text-6xl">
-                          Кастинг и продакшен
-                          <span className="text-slate-500"> в одной системе</span>
-                        </h1>
+                <h1 className="mt-6 text-5xl font-black leading-[0.9] sm:text-6xl md:text-8xl">
+                  ONSET
+                </h1>
+                <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-200 md:text-2xl md:leading-9">
+                  Кинематографичная платформа, где кастинг, команда, локации и объявления
+                  собираются в один быстрый рабочий поток.
+                </p>
 
-                        <div className="mt-8 flex flex-col sm:flex-row gap-3">
-                          <Link to="/actors" className="w-full sm:w-auto">
-                            <button
-                              className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white shadow-[0_0_22px_rgba(255,255,255,0.52)] transition-colors hover:bg-slate-800 sm:w-auto sm:px-8"
-                              type="button"
-                            >
-                              Перейти в каталог
-                            </button>
-                          </Link>
-                          <Link to="/ads" className="w-full sm:w-auto">
-                            <button
-                              className="hero-glass-chip inline-flex w-full items-center justify-center rounded-xl px-6 py-3 font-semibold text-slate-900 transition-colors sm:w-auto sm:px-8"
-                              type="button"
-                            >
-                              Смотреть объявления
-                            </button>
-                          </Link>
-                        </div>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    to="/actors"
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-slate-950 transition-colors hover:bg-cyan-50"
+                  >
+                    Открыть каталог
+                    <ArrowRight size={18} />
+                  </Link>
+                  <Link
+                    to="/ads"
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-6 text-sm font-bold text-white backdrop-blur transition-colors hover:bg-white/15"
+                  >
+                    <Play size={17} />
+                    Смотреть кастинги
+                  </Link>
+                </div>
+
+                <div className="mt-8 grid max-w-xl grid-cols-2 gap-3">
+                  {metricCards.map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-white/12 bg-white/[0.08] p-4 backdrop-blur"
+                    >
+                      <div className="text-3xl font-black">
+                        {new Intl.NumberFormat('ru-RU').format(item.value)}
                       </div>
+                      <div className="mt-1 text-xs text-slate-300">{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-                      <div className="grid gap-3">
-                        {metricCards.map((item) => (
-                          <div
-                            key={item.label}
-                            className="hero-glass-card rounded-2xl p-4"
-                          >
-                            <div className="text-3xl font-extrabold">
-                              {new Intl.NumberFormat('ru-RU').format(item.value)}
-                            </div>
-                            <div className="text-sm text-slate-600 mt-1">{item.label}</div>
-                          </div>
-                        ))}
+              <div className="home-radar-scene relative hidden min-h-[520px] md:block">
+                <div className="home-radar-ring home-radar-ring--outer" />
+                <div className="home-radar-ring home-radar-ring--middle" />
+                <div className="home-radar-ring home-radar-ring--inner" />
+                <div className="home-radar-beam" />
+
+                {liveCards.map((card, index) => (
+                  <div
+                    key={card.title}
+                    className={`home-live-card home-live-card--${index + 1}`}
+                  >
+                    <div className={`home-live-dot home-live-dot--${card.accent}`} />
+                    <div>
+                      <div className="text-sm font-bold">{card.title}</div>
+                      <div className="mt-1 text-xs text-slate-300">{card.text}</div>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="home-command-card">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400 text-slate-950">
+                      <Radar size={22} />
+                    </span>
+                    <div>
+                      <div className="text-sm font-bold">Live matching</div>
+                      <div className="mt-1 text-xs text-slate-300">
+                        3 направления · 1 проект
                       </div>
                     </div>
                   </div>
-
-                  <div className="hero-glass-footer relative px-6 py-5">
-                    <div className="marquee">
-                      <div className="marquee__track">
-                        {[...studios, ...studios].map((studio, idx) => (
-                          <span
-                            key={`${studio}-${idx}`}
-                            className="text-xs text-slate-500 tracking-wide"
-                          >
-                            {studio}
-                          </span>
-                        ))}
+                  <div className="mt-5 grid grid-cols-3 gap-2">
+                    {['Актёр', 'Локация', 'Команда'].map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2 text-center text-[11px] font-semibold text-slate-200"
+                      >
+                        {item}
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </section>
+          </Container>
+        </div>
+      </div>
 
-            <section className="relative px-4 pb-10 sm:px-6 md:px-8 md:pb-12">
-              <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-0 top-0 h-30 bg-gradient-to-b from-[#f3f4f7]/90 via-[#f3f4f7]/68 to-transparent"
-              />
-              <div className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-                <div>
-                  <h2 className="text-2xl md:text-3xl font-bold">Что есть на платформе</h2>
-                  <p className="mt-2 text-slate-600">
-                    Все ключевые роли и ресурсы для проекта в едином каталоге.
-                  </p>
-                </div>
-                <Link to="/actors" className="text-sm text-slate-700 hover:text-slate-900">
-                  Открыть каталог →
-                </Link>
-              </div>
-
-              <div className="mt-8 grid md:grid-cols-3 gap-4">
-                {profileDirections.map((item) => (
-                  <Link
-                    key={item.title}
-                    to={item.to}
-                    className="group hero-glass-card block rounded-[28px] p-6 transition-shadow hover:shadow-[0_14px_32px_rgba(15,23,42,0.14)] focus:outline-none focus:ring-2 focus:ring-slate-300/70"
+      <main className="relative z-10 bg-[#08090d] pb-16">
+        <Container>
+          <section className="-mt-8 rounded-[28px] border border-white/10 bg-white/[0.06] p-3 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur md:rounded-[36px] md:p-4">
+            <div className="marquee">
+              <div className="marquee__track py-3">
+                {[...studios, ...studios].map((studio, idx) => (
+                  <span
+                    key={`${studio}-${idx}`}
+                    className="text-xs font-semibold tracking-wide text-slate-400"
                   >
-                    <div className="h-10 w-10 rounded-xl bg-slate-900/5 grid place-items-center">
-                      <img src={item.icon} alt="" className="h-6 w-6 opacity-80" />
-                    </div>
-                    <div className="mt-5 text-lg font-semibold underline-offset-4 group-hover:underline">
-                      {item.title}
-                    </div>
-                    <div className="mt-2 text-sm text-slate-600 leading-relaxed">
-                      {item.description}
-                    </div>
-                  </Link>
+                    {studio}
+                  </span>
                 ))}
               </div>
-            </section>
+            </div>
+          </section>
 
-            <section className="px-4 pb-10 sm:px-6 md:px-8 md:pb-12">
-              <div className="text-center">
-                <h2 className="text-2xl md:text-3xl font-bold">Как это работает</h2>
-                <p className="mt-2 text-slate-600 max-w-2xl mx-auto">
-                  Простой процесс: публикуете запрос, получаете отклики и выбираете
-                  подходящих людей.
+          <section className="py-12 md:py-16">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">
+                  Каталог
+                </div>
+                <h2 className="mt-3 text-3xl font-black text-white md:text-5xl">
+                  Выбирайте как в приложении
+                </h2>
+                <p className="mt-3 max-w-2xl text-slate-400">
+                  Быстрые направления, понятные профили и визуальный выбор без ощущения
+                  старой базы данных.
                 </p>
               </div>
+              <Link
+                to="/actors"
+                className="inline-flex items-center gap-2 text-sm font-bold text-cyan-200 hover:text-white"
+              >
+                Открыть каталог
+                <ArrowRight size={17} />
+              </Link>
+            </div>
 
-              <div className="mt-8 grid md:grid-cols-3 gap-4">
-                {steps.map((step) => (
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {profileDirections.map((item, index) => (
+                <Link
+                  key={item.title}
+                  to={item.to}
+                  className="group relative min-h-[300px] overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.06] p-5 transition-transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-cyan-300/70"
+                >
+                  <div className="absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className={`home-direction-light home-direction-light--${index + 1}`} />
+                  </div>
+                  <div className="relative flex h-full flex-col justify-between">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-slate-950">
+                        <img src={item.icon} alt="" className="h-7 w-7" />
+                      </div>
+                      <span className="rounded-full border border-white/10 bg-white/[0.08] px-3 py-1 text-xs font-semibold text-slate-300">
+                        {item.meta}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-white">{item.title}</div>
+                      <div className="mt-3 text-sm leading-6 text-slate-300">
+                        {item.description}
+                      </div>
+                    </div>
+                    <div className="inline-flex items-center gap-2 text-sm font-bold text-cyan-200">
+                      Перейти
+                      <ArrowRight size={16} />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          <section className="grid gap-5 pb-12 md:grid-cols-[0.9fr_1.1fr] md:pb-16">
+            <div className="rounded-[28px] border border-white/10 bg-white/[0.06] p-6 md:p-8">
+              <div className="text-xs font-bold uppercase tracking-[0.22em] text-amber-300">
+                Процесс
+              </div>
+              <h2 className="mt-3 text-3xl font-black text-white md:text-5xl">
+                От идеи до команды без хаоса
+              </h2>
+              <p className="mt-4 text-slate-400">
+                Главная задача ONSET — дать ощущение диспетчерской, где видно,
+                кто нужен, кто готов и что уже можно брать в работу.
+              </p>
+              <div className="mt-6 grid grid-cols-3 gap-2">
+                <MiniIcon label="Кастинг" icon={<Clapperboard size={18} />} />
+                <MiniIcon label="Команда" icon={<UsersRound size={18} />} />
+                <MiniIcon label="Локации" icon={<MapPin size={18} />} />
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              {steps.map((step) => {
+                const Icon = step.icon;
+                return (
                   <div
                     key={step.id}
-                    className="hero-glass-card rounded-[28px] p-6"
+                    className="grid gap-4 rounded-[24px] border border-white/10 bg-white/[0.06] p-5 md:grid-cols-[72px_1fr]"
                   >
-                    <div className="text-xs font-bold tracking-wider text-slate-500">
-                      {step.id}
+                    <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white text-slate-950">
+                      <Icon size={26} />
                     </div>
-                    <div className="mt-3 text-lg font-semibold">{step.title}</div>
-                    <div className="mt-2 text-sm text-slate-600 leading-relaxed">
-                      {step.text}
+                    <div>
+                      <div className="text-xs font-bold tracking-[0.18em] text-slate-500">
+                        {step.id}
+                      </div>
+                      <div className="mt-1 text-xl font-black text-white">{step.title}</div>
+                      <div className="mt-2 text-sm leading-6 text-slate-400">{step.text}</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </section>
+                );
+              })}
+            </div>
+          </section>
 
-            <section className="px-4 pb-12 sm:px-6 md:px-8 md:pb-14">
-              <div className="rounded-[24px] border border-black/5 bg-slate-900 p-6 text-white sm:rounded-[30px] md:p-10">
-                <div className="grid lg:grid-cols-[1fr_auto] gap-6 items-center">
-                  <div>
-                    <h3 className="text-2xl md:text-3xl font-bold">
-                      Готовы закрыть кастинг быстрее?
-                    </h3>
-                    <p className="mt-2 text-slate-300 max-w-2xl">
-                      Разместите объявление или найдите исполнителей в каталоге уже
-                      сегодня.
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Link to="/auth/register">
-                      <button
-                        className="inline-flex items-center justify-center rounded-xl px-7 py-3 font-semibold bg-white text-slate-900 hover:bg-slate-100 transition-colors"
-                        type="button"
-                      >
-                        Начать бесплатно
-                      </button>
-                    </Link>
-                    <Link to="/ads">
-                      <button
-                        className="inline-flex items-center justify-center rounded-xl px-7 py-3 font-semibold border border-white/30 text-white hover:bg-white/10 transition-colors"
-                        type="button"
-                      >
-                        Объявления
-                      </button>
-                    </Link>
-                  </div>
+          <section className="overflow-hidden rounded-[32px] border border-white/10 bg-white text-slate-950">
+            <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
+              <div className="p-6 md:p-10">
+                <div className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white">
+                  <Camera size={15} />
+                  Production ready
+                </div>
+                <h3 className="mt-5 text-3xl font-black md:text-5xl">
+                  Публикуйте проект и собирайте людей быстрее
+                </h3>
+                <p className="mt-4 max-w-2xl text-slate-600">
+                  Для заказчика это короткий путь от задачи к реальным кандидатам.
+                  Для исполнителя — место, где профиль выглядит как витрина, а не анкета.
+                </p>
+                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    to="/auth/register"
+                    className="inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-6 text-sm font-bold text-white hover:bg-slate-800"
+                  >
+                    Начать бесплатно
+                  </Link>
+                  <Link
+                    to="/ads"
+                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-slate-300 px-6 text-sm font-bold text-slate-950 hover:bg-slate-100"
+                  >
+                    Объявления
+                  </Link>
                 </div>
               </div>
-            </section>
-          </div>
+              <div className="relative min-h-[320px] bg-slate-950">
+                <img
+                  src="/loginpage.png"
+                  alt=""
+                  className="absolute inset-0 h-full w-full object-cover opacity-80"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+              </div>
+            </div>
+          </section>
         </Container>
-      </div>
-      <div className="relative z-10">
+      </main>
+
+      <div className="bg-[#08090d]">
         <PublicFooter />
       </div>
     </div>
   );
 };
+
+const MiniIcon = ({ label, icon }: { label: string; icon: ReactNode }) => (
+  <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3 text-center">
+    <div className="mx-auto grid h-9 w-9 place-items-center rounded-xl bg-white text-slate-950">
+      {icon}
+    </div>
+    <div className="mt-2 text-[11px] font-bold text-slate-300">{label}</div>
+  </div>
+);
