@@ -15,6 +15,17 @@ export async function getSubscriptionInfo(): Promise<SubscriptionInfoResponse> {
   return data;
 }
 
+// POST /api/customer/promo-codes/redeem
+export async function redeemCustomerPromoCode(
+  code: string
+): Promise<SubscriptionInfoResponse> {
+  const { data } = await api.post<SubscriptionInfoResponse>(
+    "/api/customer/promo-codes/redeem",
+    { code }
+  );
+  return data;
+}
+
 // POST /api/customer/profiles/{profileId}/contacts
 export async function showContacts(
   profileId: number

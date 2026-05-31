@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import api from "@/api/client";
 import { useSession } from "@/entities/user/model/authStore";
 import publicApi from "@/shared/api/publicClient";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { PublicFooter } from "@/shared/ui/PublicFooter";
 import { pickProfilePhoto, resolveMediaUrl } from "@/shared/ui/useProfileAvatar";
 import { getSubscriptionInfo, showContacts } from "@/api/customer";
@@ -418,6 +417,7 @@ export const ProfileDetailsPage = () => {
   const name = useMemo(() => {
     if (!profile) return "";
     return (
+      profile.locationName ||
       profile.displayName ||
       [profile.firstName, profile.lastName].filter(Boolean).join(" ") ||
       "Без имени"
@@ -535,10 +535,52 @@ export const ProfileDetailsPage = () => {
       ? "locations"
       : undefined;
   const premium = extractProfilePremiumInfo(profile);
+  const topLine = [
+    profile ? profileTypeLabel[profile.type] : null,
+    profile?.city,
+    profile?.type === "ACTOR" && profile.age ? `${profile.age} лет` : null,
+    profile?.type === "CREATOR" && activityTypes.length ? activityTypes.slice(0, 2).join(", ") : null,
+  ].filter(Boolean);
+  const quickFacts = [
+    {
+      label: "Город",
+      value: profile?.city || "Не указан",
+    },
+    {
+      label: profile?.type === "LOCATION" ? "Тип" : "Роль",
+      value:
+        profile?.type === "CREATOR" && activityTypes.length
+          ? activityTypes.slice(0, 2).join(", ")
+          : profile
+          ? profileTypeLabel[profile.type]
+          : "—",
+    },
+    {
+      label: profile?.type === "ACTOR" ? "Возраст" : "Ставка",
+      value:
+        profile?.type === "ACTOR"
+          ? profile.age
+            ? `${profile.age} лет`
+            : "Не указан"
+          : localizeRate(profile?.minRate, profile?.rateUnit) || "По запросу",
+    },
+    {
+      label: profile?.type === "ACTOR" ? "Игровой возраст" : "Материалы",
+      value:
+        profile?.type === "ACTOR"
+          ? playingAge || "Не указан"
+          : `${photos.length} фото · ${videoList.length} видео`,
+    },
+  ];
+  const heroTags =
+    profile?.type === "CREATOR"
+      ? creatorSkills.slice(0, 8)
+      : profile?.type === "ACTOR"
+      ? skills.slice(0, 8)
+      : activityTypes.slice(0, 8);
 
   return (
     <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
-      <PageOctopusDecor />
       <div className="relative z-10 pt-8 pb-16">
         <Container>
           <div
@@ -561,11 +603,11 @@ export const ProfileDetailsPage = () => {
             >
               <div>
                 <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                  Профиль
+                  Casting card
                 </div>
                 <h1 className="text-2xl md:text-3xl font-bold mt-1">{name}</h1>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                  <span>{profile ? profileTypeLabel[profile.type] : ""}</span>
+                  <span>{topLine.join(" · ")}</span>
                   {premium.active ? (
                     <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
                       Premium
@@ -609,105 +651,190 @@ export const ProfileDetailsPage = () => {
               )}
 
               {!loading && !error && profile && (
-                <div>
-                  <div className="text-center mb-6">
-                    <div className="inline-flex border-b-2 border-slate-300 text-slate-800 font-semibold text-sm md:text-base pb-2">
-                      Детали и медиа
-                    </div>
-                  </div>
-
-                  <div className="grid gap-3 lg:grid-cols-[0.68fr_1fr] xl:grid-cols-[0.72fr_1fr]">
-                    <div className="relative rounded-xl overflow-hidden border border-black/10 bg-slate-200 aspect-[4/4.8] max-h-[560px]">
-                      {galleryPhotos[0] ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActivePhoto(0);
-                            setLightboxOpen(true);
-                          }}
-                          className="w-full h-full"
-                        >
-                          <img
-                            src={resolveMediaUrl(galleryPhotos[0]) ?? undefined}
-                            alt={name}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ) : (
-                        <div className="w-full h-full grid place-items-center text-slate-500">
-                          Фото отсутствует
-                        </div>
-                      )}
-
-                      {videoList[0] && (
-                        <button
-                          type="button"
-                          onClick={() => openVideoModal(videoList[0], "Интро-видео")}
-                          className="absolute left-4 bottom-4 px-4 py-2 rounded-xl bg-white/90 text-slate-900 text-sm font-medium hover:bg-black"
-                        >
-                          ▶ Смотреть интро-видео
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 auto-rows-[1fr]">
-                      {sidePhotos.length > 0 ? (
-                        sidePhotos.map((url, index) => (
-                          <button
-                            key={`${url}-${index}`}
-                            type="button"
-                            onClick={() => {
-                              setActivePhoto(index + 1);
-                              setLightboxOpen(true);
-                            }}
-                            className="rounded-xl overflow-hidden border border-black/10 bg-slate-200 aspect-square"
-                          >
-                            <img
-                              src={resolveMediaUrl(url) ?? undefined}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))
-                      ) : (
-                        <div className="col-span-2 rounded-xl border border-dashed border-black/20 grid place-items-center text-sm text-slate-500 p-6">
-                          Дополнительные медиа отсутствуют
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-8 grid gap-8 xl:mt-10 xl:grid-cols-[1fr_340px]">
-                    <div>
-                      <h2 className="text-2xl md:text-3xl font-bold leading-tight">{name}</h2>
-                      {profile.city ? (
-                        <p className="text-lg md:text-xl mt-2 text-slate-700">
-                          {profile.city}
-                        </p>
-                      ) : null}
-                      {(profile.gender && genderLabel[profile.gender]) || profile.gender ? (
-                        <p className="text-base md:text-lg mt-2 text-slate-700">
-                          {(profile.gender && genderLabel[profile.gender]) || profile.gender}
-                        </p>
-                      ) : null}
-
-                      {description ? (
-                        <>
-                          <div className="mt-8 text-[15px] leading-7 text-slate-800">
-                            {bioExpanded ? description : shortDescription}
+                <div className="space-y-8">
+                  <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+                    <div className="grid gap-5 lg:grid-cols-[minmax(280px,0.78fr)_minmax(0,1fr)]">
+                      <div className="space-y-3">
+                        <div className="relative overflow-hidden rounded-[28px] border border-white/80 bg-slate-200 shadow-[0_22px_70px_rgba(15,23,42,0.16)]">
+                          <div className="aspect-[3/4]">
+                            {galleryPhotos[0] ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setActivePhoto(0);
+                                  setLightboxOpen(true);
+                                }}
+                                className="h-full w-full"
+                              >
+                                <img
+                                  src={resolveMediaUrl(galleryPhotos[0]) ?? undefined}
+                                  alt={name}
+                                  className="h-full w-full object-cover"
+                                />
+                              </button>
+                            ) : (
+                              <div className="grid h-full w-full place-items-center text-slate-500">
+                                Фото отсутствует
+                              </div>
+                            )}
                           </div>
-                          {description.length > 260 && (
+
+                          <div className="absolute inset-x-3 bottom-3 rounded-[22px] border border-white/80 bg-white/86 p-4 text-slate-900 shadow-[0_14px_40px_rgba(15,23,42,0.14)] backdrop-blur">
+                            <div className="flex flex-wrap items-end justify-between gap-3">
+                              <div>
+                                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                  {profileTypeLabel[profile.type]}
+                                </div>
+                                <div className="mt-1 text-3xl font-black leading-none">{name}</div>
+                              </div>
+                              {premium.active ? (
+                                <span className="rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-amber-950">
+                                  Premium
+                                </span>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          {videoList[0] && (
                             <button
                               type="button"
-                              onClick={() => setBioExpanded((v) => !v)}
-                              className="mt-2 text-slate-700 text-sm font-medium hover:underline"
+                              onClick={() => openVideoModal(videoList[0], "Интро-видео")}
+                              className="absolute left-4 top-4 rounded-full border border-white/80 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm backdrop-blur hover:bg-white"
                             >
-                              {bioExpanded ? "Свернуть" : "Показать больше"}
+                              ▶ Интро
                             </button>
                           )}
-                        </>
-                      ) : null}
+                        </div>
 
+                        <div className="grid grid-cols-4 gap-2">
+                          {sidePhotos.length > 0 ? (
+                            sidePhotos.map((url, index) => (
+                              <button
+                                key={`${url}-${index}`}
+                                type="button"
+                                onClick={() => {
+                                  setActivePhoto(index + 1);
+                                  setLightboxOpen(true);
+                                }}
+                                className="overflow-hidden rounded-2xl border border-white/80 bg-slate-200 aspect-square shadow-sm"
+                              >
+                                <img
+                                  src={resolveMediaUrl(url) ?? undefined}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              </button>
+                            ))
+                          ) : (
+                            <div className="col-span-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 px-4 py-5 text-center text-sm text-slate-500">
+                              Дополнительные медиа отсутствуют
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="rounded-[28px] border border-white/80 bg-white/82 p-5 shadow-[0_18px_56px_rgba(15,23,42,0.09)] backdrop-blur md:p-6">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                            {profileTypeLabel[profile.type]}
+                          </span>
+                          {profile.city ? (
+                            <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
+                              {profile.city}
+                            </span>
+                          ) : null}
+                          {premium.active ? (
+                            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                              Premium
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <h2 className="mt-5 text-3xl font-black leading-tight md:text-5xl">{name}</h2>
+                        {topLine.length > 0 ? (
+                          <div className="mt-3 text-base font-medium text-slate-600">
+                            {topLine.join(" · ")}
+                          </div>
+                        ) : null}
+
+                        <div className="mt-5 grid grid-cols-2 gap-3">
+                          {quickFacts.map((fact) => (
+                            <div
+                              key={fact.label}
+                              className="rounded-2xl border border-slate-200 bg-white/75 px-4 py-3"
+                            >
+                              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+                                {fact.label}
+                              </div>
+                              <div className="mt-1 text-sm font-semibold text-slate-900">
+                                {fact.value}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {description ? (
+                          <div className="mt-6">
+                            <div className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                              О профиле
+                            </div>
+                            <div className="mt-3 text-[15px] leading-7 text-slate-800">
+                              {bioExpanded ? description : shortDescription}
+                            </div>
+                            {description.length > 260 && (
+                              <button
+                                type="button"
+                                onClick={() => setBioExpanded((v) => !v)}
+                                className="mt-2 text-sm font-semibold text-slate-700 hover:underline"
+                              >
+                                {bioExpanded ? "Свернуть" : "Показать больше"}
+                              </button>
+                            )}
+                          </div>
+                        ) : null}
+
+                        {heroTags.length > 0 ? (
+                          <div className="mt-6">
+                            <div className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+                              Сильные стороны
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {heroTags.map((tag, index) => (
+                                <span
+                                  key={`${tag}-${index}`}
+                                  className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-800"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+                      <ActionPanel
+                        isAuthed={isAuthenticated}
+                        isCustomer={isCustomer}
+                        unlocking={unlocking}
+                        hasRemainingContacts={remainingContacts > 0}
+                        remainingContacts={remainingContacts}
+                        contactsUnlocked={contactsUnlocked}
+                        contactInfo={contactInfo}
+                        onUnlock={unlockContacts}
+                        error={contactsError}
+                      />
+
+                      <ProfileSummaryCard
+                        facts={quickFacts}
+                        photosCount={photos.length}
+                        videosCount={videoList.length}
+                      />
+                    </aside>
+                  </div>
+
+                  <div className="space-y-8">
                       {profile.type === "ACTOR" && appearanceRows.length > 0 && (
                         <>
                           <SectionTitle title="Внешность" />
@@ -827,27 +954,6 @@ export const ProfileDetailsPage = () => {
                           </div>
                         </>
                       ) : null}
-                    </div>
-
-                    <aside className="space-y-6">
-                      <ActionPanel
-                        isAuthed={isAuthenticated}
-                        isCustomer={isCustomer}
-                        unlocking={unlocking}
-                        hasRemainingContacts={remainingContacts > 0}
-                        remainingContacts={remainingContacts}
-                        contactsUnlocked={contactsUnlocked}
-                        contactInfo={contactInfo}
-                        onUnlock={unlockContacts}
-                        error={contactsError}
-                      />
-
-                      <SidebarBlock title="Контакты">
-                        <p className="text-base">
-                          Контакты видны только заказчику с доступными токенами.
-                        </p>
-                      </SidebarBlock>
-                    </aside>
                   </div>
                 </div>
               )}
@@ -1109,6 +1215,45 @@ const VideoCard = ({
   </button>
 );
 
+const ProfileSummaryCard = ({
+  facts,
+  photosCount,
+  videosCount,
+}: {
+  facts: Array<{ label: string; value: string }>;
+  photosCount: number;
+  videosCount: number;
+}) => (
+  <div className="rounded-2xl border border-black/10 bg-white p-5 shadow-sm">
+    <div className="text-xs uppercase tracking-[0.14em] text-slate-500">
+      Быстрый обзор
+    </div>
+    <div className="mt-4 grid gap-3">
+      {facts.map((fact) => (
+        <div
+          key={fact.label}
+          className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"
+        >
+          <span className="text-xs text-slate-500">{fact.label}</span>
+          <span className="text-right text-sm font-semibold text-slate-900">
+            {fact.value}
+          </span>
+        </div>
+      ))}
+    </div>
+    <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+        <div className="text-xs text-slate-500">Фото</div>
+        <div className="text-lg font-bold text-slate-900">{photosCount}</div>
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-white px-3 py-2">
+        <div className="text-xs text-slate-500">Видео</div>
+        <div className="text-lg font-bold text-slate-900">{videosCount}</div>
+      </div>
+    </div>
+  </div>
+);
+
 const ActionPanel = ({
   isAuthed,
   isCustomer,
@@ -1141,7 +1286,7 @@ const ActionPanel = ({
     {!isAuthed && (
       <Link
         to="/login"
-        className="mt-4 inline-flex w-full items-center justify-center rounded-xl bg-white/90 text-slate-900 py-3 text-base font-semibold hover:bg-black"
+        className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white/90 py-3 text-base font-semibold text-slate-900 hover:bg-slate-50"
       >
         Войти как заказчик
       </Link>
@@ -1158,7 +1303,7 @@ const ActionPanel = ({
         type="button"
         onClick={onUnlock}
         disabled={!hasRemainingContacts || unlocking}
-        className="mt-4 w-full rounded-xl bg-white/90 text-slate-900 py-3 text-base font-semibold hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-4 w-full rounded-xl bg-sky-500 py-3 text-base font-semibold text-white shadow-sm shadow-sky-200 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {unlocking ? "Открываем..." : hasRemainingContacts ? "Открыть контакты (1 токен)" : "Нет доступных токенов"}
       </button>
@@ -1215,17 +1360,4 @@ const ActionPanel = ({
       </div>
     )}
   </div>
-);
-
-const SidebarBlock = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) => (
-  <section className="pt-3 border-t border-black/15">
-    <h4 className="text-xl font-bold mb-3">{title}</h4>
-    <div>{children}</div>
-  </section>
 );

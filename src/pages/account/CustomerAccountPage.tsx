@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "@/api/client";
-import { getSubscriptionInfo, getViewedContacts } from "@/api/customer";
+import {
+  getSubscriptionInfo,
+  getViewedContacts,
+  redeemCustomerPromoCode,
+} from "@/api/customer";
 import { useSession } from "@/entities/user/model/authStore";
 import {
   buildProfileCompletion,
@@ -107,6 +111,16 @@ const formatDateTime = (iso?: string) => {
   });
 };
 
+const formatDate = (iso?: string) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return d.toLocaleDateString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
 /* ================= PAGE ================= */
 
 export const CustomerAccountPage = () => {
@@ -129,6 +143,9 @@ export const CustomerAccountPage = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoRedeeming, setPromoRedeeming] = useState(false);
+  const [promoNotice, setPromoNotice] = useState<string | null>(null);
   const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
   const [showModerationWarning, setShowModerationWarning] = useState(true);
 
@@ -279,6 +296,39 @@ export const CustomerAccountPage = () => {
   const contactsUsed = subscription
     ? Math.max(subscription.totalLimit - subscription.remainingContacts, 0)
     : 0;
+  const subscriptionDaysText =
+    subscription?.daysRemaining !== null && subscription?.daysRemaining !== undefined
+      ? `${subscription.daysRemaining} дн.`
+      : subscription?.expiresAt
+      ? `до ${formatDate(subscription.expiresAt)}`
+      : subscription?.active
+      ? "Активна"
+      : "Не активна";
+
+  const redeemPromoCode = async () => {
+    const normalizedCode = promoCode.trim().toUpperCase();
+    if (!normalizedCode) {
+      setPromoNotice(null);
+      setError("Введите промокод");
+      return;
+    }
+
+    try {
+      setPromoRedeeming(true);
+      setError(null);
+      setPromoNotice(null);
+      const nextSubscription = await redeemCustomerPromoCode(normalizedCode);
+      setSubscription(nextSubscription);
+      setPromoCode("");
+      setPromoNotice("Промокод активирован. Лимит и срок обновлены.");
+      window.setTimeout(() => setPromoNotice(null), 3500);
+    } catch (error) {
+      setPromoNotice(null);
+      setError(getApiErrorMessage(error, "Не удалось активировать промокод"));
+    } finally {
+      setPromoRedeeming(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -487,13 +537,64 @@ export const CustomerAccountPage = () => {
                 <Section title="Тариф и контакты">
                   {subscription ? (
                     <div className="space-y-4">
-                      <Info title="Тариф">{subscription.planName}</Info>
-                      <Info title="Осталось контактов">
-                        {subscription.remainingContacts} из {subscription.totalLimit}
-                      </Info>
+                      <div className="grid grid-cols-2 gap-3">
+                        <SubscriptionMetric
+                          title="Осталось контактов"
+                          value={`${subscription.remainingContacts}`}
+                          hint={`из ${subscription.totalLimit}`}
+                        />
+                        <SubscriptionMetric
+                          title="Осталось дней"
+                          value={subscriptionDaysText}
+                          hint={subscription.planName}
+                        />
+                      </div>
+                      {subscription.expiresAt ? (
+                        <Info title="Действует до">
+                          {formatDateTime(subscription.expiresAt)}
+                        </Info>
+                      ) : null}
                       <Progress
                         value={toPercent(contactsUsed, subscription.totalLimit)}
                       />
+
+                      <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-3">
+                        <div className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-700">
+                          Промокод
+                        </div>
+                        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                          <input
+                            value={promoCode}
+                            onChange={(e) => setPromoCode(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                void redeemPromoCode();
+                              }
+                            }}
+                            placeholder="CUST-FREE-0001"
+                            className="min-h-11 flex-1 rounded-xl border border-sky-100 bg-white px-3 text-sm font-semibold uppercase text-slate-900 outline-none transition focus:border-sky-300 focus:ring-2 focus:ring-sky-100"
+                            disabled={promoRedeeming}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => void redeemPromoCode()}
+                            disabled={promoRedeeming}
+                            className="rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-sky-200 hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {promoRedeeming ? "Проверяем..." : "Активировать"}
+                          </button>
+                        </div>
+                        {promoNotice ? (
+                          <div className="mt-2 text-sm font-medium text-emerald-700">
+                            {promoNotice}
+                          </div>
+                        ) : (
+                          <div className="mt-2 text-xs text-slate-500">
+                            Промокод добавит бесплатный доступ, если активной подписки еще нет.
+                          </div>
+                        )}
+                      </div>
 
                       <div className="flex flex-wrap gap-2">
                         <button
@@ -558,7 +659,10 @@ export const CustomerAccountPage = () => {
         open={modalOpen}
         mode={modalMode}
         onClose={() => setModalOpen(false)}
-        onSuccess={() => setModalOpen(false)}
+        onSuccess={() => {
+          setModalOpen(false);
+          void getSubscriptionInfo().then(setSubscription);
+        }}
       />
       {error && <CenterToast message={error} variant="error" />}
       {saveNotice && <CenterToast message={saveNotice} />}
@@ -591,6 +695,24 @@ const Info = ({
   <div>
     <div className="text-xs text-slate-500">{title}</div>
     <div className="text-sm">{children}</div>
+  </div>
+);
+
+const SubscriptionMetric = ({
+  title,
+  value,
+  hint,
+}: {
+  title: string;
+  value: string;
+  hint: string;
+}) => (
+  <div className="rounded-2xl border border-white/70 bg-white/80 p-4 shadow-sm">
+    <div className="text-xs text-slate-500">{title}</div>
+    <div className="mt-1 text-2xl font-black leading-none text-slate-900">
+      {value}
+    </div>
+    <div className="mt-2 text-xs text-slate-500">{hint}</div>
   </div>
 );
 

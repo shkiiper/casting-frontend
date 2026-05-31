@@ -28,14 +28,14 @@ export const PublishToggle = ({
           onClick={() => onChange(!checked)}
           disabled={disabled}
           className={[
-            "relative inline-flex h-8 w-14 items-center rounded-full transition-colors",
-            checked ? "bg-white/85" : "bg-slate-300",
+            "relative inline-flex h-8 w-14 items-center rounded-full transition-colors shadow-inner",
+            checked ? "bg-emerald-500" : "bg-slate-300",
             disabled ? "opacity-60 cursor-not-allowed" : "",
           ].join(" ")}
         >
           <span
             className={[
-              "inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform",
+              "inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform",
               checked ? "translate-x-7" : "translate-x-1",
             ].join(" ")}
           />

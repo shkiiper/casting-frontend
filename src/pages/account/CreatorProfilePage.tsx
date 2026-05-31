@@ -986,13 +986,13 @@ const EditForm = ({
                   })
                 }
                 className={[
-                  "px-3 py-1.5 rounded-full border text-sm transition-colors",
+                  "px-3 py-1.5 rounded-full border text-sm font-medium transition-colors",
                   selected
-                    ? "bg-white/85 text-slate-900 border-slate-300"
+                    ? "border-sky-500 bg-sky-500 text-white shadow-[0_8px_20px_rgba(14,165,233,0.24)]"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
                 ].join(" ")}
               >
-                {item}
+                {selected ? `✓ ${item}` : item}
               </button>
             );
           })}
@@ -1017,13 +1017,13 @@ const EditForm = ({
                   })
                 }
                 className={[
-                  "px-3 py-1.5 rounded-full border text-sm transition-colors",
+                  "px-3 py-1.5 rounded-full border text-sm font-medium transition-colors",
                   selected
-                    ? "bg-white/85 text-slate-900 border-slate-300"
+                    ? "border-sky-500 bg-sky-500 text-white shadow-[0_8px_20px_rgba(14,165,233,0.24)]"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
                 ].join(" ")}
               >
-                {item}
+                {selected ? `✓ ${item}` : item}
               </button>
             );
           })}
@@ -1048,13 +1048,13 @@ const EditForm = ({
                   })
                 }
                 className={[
-                  "px-3 py-1.5 rounded-full border text-sm transition-colors",
+                  "px-3 py-1.5 rounded-full border text-sm font-medium transition-colors",
                   selected
-                    ? "bg-white/85 text-slate-900 border-slate-300"
+                    ? "border-sky-500 bg-sky-500 text-white shadow-[0_8px_20px_rgba(14,165,233,0.24)]"
                     : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50",
                 ].join(" ")}
               >
-                {skill}
+                {selected ? `✓ ${skill}` : skill}
               </button>
             );
           })}

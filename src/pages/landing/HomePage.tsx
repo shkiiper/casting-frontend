@@ -156,9 +156,9 @@ export const HomePage = () => {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0">
           <img
-            src="/main.png"
+            src="/production-hero.png"
             alt=""
-            className="h-full w-full object-cover object-center opacity-80"
+            className="h-full w-full object-cover object-right opacity-55"
           />
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.94)_0%,rgba(255,255,255,0.72)_44%,rgba(255,255,255,0.34)_100%)]" />
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#f3f4f7] to-transparent" />
@@ -412,9 +412,9 @@ export const HomePage = () => {
               </div>
               <div className="relative min-h-[320px] bg-white">
                 <img
-                  src="/loginpage.png"
+                  src="/production-hero.png"
                   alt=""
-                  className="absolute inset-0 h-full w-full object-cover opacity-80"
+                  className="absolute inset-0 h-full w-full object-contain p-6 opacity-95"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
               </div>

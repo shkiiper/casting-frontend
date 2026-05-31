@@ -176,7 +176,7 @@ export const AdsPage = () => {
                           className={[
                             "rounded-xl border px-3 py-2 text-sm transition-colors",
                             form.days === days
-                              ? "border-slate-300 bg-white/85 text-slate-900"
+                              ? "border-sky-500 bg-sky-500 text-white shadow-[0_8px_20px_rgba(14,165,233,0.24)]"
                               : "border-black/10 bg-white text-slate-700 hover:bg-slate-50",
                           ].join(" ")}
                         >

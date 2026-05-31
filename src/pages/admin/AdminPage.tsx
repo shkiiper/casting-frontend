@@ -789,7 +789,7 @@ const AdminDashboardSectionNav = ({
             className={[
               "flex min-h-[64px] items-center gap-3 rounded-2xl border px-4 text-left transition-colors",
               selected
-                ? "border-slate-300 bg-white/85 text-slate-900 shadow-sm"
+                ? "border-sky-500 bg-sky-500 text-white shadow-[0_8px_20px_rgba(14,165,233,0.24)] shadow-sm"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
             ].join(" ")}
             aria-pressed={selected}
@@ -1088,8 +1088,8 @@ const ToggleField = ({
       </span>
       <span
         className={[
-          "relative inline-flex h-7 w-12 items-center rounded-full transition-colors",
-          checked ? "bg-white/85" : "bg-slate-300",
+          "relative inline-flex h-7 w-12 items-center rounded-full transition-colors shadow-inner",
+          checked ? "bg-emerald-500" : "bg-slate-300",
         ].join(" ")}
       >
         <input
@@ -1100,7 +1100,7 @@ const ToggleField = ({
         />
         <span
           className={[
-            "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
+            "inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform",
             checked ? "translate-x-6" : "translate-x-1",
           ].join(" ")}
         />

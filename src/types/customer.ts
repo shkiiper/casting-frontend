@@ -3,6 +3,8 @@ export interface SubscriptionInfoResponse {
   planName: string;
   totalLimit: number;
   remainingContacts: number;
+  expiresAt?: string | null;
+  daysRemaining?: number | null;
 }
 
 export interface ContactInfoResponse {
