@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import api from "@/api/client";
 import { useSession } from "@/entities/user/model/authStore";
@@ -359,6 +359,7 @@ export const ProfileDetailsPage = () => {
   const [contactInfo, setContactInfo] = useState<ContactInfoResponse | null>(null);
   const [unlocking, setUnlocking] = useState(false);
   const [contactsError, setContactsError] = useState<string | null>(null);
+  const lightboxTouchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -455,6 +456,29 @@ export const ProfileDetailsPage = () => {
   const showNext = () => {
     if (!photos.length) return;
     setActivePhoto((prev) => (prev + 1) % photos.length);
+  };
+
+  const handleLightboxTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+    lightboxTouchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleLightboxTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const start = lightboxTouchStartRef.current;
+    const touch = event.changedTouches[0];
+    lightboxTouchStartRef.current = null;
+    if (!start || !touch || !hasManyPhotos) return;
+
+    const deltaX = touch.clientX - start.x;
+    const deltaY = touch.clientY - start.y;
+    if (Math.abs(deltaX) < 42 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+
+    if (deltaX < 0) {
+      showNext();
+    } else {
+      showPrev();
+    }
   };
 
   useEffect(() => {
@@ -995,22 +1019,26 @@ export const ProfileDetailsPage = () => {
 
       {lightboxOpen && currentPhoto && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 p-3 sm:p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/78 p-3 backdrop-blur-sm sm:p-4"
           onClick={() => setLightboxOpen(false)}
         >
           <div
-            className="relative flex h-full w-full max-w-6xl items-center justify-center"
+            className="relative flex h-full w-full max-w-6xl touch-pan-y items-center justify-center"
             onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleLightboxTouchStart}
+            onTouchEnd={handleLightboxTouchEnd}
           >
             <img
               src={resolveMediaUrl(currentPhoto) ?? undefined}
               alt={name}
-              className="max-h-full max-w-full object-contain rounded-xl"
+              className="max-h-full max-w-full select-none rounded-2xl object-contain shadow-[0_24px_80px_rgba(0,0,0,0.45)]"
+              draggable={false}
             />
             <button
               type="button"
               onClick={() => setLightboxOpen(false)}
-              className="absolute top-2 right-2 rounded-full w-9 h-9 bg-white/90 text-slate-900"
+              aria-label="Закрыть"
+              className="absolute right-2 top-2 grid h-12 w-12 place-items-center rounded-full border border-white/80 bg-white text-2xl font-bold leading-none text-slate-950 shadow-[0_12px_34px_rgba(0,0,0,0.28)] sm:right-4 sm:top-4"
             >
               ✕
             </button>
@@ -1019,17 +1047,22 @@ export const ProfileDetailsPage = () => {
                 <button
                   type="button"
                   onClick={showPrev}
-                  className="absolute left-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-white/90 text-slate-900 sm:left-2 sm:h-10 sm:w-10"
+                  aria-label="Предыдущее фото"
+                  className="absolute left-2 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-white text-3xl font-bold leading-none text-slate-950 shadow-[0_12px_34px_rgba(0,0,0,0.28)] sm:left-4 sm:h-12 sm:w-12"
                 >
                   ←
                 </button>
                 <button
                   type="button"
                   onClick={showNext}
-                  className="absolute right-1 top-1/2 h-9 w-9 -translate-y-1/2 rounded-full bg-white/90 text-slate-900 sm:right-2 sm:h-10 sm:w-10"
+                  aria-label="Следующее фото"
+                  className="absolute right-2 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/80 bg-white text-3xl font-bold leading-none text-slate-950 shadow-[0_12px_34px_rgba(0,0,0,0.28)] sm:right-4 sm:h-12 sm:w-12"
                 >
                   →
                 </button>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-xs font-semibold text-white sm:bottom-4">
+                  {activePhoto + 1} / {photos.length}
+                </div>
               </>
             )}
           </div>
