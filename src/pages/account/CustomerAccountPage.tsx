@@ -572,7 +572,6 @@ export const CustomerAccountPage = () => {
                                 void redeemPromoCode();
                               }
                             }}
-                            placeholder="CUST-FREE-0001"
                             className="min-h-11 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold uppercase text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                             disabled={promoRedeeming}
                           />

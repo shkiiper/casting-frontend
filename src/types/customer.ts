@@ -12,6 +12,10 @@ export interface ContactInfoResponse {
   email?: string;
   whatsapp?: string;
   telegram?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  contactWhatsapp?: string;
+  contactTelegram?: string;
 }
 
 export interface ViewedContactResponse {

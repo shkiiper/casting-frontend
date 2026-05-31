@@ -6,6 +6,32 @@ import type {
 } from "@/types/customer";
 import type { PageResponse } from "@/types/common";
 
+type ContactPayload = {
+  phone?: string | null;
+  email?: string | null;
+  whatsapp?: string | null;
+  telegram?: string | null;
+  contactPhone?: string | null;
+  contactEmail?: string | null;
+  contactWhatsapp?: string | null;
+  contactTelegram?: string | null;
+};
+
+type ContactResponsePayload = ContactPayload & {
+  contacts?: ContactPayload | null;
+  contactInfo?: ContactPayload | null;
+};
+
+const normalizeContactInfo = (payload: ContactResponsePayload): ContactInfoResponse => {
+  const source = payload.contactInfo ?? payload.contacts ?? payload;
+
+  return {
+    phone: source.phone ?? source.contactPhone ?? undefined,
+    email: source.email ?? source.contactEmail ?? undefined,
+    whatsapp: source.whatsapp ?? source.contactWhatsapp ?? undefined,
+    telegram: source.telegram ?? source.contactTelegram ?? undefined,
+  };
+};
 
 // GET /api/customer/subscription
 export async function getSubscriptionInfo(): Promise<SubscriptionInfoResponse> {
@@ -28,12 +54,14 @@ export async function redeemCustomerPromoCode(
 
 // POST /api/customer/profiles/{profileId}/contacts
 export async function showContacts(
-  profileId: number
+  profileId: number,
+  profileType?: "ACTOR" | "CREATOR" | "LOCATION"
 ): Promise<ContactInfoResponse> {
-  const { data } = await api.post<ContactInfoResponse>(
-    `/api/customer/profiles/${profileId}/contacts`
+  const { data } = await api.post<ContactResponsePayload>(
+    `/api/customer/profiles/${profileId}/contacts`,
+    profileType ? { profileType } : undefined
   );
-  return data;
+  return normalizeContactInfo(data);
 }
 
 // GET /api/customer/contacts/viewed?page=&size=

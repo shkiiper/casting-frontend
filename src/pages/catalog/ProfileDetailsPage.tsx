@@ -10,6 +10,7 @@ import { pickProfilePhoto, resolveMediaUrl } from "@/shared/ui/useProfileAvatar"
 import { getSubscriptionInfo, showContacts } from "@/api/customer";
 import type { ContactInfoResponse, SubscriptionInfoResponse } from "@/types/customer";
 import { extractProfilePremiumInfo, formatPremiumDate } from "@/shared/lib/profilePremium";
+import { getApiErrorMessage } from "@/shared/lib/safety";
 
 type ProfileType = "ACTOR" | "CREATOR" | "LOCATION";
 
@@ -555,12 +556,14 @@ export const ProfileDetailsPage = () => {
     try {
       setUnlocking(true);
       setContactsError(null);
-      const opened = await showContacts(profile.id);
+      const opened = await showContacts(profile.id, profile.type);
       setContactInfo(opened);
       const info = await getSubscriptionInfo();
       setSubscription(info);
-    } catch {
-      setContactsError("Не удалось открыть контакты. Проверьте лимит или попробуйте позже.");
+    } catch (error) {
+      setContactsError(
+        getApiErrorMessage(error, "Не удалось открыть контакты. Проверьте лимит или попробуйте позже.")
+      );
     } finally {
       setUnlocking(false);
     }
