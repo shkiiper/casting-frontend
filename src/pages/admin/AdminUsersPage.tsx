@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Mail, ShieldAlert, UserRound } from "lucide-react";
 import { type AdminUser } from "@/api/admin";
 import { useSession } from "@/entities/user/model/authStore";
 import { useAdminUsersData } from "@/pages/admin/hooks/useAdminUsersData";
@@ -377,7 +378,34 @@ export const AdminUsersPage = () => {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-sm">
+          <div className="grid gap-3 md:hidden">
+            {loading ? (
+              <div className="rounded-2xl border border-black/10 bg-white px-4 py-6 text-slate-600">
+                Загрузка...
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <div className="rounded-2xl border border-black/10 bg-white px-4 py-6 text-slate-600">
+                Нет данных
+              </div>
+            ) : (
+              filteredItems.map((user) => (
+                <UserMobileCard
+                  key={user.id}
+                  user={user}
+                  processing={processingId === user.id}
+                  onBanToggle={onBanToggle}
+                  onDeactivate={onDeactivate}
+                  onDelete={onDeleteUser}
+                  onNotifyMissingPhoto={onNotifyMissingPhoto}
+                  onOpen={setSelectedUser}
+                  onResendVerificationCode={onResendVerificationCode}
+                  onVisibilityToggle={onVisibilityToggle}
+                />
+              ))
+            )}
+          </div>
+
+          <div className="hidden overflow-hidden rounded-[28px] border border-black/10 bg-white shadow-sm md:block">
             <div className="overflow-x-auto">
               <div className="min-w-[980px]">
                 <div className="grid grid-cols-[110px_180px_minmax(260px,1fr)_250px_320px] gap-4 border-b border-black/10 px-5 py-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -549,6 +577,190 @@ export const AdminUsersPage = () => {
     </div>
   );
 };
+
+const UserMobileCard = ({
+  user,
+  processing,
+  onBanToggle,
+  onDeactivate,
+  onDelete,
+  onNotifyMissingPhoto,
+  onOpen,
+  onResendVerificationCode,
+  onVisibilityToggle,
+}: {
+  user: AdminUser;
+  processing: boolean;
+  onBanToggle: (user: AdminUser) => Promise<void>;
+  onDeactivate: (user: AdminUser) => Promise<void>;
+  onDelete: (user: AdminUser) => void;
+  onNotifyMissingPhoto: (user: AdminUser) => Promise<void>;
+  onOpen: (user: AdminUser) => void;
+  onResendVerificationCode: (user: AdminUser) => Promise<void>;
+  onVisibilityToggle: (user: AdminUser, nextPublished: boolean) => Promise<void>;
+}) => {
+  const photo = resolveMediaUrl(pickProfilePhoto(user));
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-black/10 bg-white shadow-sm">
+      <button
+        type="button"
+        onClick={() => onOpen(user)}
+        className="flex w-full items-center gap-3 px-4 py-4 text-left"
+      >
+        <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-slate-100 text-slate-500">
+          {photo ? (
+            <img src={photo} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <UserRound size={24} />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <div className="truncate font-semibold text-slate-900">{userName(user)}</div>
+            <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+              #{user.id}
+            </span>
+          </div>
+          <div className="mt-1 truncate text-xs text-slate-500">
+            {roleLabel(user.role)} · {user.email || user.contactEmail || "email не указан"}
+          </div>
+        </div>
+      </button>
+
+      <div className="grid grid-cols-2 gap-2 border-y border-black/5 bg-slate-50/70 px-4 py-3 text-xs">
+        <StatusPill
+          label={user.active ? "Активен" : "Неактивен"}
+          tone={user.active ? "emerald" : "amber"}
+        />
+        <StatusPill
+          label={user.banned ? "Забанен" : "Не забанен"}
+          tone={user.banned ? "red" : "emerald"}
+        />
+        <StatusPill
+          label={
+            typeof user.published === "boolean"
+              ? user.published
+                ? "В каталоге"
+                : "Скрыт"
+              : "Без каталога"
+          }
+          tone={user.published ? "blue" : "slate"}
+        />
+        <StatusPill
+          label={
+            user.emailVerified === true
+              ? "Email ок"
+              : user.emailVerified === false
+              ? "Email не ок"
+              : "Email: —"
+          }
+          tone={user.emailVerified === false ? "amber" : "slate"}
+        />
+      </div>
+
+      <div className="space-y-3 px-4 py-4">
+        {user.role !== "CUSTOMER" && user.role !== "ADMIN" ? (
+          <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 px-3 py-2">
+            <span className="text-sm font-medium text-slate-700">Показывать в каталоге</span>
+            <HeaderPublishSwitch
+              checked={Boolean(user.published)}
+              onChange={(next) => void onVisibilityToggle(user, next)}
+              disabled={processing}
+            />
+          </div>
+        ) : null}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onOpen(user)}
+            className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700"
+          >
+            Карточка
+          </button>
+          {user.emailVerified === false ? (
+            <button
+              type="button"
+              disabled={processing}
+              onClick={() => void onResendVerificationCode(user)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-indigo-300 px-3 py-2.5 text-sm font-semibold text-indigo-700 disabled:opacity-60"
+            >
+              <Mail size={15} />
+              Код
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={processing}
+              onClick={() => void onBanToggle(user)}
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-300 px-3 py-2.5 text-sm font-semibold text-red-600 disabled:opacity-60"
+            >
+              <ShieldAlert size={15} />
+              {user.banned ? "Разбан" : "Бан"}
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-2">
+          {user.role !== "CUSTOMER" && user.role !== "ADMIN" ? (
+            <button
+              type="button"
+              disabled={processing}
+              onClick={() => void onNotifyMissingPhoto(user)}
+              className="rounded-xl border border-sky-300 px-3 py-2.5 text-sm font-semibold text-sky-700 disabled:opacity-60"
+            >
+              Напомнить о фото
+            </button>
+          ) : null}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              disabled={processing || user.active === false}
+              onClick={() => void onDeactivate(user)}
+              className="rounded-xl border border-amber-300 px-3 py-2.5 text-sm font-semibold text-amber-700 disabled:opacity-60"
+            >
+              Деактивировать
+            </button>
+            <button
+              type="button"
+              disabled={processing}
+              onClick={() => onDelete(user)}
+              className="rounded-xl border border-red-500 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-700 disabled:opacity-60"
+            >
+              Удалить
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const StatusPill = ({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "slate" | "blue" | "emerald" | "amber" | "red";
+}) => (
+  <div
+    className={[
+      "rounded-full px-2.5 py-1 text-center font-semibold",
+      tone === "blue"
+        ? "bg-blue-50 text-blue-700"
+        : tone === "emerald"
+        ? "bg-emerald-50 text-emerald-700"
+        : tone === "amber"
+        ? "bg-amber-50 text-amber-700"
+        : tone === "red"
+        ? "bg-red-50 text-red-700"
+        : "bg-slate-100 text-slate-600",
+    ].join(" ")}
+  >
+    {label}
+  </div>
+);
 
 const UserDrawer = ({
   user,

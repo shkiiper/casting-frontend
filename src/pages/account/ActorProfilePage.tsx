@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  BadgeCheck,
+  Camera,
+  Contact,
+  LayoutGrid,
+  SlidersHorizontal,
+  UserRound,
+} from "lucide-react";
 import api from "@/api/client";
 import { useSession } from "@/entities/user/model/authStore";
 import {
@@ -177,6 +185,7 @@ type ActorProfileForm = {
 
 type Mode = "LOADING" | "EMPTY" | "VIEW";
 type ManualSaveSection = "main" | "contacts";
+type ActorMobileSection = "overview" | "about" | "details" | "media" | "contacts";
 
 /* ================= CONSTS ================= */
 
@@ -280,6 +289,8 @@ export const ActorProfilePage = () => {
   const photoSectionRef = useRef<HTMLDivElement>(null);
   const [photoRequirementMessage, setPhotoRequirementMessage] = useState<string | null>(null);
   const [showModerationWarning, setShowModerationWarning] = useState(true);
+  const [activeMobileSection, setActiveMobileSection] =
+    useState<ActorMobileSection>("overview");
 
   /* ---------- LOAD ---------- */
 
@@ -491,6 +502,11 @@ export const ActorProfilePage = () => {
 
   const premium = extractProfilePremiumInfo(profileData);
   const hasRequiredPhoto = Boolean(form?.photoUrls.length);
+  const profileName =
+    [form?.firstName, form?.lastName].filter(Boolean).join(" ").trim() ||
+    form?.bio?.trim() ||
+    "Ваш профиль";
+  const profilePhotoUrl = form?.mainPhotoUrl || form?.photoUrls[0] || null;
   const completion = useMemo(
     () =>
       buildProfileCompletion([
@@ -648,78 +664,106 @@ export const ActorProfilePage = () => {
 
             {form && (
               <>
-                <ProfilePremiumPanel
-                  premium={premium}
-                  returnTo="/account"
-                  title="Оплата premium профиля актёра"
-                  onError={setError}
+                <MobileProfileHero
+                  completionPercent={completion.percent}
+                  city={form.city}
+                  name={profileName}
+                  photoUrl={profilePhotoUrl}
+                  published={form.published}
                 />
 
-                <ProfileCompletionCard completion={completion} />
-
-	                <EditForm
-	                  form={form}
-	                  setForm={setForm}
-	                  onSaveMain={() => void saveManualSection("main")}
-	                  onSaveContacts={() => void saveManualSection("contacts")}
-	                  saving={saving || publishSaving}
-	                />
-
-	                <MediaSection
-                  title="Фотографии"
-                  urls={form.photoUrls}
-                  accept={PHOTO_TYPES.join(",")}
-                  hint={PHOTO_UPLOAD_HINT}
-                  containerRef={photoSectionRef}
-                  highlight={Boolean(photoRequirementMessage)}
-                  errorMessage={photoRequirementMessage}
-                  showModerationWarning={showModerationWarning}
-                  onDismissModerationWarning={() => setShowModerationWarning(false)}
-                  mainUrl={form.mainPhotoUrl}
-                  onReorder={(nextUrls) =>
-                    setForm({
-                      ...form,
-                      photoUrls: nextUrls,
-                    })
-                  }
-                  onAdd={(files) => uploadFiles(files, "photo")}
-                  onSetMain={(url) =>
-                    setForm({
-                      ...form,
-                      mainPhotoUrl: url,
-                    })
-                  }
-                  onRemove={(url) =>
-                    setForm({
-                      ...form,
-                      mainPhotoUrl:
-                        form.mainPhotoUrl === url
-                          ? form.photoUrls.find((u) => u !== url) || ""
-                          : form.mainPhotoUrl,
-                      photoUrls: form.photoUrls.filter((u) => u !== url),
-                    })
-                  }
+                <MobileSectionNav
+                  active={activeMobileSection}
+                  onChange={setActiveMobileSection}
                 />
 
-	                <MediaSection
-                  title="Видео"
-                  urls={form.videoUrls}
-                  accept={VIDEO_ACCEPT}
-                  hint={VIDEO_UPLOAD_HINT}
-                  isVideo
-                  showModerationWarning={showModerationWarning}
-                  onDismissModerationWarning={() => setShowModerationWarning(false)}
-                  onAdd={(files) => uploadFiles(files, "video")}
-                  onRemove={(url) =>
-                    setForm({
-                      ...form,
-                      videoUrls: form.videoUrls.filter((u) => u !== url),
-                    })
+                <div
+                  className={
+                    activeMobileSection === "overview" ? "block" : "hidden md:block"
                   }
+                >
+                  <div className="space-y-5">
+                    <ProfilePremiumPanel
+                      premium={premium}
+                      returnTo="/account"
+                      title="Оплата premium профиля актёра"
+                      onError={setError}
+                    />
+                    <ProfileCompletionCard completion={completion} />
+                  </div>
+                </div>
+
+                <EditForm
+                  form={form}
+                  mobileSection={activeMobileSection}
+                  setForm={setForm}
+                  onSaveMain={() => void saveManualSection("main")}
+                  onSaveContacts={() => void saveManualSection("contacts")}
+                  saving={saving || publishSaving}
                 />
 
-	              </>
-	            )}
+                <div
+                  className={
+                    activeMobileSection === "media" ? "block" : "hidden md:block"
+                  }
+                >
+                  <div className="space-y-5">
+                    <MediaSection
+                      title="Фотографии"
+                      urls={form.photoUrls}
+                      accept={PHOTO_TYPES.join(",")}
+                      hint={PHOTO_UPLOAD_HINT}
+                      containerRef={photoSectionRef}
+                      highlight={Boolean(photoRequirementMessage)}
+                      errorMessage={photoRequirementMessage}
+                      showModerationWarning={showModerationWarning}
+                      onDismissModerationWarning={() => setShowModerationWarning(false)}
+                      mainUrl={form.mainPhotoUrl}
+                      onReorder={(nextUrls) =>
+                        setForm({
+                          ...form,
+                          photoUrls: nextUrls,
+                        })
+                      }
+                      onAdd={(files) => uploadFiles(files, "photo")}
+                      onSetMain={(url) =>
+                        setForm({
+                          ...form,
+                          mainPhotoUrl: url,
+                        })
+                      }
+                      onRemove={(url) =>
+                        setForm({
+                          ...form,
+                          mainPhotoUrl:
+                            form.mainPhotoUrl === url
+                              ? form.photoUrls.find((u) => u !== url) || ""
+                              : form.mainPhotoUrl,
+                          photoUrls: form.photoUrls.filter((u) => u !== url),
+                        })
+                      }
+                    />
+
+                    <MediaSection
+                      title="Видео"
+                      urls={form.videoUrls}
+                      accept={VIDEO_ACCEPT}
+                      hint={VIDEO_UPLOAD_HINT}
+                      isVideo
+                      showModerationWarning={showModerationWarning}
+                      onDismissModerationWarning={() => setShowModerationWarning(false)}
+                      onAdd={(files) => uploadFiles(files, "video")}
+                      onRemove={(url) =>
+                        setForm({
+                          ...form,
+                          videoUrls: form.videoUrls.filter((u) => u !== url),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </section>
           </div>
         </Container>
@@ -729,6 +773,110 @@ export const ActorProfilePage = () => {
     </div>
   );
 };
+
+/* ================= MOBILE UX ================= */
+
+const MOBILE_SECTIONS: Array<{
+  key: ActorMobileSection;
+  label: string;
+  icon: typeof LayoutGrid;
+}> = [
+  { key: "overview", label: "Обзор", icon: LayoutGrid },
+  { key: "about", label: "О себе", icon: UserRound },
+  { key: "details", label: "Детали", icon: SlidersHorizontal },
+  { key: "media", label: "Медиа", icon: Camera },
+  { key: "contacts", label: "Контакты", icon: Contact },
+];
+
+const mobileOnlySectionClass = (
+  activeSection: ActorMobileSection,
+  section: ActorMobileSection
+) => (activeSection === section ? "block" : "hidden md:block");
+
+const MobileProfileHero = ({
+  city,
+  completionPercent,
+  name,
+  photoUrl,
+  published,
+}: {
+  city: string;
+  completionPercent: number;
+  name: string;
+  photoUrl: string | null;
+  published: boolean;
+}) => (
+  <div className="overflow-hidden rounded-2xl border border-white/70 bg-white shadow-sm md:hidden">
+    <div className="relative aspect-[4/5] bg-slate-200">
+      {photoUrl ? (
+        <img
+          src={resolveMediaUrl(photoUrl) ?? undefined}
+          alt=""
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-slate-900 text-white">
+          <UserRound size={48} strokeWidth={1.8} />
+        </div>
+      )}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/35 to-transparent p-4 pt-16 text-white">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="truncate text-2xl font-bold">{name}</h2>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-white/85">
+              {city ? <span>{city}</span> : <span>Город не указан</span>}
+              <span className="h-1 w-1 rounded-full bg-white/60" />
+              <span>{published ? "В каталоге" : "Скрыт"}</span>
+            </div>
+          </div>
+          <div className="shrink-0 rounded-full bg-white px-3 py-1 text-sm font-semibold text-slate-900">
+            {completionPercent}%
+          </div>
+        </div>
+      </div>
+      {published ? (
+        <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
+          <BadgeCheck size={14} />
+          Активен
+        </div>
+      ) : null}
+    </div>
+  </div>
+);
+
+const MobileSectionNav = ({
+  active,
+  onChange,
+}: {
+  active: ActorMobileSection;
+  onChange: (section: ActorMobileSection) => void;
+}) => (
+  <div className="sticky top-[65px] z-30 -mx-4 bg-[#f3f4f7]/95 px-4 py-2 backdrop-blur md:hidden">
+    <div className="flex gap-2 overflow-x-auto pb-1">
+      {MOBILE_SECTIONS.map((item) => {
+        const Icon = item.icon;
+        const selected = active === item.key;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            className={[
+              "inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-colors",
+              selected
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-200 bg-white text-slate-600 active:bg-slate-100",
+            ].join(" ")}
+            aria-pressed={selected}
+          >
+            <Icon size={16} strokeWidth={2.2} />
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
+  </div>
+);
 
 /* ================= MEDIA ================= */
 
@@ -920,19 +1068,21 @@ const MediaSection = ({
 
 const EditForm = ({
   form,
+  mobileSection,
   setForm,
   onSaveMain,
   onSaveContacts,
   saving,
 }: {
   form: ActorProfileForm;
+  mobileSection: ActorMobileSection;
   setForm: (v: ActorProfileForm) => void;
   onSaveMain: () => void;
   onSaveContacts: () => void;
   saving: boolean;
 }) => (
   <div className="space-y-5">
-    <div className="glass-object-soft rounded-2xl p-5 space-y-4">
+    <div className={`${mobileOnlySectionClass(mobileSection, "about")} glass-object-soft rounded-2xl p-5 space-y-4`}>
       <h2 className="text-sm font-semibold text-slate-800">
         Основные данные
       </h2>
@@ -990,7 +1140,7 @@ const EditForm = ({
       </div>
     </div>
 
-    <div className="glass-object-soft rounded-2xl p-5 space-y-4">
+    <div className={`${mobileOnlySectionClass(mobileSection, "details")} glass-object-soft rounded-2xl p-5 space-y-4`}>
       <h2 className="text-sm font-semibold text-slate-800">
         Параметры актёра
       </h2>
@@ -1220,7 +1370,7 @@ const EditForm = ({
 
     </div>
 
-    <div className="glass-object-soft rounded-2xl p-5 space-y-4">
+    <div className={`${mobileOnlySectionClass(mobileSection, "details")} glass-object-soft rounded-2xl p-5 space-y-4`}>
       <h2 className="text-sm font-semibold text-slate-800">Навыки</h2>
       <div className="flex flex-wrap gap-2">
         {SKILL_OPTIONS.map((skill) => {
@@ -1251,7 +1401,7 @@ const EditForm = ({
       </div>
     </div>
 
-    <div className="glass-object-soft rounded-2xl p-5 space-y-4">
+    <div className={`${mobileOnlySectionClass(mobileSection, "contacts")} glass-object-soft rounded-2xl p-5 space-y-4`}>
       <h2 className="text-sm font-semibold text-slate-800">
         О себе и контакты
       </h2>

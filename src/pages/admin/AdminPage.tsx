@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { ChartNoAxesColumn, PackagePlus, SlidersHorizontal } from "lucide-react";
 import {
   type RoleCounts,
   type AdminPlan,
@@ -26,6 +27,8 @@ const emptyPlan: AdminPlanPayload = {
   premiumProfileDays: 30,
   active: true,
 };
+
+type AdminDashboardSection = "overview" | "plans" | "products";
 
 const toNum = (value: string) => {
   const n = Number(value);
@@ -90,6 +93,8 @@ export const AdminPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [openPlanMenuId, setOpenPlanMenuId] = useState<number | null>(null);
+  const [activeSection, setActiveSection] =
+    useState<AdminDashboardSection>("overview");
   const planMenuRef = useRef<HTMLDivElement | null>(null);
   const stats = dashboardQuery.data?.stats ?? null;
   const roleCountsFallback = dashboardQuery.data?.roleCountsFallback ?? null;
@@ -313,7 +318,12 @@ export const AdminPage = () => {
             <div className="text-slate-600">Загрузка админ-данных...</div>
           ) : (
             <>
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_380px]">
+              <AdminDashboardSectionNav
+                active={activeSection}
+                onChange={setActiveSection}
+              />
+
+              <div className={`${adminSectionClass(activeSection, "overview")} grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_380px]`}>
                 <section className="rounded-[30px] border border-slate-200 bg-white/90 p-5 shadow-sm">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -369,7 +379,7 @@ export const AdminPage = () => {
                 </section>
               </div>
 
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_520px]">
+              <div className={`${adminSectionClass(activeSection, "plans")} grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_520px]`}>
                 <section className="rounded-[30px] border border-slate-200 bg-white/90 p-5 shadow-sm">
                   <div>
                     <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
@@ -466,135 +476,6 @@ export const AdminPage = () => {
                       <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                         Планов: <span className="font-semibold text-slate-900">{plans.length}</span>
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[30px] border border-slate-200 bg-white/95 p-5 shadow-sm">
-                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
-                      Глобальные продукты
-                    </div>
-                    <div className="mt-2 text-2xl font-bold text-slate-900">
-                      Бустер, объявления и premium
-                    </div>
-                    <div className="mt-2 text-sm leading-6 text-slate-500">
-                      Эти настройки применяются ко всем тарифам одинаково и не привязаны к
-                      конкретному плану.
-                    </div>
-
-                    <div className="mt-5 space-y-4">
-                      <FieldGroup
-                        title="Бустер"
-                        description="Глобальная докупка контактов. После сохранения одинаковое значение уйдёт во все тарифы."
-                        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
-                        action={
-                          <button
-                            type="button"
-                            onClick={() => void onSaveGlobalSection("booster")}
-                            disabled={savingId === "global-booster" || plans.length === 0}
-                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-                          >
-                            {savingId === "global-booster" ? "Сохраняем..." : "Сохранить блок"}
-                          </button>
-                        }
-                      >
-                        <Field
-                          label="Цена бустера"
-                          type="number"
-                          value={String(globalProducts.boosterPrice)}
-                          suffix="сом"
-                          onChange={(v) =>
-                            setGlobalProducts((prev) => ({ ...prev, boosterPrice: toNum(v) }))
-                          }
-                        />
-                        <Field
-                          label="Контакты бустера"
-                          type="number"
-                          value={String(globalProducts.boosterContacts)}
-                          suffix="шт"
-                          onChange={(v) =>
-                            setGlobalProducts((prev) => ({ ...prev, boosterContacts: toNum(v) }))
-                          }
-                        />
-                      </FieldGroup>
-                      {hasGlobalBoosterMismatch ? (
-                        <InlineWarning message="Сейчас в тарифах разные настройки бустера. После сохранения они станут одинаковыми." />
-                      ) : null}
-
-                      <FieldGroup
-                        title="Объявления"
-                        description="Глобальная цена и срок публикации объявления для заказчиков."
-                        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
-                        action={
-                          <button
-                            type="button"
-                            onClick={() => void onSaveGlobalSection("casting")}
-                            disabled={savingId === "global-casting" || plans.length === 0}
-                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-                          >
-                            {savingId === "global-casting" ? "Сохраняем..." : "Сохранить блок"}
-                          </button>
-                        }
-                      >
-                        <Field
-                          label="Цена объявления"
-                          type="number"
-                          value={String(globalProducts.castingPostPrice)}
-                          suffix="сом"
-                          onChange={(v) =>
-                            setGlobalProducts((prev) => ({ ...prev, castingPostPrice: toNum(v) }))
-                          }
-                        />
-                        <Field
-                          label="Дней объявления"
-                          type="number"
-                          value={String(globalProducts.castingPostDays)}
-                          suffix="дней"
-                          onChange={(v) =>
-                            setGlobalProducts((prev) => ({ ...prev, castingPostDays: toNum(v) }))
-                          }
-                        />
-                      </FieldGroup>
-                      {hasGlobalCastingMismatch ? (
-                        <InlineWarning message="Сейчас в тарифах разные настройки объявлений. После сохранения они станут одинаковыми." />
-                      ) : null}
-
-                      <FieldGroup
-                        title="Premium профиль"
-                        description="Глобальная цена и срок premium, отдельно от подписочных тарифов."
-                        fieldsLayoutClassName="grid gap-4 md:grid-cols-2"
-                        action={
-                          <button
-                            type="button"
-                            onClick={() => void onSaveGlobalSection("premium")}
-                            disabled={savingId === "global-premium" || plans.length === 0}
-                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
-                          >
-                            {savingId === "global-premium" ? "Сохраняем..." : "Сохранить блок"}
-                          </button>
-                        }
-                      >
-                        <Field
-                          label="Цена premium"
-                          type="number"
-                          value={String(globalProducts.premiumProfilePrice)}
-                          suffix="сом"
-                          onChange={(v) =>
-                            setGlobalProducts((prev) => ({ ...prev, premiumProfilePrice: toNum(v) }))
-                          }
-                        />
-                        <Field
-                          label="Срок premium"
-                          type="number"
-                          value={String(globalProducts.premiumProfileDays)}
-                          suffix="дней"
-                          onChange={(v) =>
-                            setGlobalProducts((prev) => ({ ...prev, premiumProfileDays: toNum(v) }))
-                          }
-                        />
-                      </FieldGroup>
-                      {hasGlobalPremiumMismatch ? (
-                        <InlineWarning message="Сейчас в тарифах разные настройки premium. После сохранения они станут одинаковыми." />
-                      ) : null}
                     </div>
                   </div>
 
@@ -708,6 +589,145 @@ export const AdminPage = () => {
                   )}
                 </aside>
               </div>
+
+              <section className={`${adminSectionClass(activeSection, "products")} rounded-[30px] border border-slate-200 bg-white/95 p-5 shadow-sm`}>
+                <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-500">
+                      Глобальные продукты
+                    </div>
+                    <div className="mt-2 text-2xl font-bold text-slate-900">
+                      Бустер, объявления и premium
+                    </div>
+                    <div className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
+                      Эти настройки применяются ко всем тарифам одинаково и не привязаны к
+                      конкретному плану.
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    <div className="font-semibold text-slate-900">Раздел отдельно</div>
+                    <div className="mt-2">
+                      Цены дополнительных продуктов теперь не смешиваются с созданием тарифов.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-4 xl:grid-cols-3">
+                  <FieldGroup
+                    title="Бустер"
+                    description="Глобальная докупка контактов. После сохранения одинаковое значение уйдёт во все тарифы."
+                    fieldsLayoutClassName="grid gap-4"
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => void onSaveGlobalSection("booster")}
+                        disabled={savingId === "global-booster" || plans.length === 0}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                      >
+                        {savingId === "global-booster" ? "Сохраняем..." : "Сохранить блок"}
+                      </button>
+                    }
+                  >
+                    <Field
+                      label="Цена бустера"
+                      type="number"
+                      value={String(globalProducts.boosterPrice)}
+                      suffix="сом"
+                      onChange={(v) =>
+                        setGlobalProducts((prev) => ({ ...prev, boosterPrice: toNum(v) }))
+                      }
+                    />
+                    <Field
+                      label="Контакты бустера"
+                      type="number"
+                      value={String(globalProducts.boosterContacts)}
+                      suffix="шт"
+                      onChange={(v) =>
+                        setGlobalProducts((prev) => ({ ...prev, boosterContacts: toNum(v) }))
+                      }
+                    />
+                    {hasGlobalBoosterMismatch ? (
+                      <InlineWarning message="Сейчас в тарифах разные настройки бустера. После сохранения они станут одинаковыми." />
+                    ) : null}
+                  </FieldGroup>
+
+                  <FieldGroup
+                    title="Объявления"
+                    description="Глобальная цена и срок публикации объявления для заказчиков."
+                    fieldsLayoutClassName="grid gap-4"
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => void onSaveGlobalSection("casting")}
+                        disabled={savingId === "global-casting" || plans.length === 0}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                      >
+                        {savingId === "global-casting" ? "Сохраняем..." : "Сохранить блок"}
+                      </button>
+                    }
+                  >
+                    <Field
+                      label="Цена объявления"
+                      type="number"
+                      value={String(globalProducts.castingPostPrice)}
+                      suffix="сом"
+                      onChange={(v) =>
+                        setGlobalProducts((prev) => ({ ...prev, castingPostPrice: toNum(v) }))
+                      }
+                    />
+                    <Field
+                      label="Дней объявления"
+                      type="number"
+                      value={String(globalProducts.castingPostDays)}
+                      suffix="дней"
+                      onChange={(v) =>
+                        setGlobalProducts((prev) => ({ ...prev, castingPostDays: toNum(v) }))
+                      }
+                    />
+                    {hasGlobalCastingMismatch ? (
+                      <InlineWarning message="Сейчас в тарифах разные настройки объявлений. После сохранения они станут одинаковыми." />
+                    ) : null}
+                  </FieldGroup>
+
+                  <FieldGroup
+                    title="Premium профиль"
+                    description="Глобальная цена и срок premium, отдельно от подписочных тарифов."
+                    fieldsLayoutClassName="grid gap-4"
+                    action={
+                      <button
+                        type="button"
+                        onClick={() => void onSaveGlobalSection("premium")}
+                        disabled={savingId === "global-premium" || plans.length === 0}
+                        className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-60"
+                      >
+                        {savingId === "global-premium" ? "Сохраняем..." : "Сохранить блок"}
+                      </button>
+                    }
+                  >
+                    <Field
+                      label="Цена premium"
+                      type="number"
+                      value={String(globalProducts.premiumProfilePrice)}
+                      suffix="сом"
+                      onChange={(v) =>
+                        setGlobalProducts((prev) => ({ ...prev, premiumProfilePrice: toNum(v) }))
+                      }
+                    />
+                    <Field
+                      label="Срок premium"
+                      type="number"
+                      value={String(globalProducts.premiumProfileDays)}
+                      suffix="дней"
+                      onChange={(v) =>
+                        setGlobalProducts((prev) => ({ ...prev, premiumProfileDays: toNum(v) }))
+                      }
+                    />
+                    {hasGlobalPremiumMismatch ? (
+                      <InlineWarning message="Сейчас в тарифах разные настройки premium. После сохранения они станут одинаковыми." />
+                    ) : null}
+                  </FieldGroup>
+                </div>
+              </section>
             </>
           )}
         </section>
@@ -717,6 +737,88 @@ export const AdminPage = () => {
     </div>
   );
 };
+
+const ADMIN_DASHBOARD_SECTIONS: Array<{
+  key: AdminDashboardSection;
+  label: string;
+  description: string;
+  icon: typeof ChartNoAxesColumn;
+}> = [
+  {
+    key: "overview",
+    label: "Обзор",
+    description: "Метрики и аудитория",
+    icon: ChartNoAxesColumn,
+  },
+  {
+    key: "plans",
+    label: "Тарифы",
+    description: "Создание и статусы",
+    icon: PackagePlus,
+  },
+  {
+    key: "products",
+    label: "Продукты",
+    description: "Бустер и premium",
+    icon: SlidersHorizontal,
+  },
+];
+
+const adminSectionClass = (
+  active: AdminDashboardSection,
+  section: AdminDashboardSection
+) => (active === section ? "" : "hidden");
+
+const AdminDashboardSectionNav = ({
+  active,
+  onChange,
+}: {
+  active: AdminDashboardSection;
+  onChange: (section: AdminDashboardSection) => void;
+}) => (
+  <div className="sticky top-[65px] z-30 -mx-4 bg-[#eef2f7]/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 md:-mx-8 md:px-8 xl:-mx-10 xl:px-10">
+    <div className="grid gap-2 md:grid-cols-3">
+      {ADMIN_DASHBOARD_SECTIONS.map((item) => {
+        const Icon = item.icon;
+        const selected = active === item.key;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            onClick={() => onChange(item.key)}
+            className={[
+              "flex min-h-[64px] items-center gap-3 rounded-2xl border px-4 text-left transition-colors",
+              selected
+                ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-300",
+            ].join(" ")}
+            aria-pressed={selected}
+          >
+            <span
+              className={[
+                "grid h-10 w-10 shrink-0 place-items-center rounded-xl",
+                selected ? "bg-white/15" : "bg-slate-100",
+              ].join(" ")}
+            >
+              <Icon size={20} strokeWidth={2.2} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-bold">{item.label}</span>
+              <span
+                className={[
+                  "mt-0.5 block truncate text-xs",
+                  selected ? "text-white/70" : "text-slate-500",
+                ].join(" ")}
+              >
+                {item.description}
+              </span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  </div>
+);
 
 const MiniStat = ({
   label,
