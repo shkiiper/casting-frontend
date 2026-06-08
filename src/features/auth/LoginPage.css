@@ -35,6 +35,18 @@
   padding: 28px;
 }
 
+@media (min-width: 901px) {
+  .auth-root {
+    justify-content: flex-start;
+    padding-left: clamp(32px, 5vw, 96px);
+    padding-right: 42vw;
+  }
+
+  .auth-card {
+    margin: 0;
+  }
+}
+
 .auth-card-left {
   flex: 1 1 0;
   min-width: 0;

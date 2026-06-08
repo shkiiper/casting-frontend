@@ -15,9 +15,17 @@ export function AuthSplineVisual() {
     const reducedMotionQuery = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     );
+    let loadTimer: number | undefined;
 
     const updateVisibility = () => {
-      setShouldRender(desktopQuery.matches && !reducedMotionQuery.matches);
+      window.clearTimeout(loadTimer);
+
+      if (!desktopQuery.matches || reducedMotionQuery.matches) {
+        setShouldRender(false);
+        return;
+      }
+
+      loadTimer = window.setTimeout(() => setShouldRender(true), 300);
     };
 
     updateVisibility();
@@ -25,6 +33,7 @@ export function AuthSplineVisual() {
     reducedMotionQuery.addEventListener("change", updateVisibility);
 
     return () => {
+      window.clearTimeout(loadTimer);
       desktopQuery.removeEventListener("change", updateVisibility);
       reducedMotionQuery.removeEventListener("change", updateVisibility);
     };
