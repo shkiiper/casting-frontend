@@ -9,6 +9,7 @@ import api from "../../api/client";
 import { useAuthStore } from "../../entities/user/model/authStore";
 import { getApiErrorMessage, sanitizeEmail, trimToNull } from "@/shared/lib/safety";
 import { CenterToast } from "@/shared/ui/CenterToast";
+import { AuthSplineVisual } from "./AuthSplineVisual";
 import "./LoginPage.css";
 
 type Mode = "LOGIN" | "RESEND" | "FORGOT";
@@ -282,6 +283,7 @@ export const LoginPage = () => {
         </div>
 
         <div className="auth-card-right">
+          <AuthSplineVisual />
           <div className="auth-pill">Твоя сцена здесь</div>
 
           <div className="auth-right-header">
@@ -315,13 +317,6 @@ export const LoginPage = () => {
             Создать аккаунт
           </button>
         </div>
-
-        <img
-          src="/loginpage.png"
-          alt=""
-          aria-hidden="true"
-          className="auth-octopus-login"
-        />
       </div>
       {error && <CenterToast message={error} variant="error" />}
     </div>

@@ -2,9 +2,9 @@ import { FormEvent, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { register as apiRegister } from "../../api/auth";
 import type { RegisterRequest } from "../../types/auth";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { getApiErrorMessage, sanitizeEmail, sanitizePhone, trimToNull } from "@/shared/lib/safety";
 import { CenterToast } from "@/shared/ui/CenterToast";
+import { AuthSplineVisual } from "./AuthSplineVisual";
 import "./RegisterPage.css";
 
 const REGISTRATION_DRAFT_KEY = "pendingRegistrationDraft";
@@ -93,7 +93,6 @@ export function RegisterPage() {
 
   return (
     <div className="auth-root">
-      <PageOctopusDecor />
       <div className="auth-card relative z-10">
         <div className="auth-card-left">
           <header className="auth-card-header">
@@ -218,6 +217,7 @@ export function RegisterPage() {
         </div>
 
         <div className="auth-card-right">
+          <AuthSplineVisual />
           <div className="auth-pill">Безопасный вход</div>
           <div className="auth-right-header">
             <div className="auth-right-title">Подтверди email</div>
