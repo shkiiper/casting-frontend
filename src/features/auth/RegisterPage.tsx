@@ -93,6 +93,7 @@ export function RegisterPage() {
 
   return (
     <div className="auth-root">
+      <AuthSplineVisual />
       <div className="auth-card relative z-10">
         <div className="auth-card-left">
           <header className="auth-card-header">
@@ -217,7 +218,6 @@ export function RegisterPage() {
         </div>
 
         <div className="auth-card-right">
-          <AuthSplineVisual />
           <div className="auth-pill">Безопасный вход</div>
           <div className="auth-right-header">
             <div className="auth-right-title">Подтверди email</div>

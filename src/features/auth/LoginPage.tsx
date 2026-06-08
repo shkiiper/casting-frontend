@@ -154,6 +154,7 @@ export const LoginPage = () => {
 
   return (
     <div className="auth-root">
+      <AuthSplineVisual />
       <div className="auth-card">
         <div className="auth-card-left">
           <header className="auth-card-header">
@@ -283,7 +284,6 @@ export const LoginPage = () => {
         </div>
 
         <div className="auth-card-right">
-          <AuthSplineVisual />
           <div className="auth-pill">Твоя сцена здесь</div>
 
           <div className="auth-right-header">
