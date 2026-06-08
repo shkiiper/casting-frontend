@@ -1,4 +1,6 @@
 .auth-spline {
+  --brand-rotate-x: 0deg;
+  --brand-rotate-y: 0deg;
   position: absolute;
   inset: -12vh -8vw -18vh 42vw;
   z-index: 0;
@@ -13,6 +15,69 @@
 .auth-spline-canvas {
   width: 100%;
   height: 100%;
+}
+
+.auth-spline-brand {
+  position: absolute;
+  left: 50%;
+  top: 51%;
+  z-index: 2;
+  display: flex;
+  width: 88px;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 9px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 5px;
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(5, 8, 12, 0.38);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 2px 8px rgba(0, 0, 0, 0.28);
+  font-family: Arial, sans-serif;
+  line-height: 1;
+  pointer-events: none;
+  transform:
+    translate(-50%, -50%)
+    perspective(280px)
+    rotateX(var(--brand-rotate-x))
+    rotateY(var(--brand-rotate-y))
+    rotate(-1deg);
+  transform-origin: center;
+  transition: transform 80ms linear;
+  mix-blend-mode: screen;
+}
+
+.auth-spline-brand::before,
+.auth-spline-brand::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.auth-spline-brand::before {
+  right: calc(100% + 5px);
+}
+
+.auth-spline-brand::after {
+  left: calc(100% + 5px);
+}
+
+.auth-spline-brand-name {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.auth-spline-brand-model {
+  font-size: 5px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  opacity: 0.72;
 }
 
 .auth-spline-glow {

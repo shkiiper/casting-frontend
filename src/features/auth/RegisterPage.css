@@ -25,9 +25,9 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 980px;
+  max-width: 860px;
   display: flex;
-  gap: 32px;
+  gap: 22px;
   border-radius: 32px;
   background: rgba(255, 255, 255, 0.86);
   backdrop-filter: blur(18px);
@@ -39,7 +39,7 @@
 @media (min-width: 901px) {
   .auth-root {
     justify-content: flex-start;
-    padding-left: clamp(32px, 5vw, 96px);
+    padding-left: clamp(48px, 7vw, 136px);
     padding-right: 42vw;
   }
 }
@@ -53,7 +53,7 @@
 }
 
 .auth-card-right {
-  flex: 0 0 320px;
+  flex: 0 0 270px;
   border-radius: 26px;
   padding: 22px 20px;
   background: rgba(15, 23, 42, 0.06);

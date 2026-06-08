@@ -43,7 +43,16 @@ export function AuthSplineVisual() {
     if (!shouldRender) return;
 
     const followCursor = (event: PointerEvent) => {
-      const canvas = rootRef.current?.querySelector("canvas");
+      const root = rootRef.current;
+      if (!root) return;
+
+      const rect = root.getBoundingClientRect();
+      const pointerX = (event.clientX - rect.left) / rect.width - 0.5;
+      const pointerY = (event.clientY - rect.top) / rect.height - 0.5;
+      root.style.setProperty("--brand-rotate-y", `${pointerX * 7}deg`);
+      root.style.setProperty("--brand-rotate-x", `${pointerY * -5}deg`);
+
+      const canvas = root.querySelector("canvas");
       if (!canvas || event.target === canvas) return;
 
       canvas.dispatchEvent(
@@ -69,6 +78,10 @@ export function AuthSplineVisual() {
       <Suspense fallback={<div className="auth-spline-glow" />}>
         <Spline scene={AUTH_SCENE_URL} className="auth-spline-canvas" />
       </Suspense>
+      <div className="auth-spline-brand">
+        <span className="auth-spline-brand-name">ONSET</span>
+        <span className="auth-spline-brand-model">MODEL 01</span>
+      </div>
     </div>
   );
 }
