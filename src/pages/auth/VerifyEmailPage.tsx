@@ -2,35 +2,48 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { login as apiLogin, verifyEmail } from "../../api/auth";
 import { useAuthStore } from "../../entities/user/model/authStore";
+import type { UserRole } from "../../types/auth";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { getApiErrorMessage } from "@/shared/lib/safety";
 import "./VerifyEmailPage.css";
 
-type UserRole =
-  | "CUSTOMER"
-  | "ACTOR"
-  | "CREATOR"
-  | "LOCATION_OWNER"
-  | "LOCATION"
-  | "ADMIN";
+const REGISTRATION_DRAFT_KEY = "pendingRegistrationDraft";
 
 const resolveRedirectPath = (role?: string) => {
   const normalized = (role ?? "").toUpperCase();
-  if (normalized === "CUSTOMER") return "/customer";
-  if (normalized === "CREATOR") return "/creator";
-  if (normalized === "ACTOR") return "/actor";
-  if (normalized === "LOCATION_OWNER" || normalized === "LOCATION") return "/location";
   if (normalized === "ADMIN") return "/admin";
-  return "/account";
+  return "/auth/onboarding";
+};
+
+const readPendingRole = (fallback?: string | null): UserRole | undefined => {
+  const raw =
+    fallback ??
+    localStorage.getItem("pendingVerificationRole") ??
+    (() => {
+      try {
+        return JSON.parse(sessionStorage.getItem(REGISTRATION_DRAFT_KEY) ?? "{}")
+          ?.role;
+      } catch {
+        return undefined;
+      }
+    })();
+
+  return raw ? (String(raw).toUpperCase() as UserRole) : undefined;
 };
 
 const persistAuth = (
   token: string,
   role: string | undefined,
-  loginStore: (token: string, role?: string | null) => void
+  loginStore: (
+    token: string,
+    role?: string | null,
+    availableRoles?: string[] | null
+  ) => void,
+  availableRoles?: string[] | null
 ) => {
-  loginStore(token, role);
+  loginStore(token, role, availableRoles);
   localStorage.removeItem("pendingVerificationEmail");
+  localStorage.removeItem("pendingVerificationRole");
   sessionStorage.removeItem("pendingVerificationPassword");
 };
 
@@ -40,32 +53,41 @@ export function VerifyEmailPage() {
   const loginStore = useAuthStore((s) => s.login);
   const email = params.get("email");
   const code = params.get("code");
+  const role = readPendingRole(params.get("role"));
   const hasParams = Boolean(email && code);
 
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     hasParams ? "loading" : "error"
   );
   const [message, setMessage] = useState<string>(
-    hasParams ? "" : "Откройте подтверждение по коду на странице проверки почты"
+    hasParams
+      ? ""
+      : "Откройте подтверждение по коду на странице проверки почты"
   );
 
   useEffect(() => {
     if (!email || !code) return;
 
-    verifyEmail({ email, code })
+    verifyEmail({ email, code, role })
       .then(async (res) => {
-        const maybeAuth = res as { token?: string | null; role?: string; message?: string };
+        const maybeAuth = res as {
+          token?: string | null;
+          role?: string;
+          availableRoles?: string[];
+          message?: string;
+        };
+
         if (maybeAuth.token) {
-          persistAuth(maybeAuth.token, maybeAuth.role, loginStore);
+          persistAuth(maybeAuth.token, maybeAuth.role, loginStore, maybeAuth.availableRoles);
           navigate(resolveRedirectPath(maybeAuth.role as UserRole), { replace: true });
           return;
         }
 
         const pendingPassword = sessionStorage.getItem("pendingVerificationPassword");
         if (email && pendingPassword) {
-          const auth = await apiLogin({ email, password: pendingPassword });
+          const auth = await apiLogin({ email, password: pendingPassword, role });
           if (auth?.token) {
-            persistAuth(auth.token, auth.role, loginStore);
+            persistAuth(auth.token, auth.role, loginStore, auth.availableRoles);
             navigate(resolveRedirectPath(auth.role as UserRole), { replace: true });
             return;
           }
@@ -73,14 +95,15 @@ export function VerifyEmailPage() {
 
         setStatus("success");
         localStorage.removeItem("pendingVerificationEmail");
-        setMessage(maybeAuth.message || "Email verified");
+        localStorage.removeItem("pendingVerificationRole");
+        setMessage(maybeAuth.message || "Email подтвержден");
       })
       .catch((e: unknown) => {
         console.error(e);
         setStatus("error");
         setMessage(getApiErrorMessage(e, "Ошибка подтверждения email"));
       });
-  }, [email, code]);
+  }, [email, code, role, loginStore, navigate]);
 
   return (
     <div className="verify-root">
@@ -110,14 +133,15 @@ export function VerifyEmailPage() {
             <div className="verify-actions">
               <button
                 className="verify-secondary"
-                onClick={() => navigate("/auth/check-email", { state: { email: params.get("email") ?? "" } })}
+                onClick={() =>
+                  navigate("/auth/check-email", {
+                    state: { email: params.get("email") ?? "", role },
+                  })
+                }
               >
                 Ввести код
               </button>
-              <button
-                className="verify-primary"
-                onClick={() => navigate("/login")}
-              >
+              <button className="verify-primary" onClick={() => navigate("/login")}>
                 Вход
               </button>
             </div>

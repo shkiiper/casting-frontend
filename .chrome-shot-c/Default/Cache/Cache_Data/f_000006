@@ -1,0 +1,710 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/app/router/AppRouter.tsx");import __vite__cjsImport0_react_jsxDevRuntime from "/node_modules/.vite/deps/react_jsx-dev-runtime.js?v=ca3e608a"; const jsxDEV = __vite__cjsImport0_react_jsxDevRuntime["jsxDEV"];
+var _s = $RefreshSig$();
+import __vite__cjsImport1_react from "/node_modules/.vite/deps/react.js?v=ca3e608a"; const Suspense = __vite__cjsImport1_react["Suspense"]; const useEffect = __vite__cjsImport1_react["useEffect"];
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation
+} from "/node_modules/.vite/deps/react-router-dom.js?v=d81d6a37";
+import { ProtectedRoute } from "/src/app/router/ProtectedRoute.tsx";
+import { lazyWithRetry } from "/src/app/router/lazyWithRetry.ts";
+import { markUserActivity } from "/src/shared/lib/activityTracker.ts";
+const LoginPage = lazyWithRetry(
+  _c = () => import("/src/features/auth/LoginPage.tsx").then((m) => ({ default: m.LoginPage }))
+);
+_c2 = LoginPage;
+const RegisterPage = lazyWithRetry(
+  _c3 = () => import("/src/features/auth/RegisterPage.tsx").then((m) => ({
+    default: m.RegisterPage
+  }))
+);
+_c4 = RegisterPage;
+const CheckEmailPage = lazyWithRetry(
+  _c5 = () => import("/src/pages/auth/CheckEmailPage.tsx").then((m) => ({
+    default: m.CheckEmailPage
+  }))
+);
+_c6 = CheckEmailPage;
+const VerifyEmailPage = lazyWithRetry(
+  _c7 = () => import("/src/pages/auth/VerifyEmailPage.tsx").then((m) => ({
+    default: m.VerifyEmailPage
+  }))
+);
+_c8 = VerifyEmailPage;
+const OnboardingPage = lazyWithRetry(
+  _c9 = () => import("/src/pages/auth/OnboardingPage.tsx").then((m) => ({
+    default: m.OnboardingPage
+  }))
+);
+_c0 = OnboardingPage;
+const ResetPasswordPage = lazyWithRetry(
+  _c1 = () => import("/src/pages/auth/ResetPasswordPage.tsx").then((m) => ({
+    default: m.ResetPasswordPage
+  }))
+);
+_c10 = ResetPasswordPage;
+const HomePage = lazyWithRetry(
+  _c11 = () => import("/src/pages/landing/HomePage.tsx").then((m) => ({ default: m.HomePage }))
+);
+_c12 = HomePage;
+const CatalogPage = lazyWithRetry(
+  _c13 = () => import("/src/pages/catalog/CatalogPage.tsx").then((m) => ({
+    default: m.CatalogPage
+  }))
+);
+_c14 = CatalogPage;
+const ProfileDetailsPage = lazyWithRetry(
+  _c15 = () => import("/src/pages/catalog/ProfileDetailsPage.tsx").then((m) => ({
+    default: m.ProfileDetailsPage
+  }))
+);
+_c16 = ProfileDetailsPage;
+const AccountPage = lazyWithRetry(
+  _c17 = () => import("/src/pages/account/AccountPage.tsx").then((m) => ({
+    default: m.AccountPage
+  }))
+);
+_c18 = AccountPage;
+const AccountLayout = lazyWithRetry(
+  _c19 = () => import("/src/pages/account/AccountLayout.tsx").then((m) => ({
+    default: m.AccountLayout
+  }))
+);
+_c20 = AccountLayout;
+const CastingApplicationsPage = lazyWithRetry(
+  _c21 = () => import("/src/pages/account/CastingApplicationsPage.tsx").then((m) => ({
+    default: m.CastingApplicationsPage
+  }))
+);
+_c22 = CastingApplicationsPage;
+const CustomerCastingResponsesPage = lazyWithRetry(
+  _c23 = () => import("/src/pages/account/CustomerCastingResponsesPage.tsx").then((m) => ({
+    default: m.CustomerCastingResponsesPage
+  }))
+);
+_c24 = CustomerCastingResponsesPage;
+const CustomerMyCastingsPage = lazyWithRetry(
+  _c25 = () => import("/src/pages/account/CustomerMyCastingsPage.tsx").then((m) => ({
+    default: m.CustomerMyCastingsPage
+  }))
+);
+_c26 = CustomerMyCastingsPage;
+const AdsPage = lazyWithRetry(
+  _c27 = () => import("/src/pages/ads/AdsPage.tsx").then((m) => ({ default: m.AdsPage }))
+);
+_c28 = AdsPage;
+const PublishedAdsPage = lazyWithRetry(
+  _c29 = () => import("/src/pages/ads/PublishedAdsPage.tsx").then((m) => ({
+    default: m.PublishedAdsPage
+  }))
+);
+_c30 = PublishedAdsPage;
+const AdminPage = lazyWithRetry(
+  _c31 = () => import("/src/pages/admin/AdminPage.tsx").then((m) => ({
+    default: m.AdminPage
+  }))
+);
+_c32 = AdminPage;
+const AdminUsersPage = lazyWithRetry(
+  _c33 = () => import("/src/pages/admin/AdminUsersPage.tsx").then((m) => ({
+    default: m.AdminUsersPage
+  }))
+);
+_c34 = AdminUsersPage;
+const PaymentStatusPage = lazyWithRetry(
+  _c35 = () => import("/src/pages/payment/PaymentStatusPage.tsx").then((m) => ({
+    default: m.PaymentStatusPage
+  }))
+);
+_c36 = PaymentStatusPage;
+const LegalPage = lazyWithRetry(
+  _c37 = () => import("/src/pages/public/LegalPage.tsx").then((m) => ({
+    default: m.LegalPage
+  }))
+);
+_c38 = LegalPage;
+const PaymentInfoPage = lazyWithRetry(
+  _c39 = () => import("/src/pages/public/PaymentInfoPage.tsx").then((m) => ({
+    default: m.PaymentInfoPage
+  }))
+);
+_c40 = PaymentInfoPage;
+const ContactsPage = lazyWithRetry(
+  _c41 = () => import("/src/pages/public/ContactsPage.tsx").then((m) => ({
+    default: m.ContactsPage
+  }))
+);
+_c42 = ContactsPage;
+export function AppRouter() {
+  return /* @__PURE__ */ jsxDEV(BrowserRouter, { children: [
+    /* @__PURE__ */ jsxDEV(ActivityRouteTracker, {}, void 0, false, {
+      fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+      lineNumber: 121,
+      columnNumber: 7
+    }, this),
+    /* @__PURE__ */ jsxDEV(
+      Suspense,
+      {
+        fallback: /* @__PURE__ */ jsxDEV("div", { className: "min-h-screen grid place-items-center text-slate-500", children: "Загрузка..." }, void 0, false, {
+          fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+          lineNumber: 124,
+          columnNumber: 9
+        }, this),
+        children: /* @__PURE__ */ jsxDEV(Routes, { children: [
+          /* @__PURE__ */ jsxDEV(Route, { path: "/", element: /* @__PURE__ */ jsxDEV(HomePage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 131,
+            columnNumber: 36
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 131,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/catalog", element: /* @__PURE__ */ jsxDEV(CatalogPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 132,
+            columnNumber: 43
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 132,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/actors", element: /* @__PURE__ */ jsxDEV(CatalogPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 133,
+            columnNumber: 42
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 133,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/creators", element: /* @__PURE__ */ jsxDEV(CatalogPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 134,
+            columnNumber: 44
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 134,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/locations", element: /* @__PURE__ */ jsxDEV(CatalogPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 135,
+            columnNumber: 45
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 135,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/profiles/:id", element: /* @__PURE__ */ jsxDEV(ProfileDetailsPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 136,
+            columnNumber: 48
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 136,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/ads", element: /* @__PURE__ */ jsxDEV(PublishedAdsPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 138,
+            columnNumber: 39
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 138,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/legal", element: /* @__PURE__ */ jsxDEV(LegalPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 139,
+            columnNumber: 41
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 139,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/payment-info", element: /* @__PURE__ */ jsxDEV(PaymentInfoPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 140,
+            columnNumber: 48
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 140,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/contacts", element: /* @__PURE__ */ jsxDEV(ContactsPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 141,
+            columnNumber: 44
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 141,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/ads/manage",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(AdsPage, {}, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 146,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 145,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 142,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/login", element: /* @__PURE__ */ jsxDEV(LoginPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 152,
+            columnNumber: 41
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 152,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/auth/register", element: /* @__PURE__ */ jsxDEV(RegisterPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 153,
+            columnNumber: 49
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 153,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/auth/check-email", element: /* @__PURE__ */ jsxDEV(CheckEmailPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 154,
+            columnNumber: 52
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 154,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/auth/verify-email", element: /* @__PURE__ */ jsxDEV(VerifyEmailPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 155,
+            columnNumber: 53
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 155,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/auth/onboarding",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(OnboardingPage, {}, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 160,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 159,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 156,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/auth/reset-password", element: /* @__PURE__ */ jsxDEV(ResetPasswordPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 164,
+            columnNumber: 55
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 164,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/auth/reset-password/:token", element: /* @__PURE__ */ jsxDEV(ResetPasswordPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 165,
+            columnNumber: 62
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 165,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/reset-password", element: /* @__PURE__ */ jsxDEV(ResetPasswordPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 166,
+            columnNumber: 50
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 166,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(Route, { path: "/reset-password/:token", element: /* @__PURE__ */ jsxDEV(ResetPasswordPage, {}, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 167,
+            columnNumber: 57
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 167,
+            columnNumber: 11
+          }, this),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/account",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(AccountLayout, {}, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 174,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 173,
+                columnNumber: 13
+              }, this),
+              children: [
+                /* @__PURE__ */ jsxDEV(Route, { index: true, element: /* @__PURE__ */ jsxDEV(AccountPage, {}, void 0, false, {
+                  fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                  lineNumber: 178,
+                  columnNumber: 35
+                }, this) }, void 0, false, {
+                  fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                  lineNumber: 178,
+                  columnNumber: 13
+                }, this),
+                /* @__PURE__ */ jsxDEV(Route, { path: "applications", element: /* @__PURE__ */ jsxDEV(CastingApplicationsPage, {}, void 0, false, {
+                  fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                  lineNumber: 179,
+                  columnNumber: 49
+                }, this) }, void 0, false, {
+                  fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                  lineNumber: 179,
+                  columnNumber: 13
+                }, this),
+                /* @__PURE__ */ jsxDEV(
+                  Route,
+                  {
+                    path: "casting-responses",
+                    element: /* @__PURE__ */ jsxDEV(CustomerCastingResponsesPage, {}, void 0, false, {
+                      fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                      lineNumber: 182,
+                      columnNumber: 24
+                    }, this)
+                  },
+                  void 0,
+                  false,
+                  {
+                    fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                    lineNumber: 180,
+                    columnNumber: 13
+                  },
+                  this
+                ),
+                /* @__PURE__ */ jsxDEV(Route, { path: "my-castings", element: /* @__PURE__ */ jsxDEV(CustomerMyCastingsPage, {}, void 0, false, {
+                  fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                  lineNumber: 184,
+                  columnNumber: 48
+                }, this) }, void 0, false, {
+                  fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                  lineNumber: 184,
+                  columnNumber: 13
+                }, this)
+              ]
+            },
+            void 0,
+            true,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 170,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/customer",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(Navigate, { to: "/account", replace: true }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 191,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 190,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 187,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/actor",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(Navigate, { to: "/account", replace: true }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 199,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 198,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 195,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/creator",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(Navigate, { to: "/account", replace: true }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 207,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 206,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 203,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/location",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(Navigate, { to: "/account", replace: true }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 215,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 214,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 211,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/admin",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(AdminPage, {}, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 223,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 222,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 219,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/admin/users",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(AdminUsersPage, {}, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 231,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 230,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 227,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(
+            Route,
+            {
+              path: "/payments/status",
+              element: /* @__PURE__ */ jsxDEV(ProtectedRoute, { children: /* @__PURE__ */ jsxDEV(PaymentStatusPage, {}, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 239,
+                columnNumber: 17
+              }, this) }, void 0, false, {
+                fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+                lineNumber: 238,
+                columnNumber: 13
+              }, this)
+            },
+            void 0,
+            false,
+            {
+              fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+              lineNumber: 235,
+              columnNumber: 11
+            },
+            this
+          ),
+          /* @__PURE__ */ jsxDEV(Route, { path: "*", element: /* @__PURE__ */ jsxDEV(Navigate, { to: "/", replace: true }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 245,
+            columnNumber: 36
+          }, this) }, void 0, false, {
+            fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+            lineNumber: 245,
+            columnNumber: 11
+          }, this)
+        ] }, void 0, true, {
+          fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+          lineNumber: 129,
+          columnNumber: 9
+        }, this)
+      },
+      void 0,
+      false,
+      {
+        fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+        lineNumber: 122,
+        columnNumber: 7
+      },
+      this
+    )
+  ] }, void 0, true, {
+    fileName: "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx",
+    lineNumber: 120,
+    columnNumber: 5
+  }, this);
+}
+_c43 = AppRouter;
+function ActivityRouteTracker() {
+  _s();
+  const location = useLocation();
+  useEffect(() => {
+    markUserActivity();
+  }, [location.pathname, location.search, location.hash]);
+  return null;
+}
+_s(ActivityRouteTracker, "BXcZrDMM76mmm4zA8/QV5UbMNXE=", false, function() {
+  return [useLocation];
+});
+_c44 = ActivityRouteTracker;
+var _c, _c2, _c3, _c4, _c5, _c6, _c7, _c8, _c9, _c0, _c1, _c10, _c11, _c12, _c13, _c14, _c15, _c16, _c17, _c18, _c19, _c20, _c21, _c22, _c23, _c24, _c25, _c26, _c27, _c28, _c29, _c30, _c31, _c32, _c33, _c34, _c35, _c36, _c37, _c38, _c39, _c40, _c41, _c42, _c43, _c44;
+$RefreshReg$(_c, "LoginPage$lazyWithRetry");
+$RefreshReg$(_c2, "LoginPage");
+$RefreshReg$(_c3, "RegisterPage$lazyWithRetry");
+$RefreshReg$(_c4, "RegisterPage");
+$RefreshReg$(_c5, "CheckEmailPage$lazyWithRetry");
+$RefreshReg$(_c6, "CheckEmailPage");
+$RefreshReg$(_c7, "VerifyEmailPage$lazyWithRetry");
+$RefreshReg$(_c8, "VerifyEmailPage");
+$RefreshReg$(_c9, "OnboardingPage$lazyWithRetry");
+$RefreshReg$(_c0, "OnboardingPage");
+$RefreshReg$(_c1, "ResetPasswordPage$lazyWithRetry");
+$RefreshReg$(_c10, "ResetPasswordPage");
+$RefreshReg$(_c11, "HomePage$lazyWithRetry");
+$RefreshReg$(_c12, "HomePage");
+$RefreshReg$(_c13, "CatalogPage$lazyWithRetry");
+$RefreshReg$(_c14, "CatalogPage");
+$RefreshReg$(_c15, "ProfileDetailsPage$lazyWithRetry");
+$RefreshReg$(_c16, "ProfileDetailsPage");
+$RefreshReg$(_c17, "AccountPage$lazyWithRetry");
+$RefreshReg$(_c18, "AccountPage");
+$RefreshReg$(_c19, "AccountLayout$lazyWithRetry");
+$RefreshReg$(_c20, "AccountLayout");
+$RefreshReg$(_c21, "CastingApplicationsPage$lazyWithRetry");
+$RefreshReg$(_c22, "CastingApplicationsPage");
+$RefreshReg$(_c23, "CustomerCastingResponsesPage$lazyWithRetry");
+$RefreshReg$(_c24, "CustomerCastingResponsesPage");
+$RefreshReg$(_c25, "CustomerMyCastingsPage$lazyWithRetry");
+$RefreshReg$(_c26, "CustomerMyCastingsPage");
+$RefreshReg$(_c27, "AdsPage$lazyWithRetry");
+$RefreshReg$(_c28, "AdsPage");
+$RefreshReg$(_c29, "PublishedAdsPage$lazyWithRetry");
+$RefreshReg$(_c30, "PublishedAdsPage");
+$RefreshReg$(_c31, "AdminPage$lazyWithRetry");
+$RefreshReg$(_c32, "AdminPage");
+$RefreshReg$(_c33, "AdminUsersPage$lazyWithRetry");
+$RefreshReg$(_c34, "AdminUsersPage");
+$RefreshReg$(_c35, "PaymentStatusPage$lazyWithRetry");
+$RefreshReg$(_c36, "PaymentStatusPage");
+$RefreshReg$(_c37, "LegalPage$lazyWithRetry");
+$RefreshReg$(_c38, "LegalPage");
+$RefreshReg$(_c39, "PaymentInfoPage$lazyWithRetry");
+$RefreshReg$(_c40, "PaymentInfoPage");
+$RefreshReg$(_c41, "ContactsPage$lazyWithRetry");
+$RefreshReg$(_c42, "ContactsPage");
+$RefreshReg$(_c43, "AppRouter");
+$RefreshReg$(_c44, "ActivityRouteTracker");
+import * as RefreshRuntime from "/@react-refresh";
+const inWebWorker = typeof WorkerGlobalScope !== "undefined" && self instanceof WorkerGlobalScope;
+if (import.meta.hot && !inWebWorker) {
+  if (!window.$RefreshReg$) {
+    throw new Error(
+      "@vitejs/plugin-react can't detect preamble. Something is wrong."
+    );
+  }
+  RefreshRuntime.__hmr_import(import.meta.url).then((currentExports) => {
+    RefreshRuntime.registerExportsForReactRefresh("C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx", currentExports);
+    import.meta.hot.accept((nextExports) => {
+      if (!nextExports) return;
+      const invalidateMessage = RefreshRuntime.validateRefreshBoundaryAndEnqueueUpdate("C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx", currentExports, nextExports);
+      if (invalidateMessage) import.meta.hot.invalidate(invalidateMessage);
+    });
+  });
+}
+function $RefreshReg$(type, id) {
+  return RefreshRuntime.register(type, "C:/Users/user/Desktop/casting-frontend/src/app/router/AppRouter.tsx " + id);
+}
+function $RefreshSig$() {
+  return RefreshRuntime.createSignatureFunctionForTransform();
+}
+
+//# sourceMappingURL=data:application/json;base64,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QWlELGFBQUEvQyxNQUFBO0FBQUErQyxhQUFBOUMsTUFBQTtBQUFBOEMsYUFBQTVDLE1BQUE7QUFBQTRDLGFBQUEzQyxNQUFBO0FBQUEyQyxhQUFBekMsTUFBQTtBQUFBeUMsYUFBQXhDLE1BQUE7QUFBQXdDLGFBQUF0QyxNQUFBO0FBQUFzQyxhQUFBckMsTUFBQTtBQUFBcUMsYUFBQW5DLE1BQUE7QUFBQW1DLGFBQUFsQyxNQUFBO0FBQUFrQyxhQUFBaEMsTUFBQTtBQUFBZ0MsYUFBQS9CLE1BQUE7QUFBQStCLGFBQUE3QixNQUFBO0FBQUE2QixhQUFBNUIsTUFBQTtBQUFBNEIsYUFBQTFCLE1BQUE7QUFBQTBCLGFBQUF6QixNQUFBO0FBQUF5QixhQUFBdkIsTUFBQTtBQUFBdUIsYUFBQXRCLE1BQUE7QUFBQXNCLGFBQUFwQixNQUFBO0FBQUFvQixhQUFBbkIsTUFBQTtBQUFBbUIsYUFBQWpCLE1BQUE7QUFBQWlCLGFBQUFoQixNQUFBO0FBQUFnQixhQUFBZCxNQUFBO0FBQUFjLGFBQUFiLE1BQUE7QUFBQWEsYUFBQVgsTUFBQTtBQUFBVyxhQUFBVixNQUFBO0FBQUFVLGFBQUFSLE1BQUE7QUFBQVEsYUFBQUQsTUFBQSIsIm5hbWVzIjpbIlN1c3BlbnNlIiwidXNlRWZmZWN0IiwiQnJvd3NlclJvdXRlciIsIlJvdXRlcyIsIlJvdXRlIiwiTmF2aWdhdGUiLCJ1c2VMb2NhdGlvbiIsIlByb3RlY3RlZFJvdXRlIiwibGF6eVdpdGhSZXRyeSIsIm1hcmtVc2VyQWN0aXZpdHkiLCJMb2dpblBhZ2UiLCJfYyIsInRoZW4iLCJtIiwiZGVmYXVsdCIsIl9jMiIsIlJlZ2lzdGVyUGFnZSIsIl9jMyIsIl9jNCIsIkNoZWNrRW1haWxQYWdlIiwiX2M1IiwiX2M2IiwiVmVyaWZ5RW1haWxQYWdlIiwiX2M3IiwiX2M4IiwiT25ib2FyZGluZ1BhZ2UiLCJfYzkiLCJfYzAiLCJSZXNldFBhc3N3b3JkUGFnZSIsIl9jMSIsIl9jMTAiLCJIb21lUGFnZSIsIl9jMTEiLCJfYzEyIiwiQ2F0YWxvZ1BhZ2UiLCJfYzEzIiwiX2MxNCIsIlByb2ZpbGVEZXRhaWxzUGFnZSIsIl9jMTUiLCJfYzE2IiwiQWNjb3VudFBhZ2UiLCJfYzE3IiwiX2MxOCIsIkFjY291bnRMYXlvdXQiLCJfYzE5IiwiX2MyMCIsIkNhc3RpbmdBcHBsaWNhdGlvbnNQYWdlIiwiX2MyMSIsIl9jMjIiLCJDdXN0b21lckNhc3RpbmdSZXNwb25zZXNQYWdlIiwiX2MyMyIsIl9jMjQiLCJDdXN0b21lck15Q2FzdGluZ3NQYWdlIiwiX2MyNSIsIl9jMjYiLCJBZHNQYWdlIiwiX2MyNyIsIl9jMjgiLCJQdWJsaXNoZWRBZHNQYWdlIiwiX2MyOSIsIl9jMzAiLCJBZG1pblBhZ2UiLCJfYzMxIiwiX2MzMiIsIkFkbWluVXNlcnNQYWdlIiwiX2MzMyIsIl9jMzQiLCJQYXltZW50U3RhdHVzUGFnZSIsIl9jMzUiLCJfYzM2IiwiTGVnYWxQYWdlIiwiX2MzNyIsIl9jMzgiLCJQYXltZW50SW5mb1BhZ2UiLCJfYzM5IiwiX2M0MCIsIkNvbnRhY3RzUGFnZSIsIl9jNDEiLCJfYzQyIiwiQXBwUm91dGVyIiwiX2M0MyIsIkFjdGl2aXR5Um91dGVUcmFja2VyIiwiX3MiLCJsb2NhdGlvbiIsInBhdGhuYW1lIiwic2VhcmNoIiwiaGFzaCIsIl9jNDQiLCIkUmVmcmVzaFJlZyQiXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZXMiOlsiQXBwUm91dGVyLnRzeCJdLCJzb3VyY2VzQ29udGVudCI6WyJpbXBvcnQgeyBTdXNwZW5zZSwgdXNlRWZmZWN0IH0gZnJvbSBcInJlYWN0XCI7XG5pbXBvcnQge1xuICBCcm93c2VyUm91dGVyLFxuICBSb3V0ZXMsXG4gIFJvdXRlLFxuICBOYXZpZ2F0ZSxcbiAgdXNlTG9jYXRpb24sXG59IGZyb20gXCJyZWFjdC1yb3V0ZXItZG9tXCI7XG5pbXBvcnQgeyBQcm90ZWN0ZWRSb3V0ZSB9IGZyb20gXCIuL1Byb3RlY3RlZFJvdXRlXCI7XG5pbXBvcnQgeyBsYXp5V2l0aFJldHJ5IH0gZnJvbSBcIi4vbGF6eVdpdGhSZXRyeVwiO1xuaW1wb3J0IHsgbWFya1VzZXJBY3Rpdml0eSB9IGZyb20gXCJAL3NoYXJlZC9saWIvYWN0aXZpdHlUcmFja2VyXCI7XG5cbmNvbnN0IExvZ2luUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vZmVhdHVyZXMvYXV0aC9Mb2dpblBhZ2VcIikudGhlbigobSkgPT4gKHsgZGVmYXVsdDogbS5Mb2dpblBhZ2UgfSkpXG4pO1xuY29uc3QgUmVnaXN0ZXJQYWdlID0gbGF6eVdpdGhSZXRyeSgoKSA9PlxuICBpbXBvcnQoXCIuLi8uLi9mZWF0dXJlcy9hdXRoL1JlZ2lzdGVyUGFnZVwiKS50aGVuKChtKSA9PiAoe1xuICAgIGRlZmF1bHQ6IG0uUmVnaXN0ZXJQYWdlLFxuICB9KSlcbik7XG5jb25zdCBDaGVja0VtYWlsUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYXV0aC9DaGVja0VtYWlsUGFnZVwiKS50aGVuKChtKSA9PiAoe1xuICAgIGRlZmF1bHQ6IG0uQ2hlY2tFbWFpbFBhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IFZlcmlmeUVtYWlsUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYXV0aC9WZXJpZnlFbWFpbFBhZ2VcIikudGhlbigobSkgPT4gKHtcbiAgICBkZWZhdWx0OiBtLlZlcmlmeUVtYWlsUGFnZSxcbiAgfSkpXG4pO1xuY29uc3QgT25ib2FyZGluZ1BhZ2UgPSBsYXp5V2l0aFJldHJ5KCgpID0+XG4gIGltcG9ydChcIi4uLy4uL3BhZ2VzL2F1dGgvT25ib2FyZGluZ1BhZ2VcIikudGhlbigobSkgPT4gKHtcbiAgICBkZWZhdWx0OiBtLk9uYm9hcmRpbmdQYWdlLFxuICB9KSlcbik7XG5jb25zdCBSZXNldFBhc3N3b3JkUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYXV0aC9SZXNldFBhc3N3b3JkUGFnZVwiKS50aGVuKChtKSA9PiAoe1xuICAgIGRlZmF1bHQ6IG0uUmVzZXRQYXNzd29yZFBhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IEhvbWVQYWdlID0gbGF6eVdpdGhSZXRyeSgoKSA9PlxuICBpbXBvcnQoXCIuLi8uLi9wYWdlcy9sYW5kaW5nL0hvbWVQYWdlXCIpLnRoZW4oKG0pID0+ICh7IGRlZmF1bHQ6IG0uSG9tZVBhZ2UgfSkpXG4pO1xuY29uc3QgQ2F0YWxvZ1BhZ2UgPSBsYXp5V2l0aFJldHJ5KCgpID0+XG4gIGltcG9ydChcIi4uLy4uL3BhZ2VzL2NhdGFsb2cvQ2F0YWxvZ1BhZ2VcIikudGhlbigobSkgPT4gKHtcbiAgICBkZWZhdWx0OiBtLkNhdGFsb2dQYWdlLFxuICB9KSlcbik7XG5jb25zdCBQcm9maWxlRGV0YWlsc1BhZ2UgPSBsYXp5V2l0aFJldHJ5KCgpID0+XG4gIGltcG9ydChcIi4uLy4uL3BhZ2VzL2NhdGFsb2cvUHJvZmlsZURldGFpbHNQYWdlXCIpLnRoZW4oKG0pID0+ICh7XG4gICAgZGVmYXVsdDogbS5Qcm9maWxlRGV0YWlsc1BhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IEFjY291bnRQYWdlID0gbGF6eVdpdGhSZXRyeSgoKSA9PlxuICBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hY2NvdW50L0FjY291bnRQYWdlXCIpLnRoZW4oKG0pID0+ICh7XG4gICAgZGVmYXVsdDogbS5BY2NvdW50UGFnZSxcbiAgfSkpXG4pO1xuY29uc3QgQWNjb3VudExheW91dCA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYWNjb3VudC9BY2NvdW50TGF5b3V0XCIpLnRoZW4oKG0pID0+ICh7XG4gICAgZGVmYXVsdDogbS5BY2NvdW50TGF5b3V0LFxuICB9KSlcbik7XG5jb25zdCBDYXN0aW5nQXBwbGljYXRpb25zUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYWNjb3VudC9DYXN0aW5nQXBwbGljYXRpb25zUGFnZVwiKS50aGVuKChtKSA9PiAoe1xuICAgIGRlZmF1bHQ6IG0uQ2FzdGluZ0FwcGxpY2F0aW9uc1BhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IEN1c3RvbWVyQ2FzdGluZ1Jlc3BvbnNlc1BhZ2UgPSBsYXp5V2l0aFJldHJ5KCgpID0+XG4gIGltcG9ydChcIi4uLy4uL3BhZ2VzL2FjY291bnQvQ3VzdG9tZXJDYXN0aW5nUmVzcG9uc2VzUGFnZVwiKS50aGVuKChtKSA9PiAoe1xuICAgIGRlZmF1bHQ6IG0uQ3VzdG9tZXJDYXN0aW5nUmVzcG9uc2VzUGFnZSxcbiAgfSkpXG4pO1xuY29uc3QgQ3VzdG9tZXJNeUNhc3RpbmdzUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYWNjb3VudC9DdXN0b21lck15Q2FzdGluZ3NQYWdlXCIpLnRoZW4oKG0pID0+ICh7XG4gICAgZGVmYXVsdDogbS5DdXN0b21lck15Q2FzdGluZ3NQYWdlLFxuICB9KSlcbik7XG5jb25zdCBBZHNQYWdlID0gbGF6eVdpdGhSZXRyeSgoKSA9PlxuICBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hZHMvQWRzUGFnZVwiKS50aGVuKChtKSA9PiAoeyBkZWZhdWx0OiBtLkFkc1BhZ2UgfSkpXG4pO1xuY29uc3QgUHVibGlzaGVkQWRzUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYWRzL1B1Ymxpc2hlZEFkc1BhZ2VcIikudGhlbigobSkgPT4gKHtcbiAgICBkZWZhdWx0OiBtLlB1Ymxpc2hlZEFkc1BhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IEFkbWluUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvYWRtaW4vQWRtaW5QYWdlXCIpLnRoZW4oKG0pID0+ICh7XG4gICAgZGVmYXVsdDogbS5BZG1pblBhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IEFkbWluVXNlcnNQYWdlID0gbGF6eVdpdGhSZXRyeSgoKSA9PlxuICBpbXBvcnQoXCIuLi8uLi9wYWdlcy9hZG1pbi9BZG1pblVzZXJzUGFnZVwiKS50aGVuKChtKSA9PiAoe1xuICAgIGRlZmF1bHQ6IG0uQWRtaW5Vc2Vyc1BhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IFBheW1lbnRTdGF0dXNQYWdlID0gbGF6eVdpdGhSZXRyeSgoKSA9PlxuICBpbXBvcnQoXCIuLi8uLi9wYWdlcy9wYXltZW50L1BheW1lbnRTdGF0dXNQYWdlXCIpLnRoZW4oKG0pID0+ICh7XG4gICAgZGVmYXVsdDogbS5QYXltZW50U3RhdHVzUGFnZSxcbiAgfSkpXG4pO1xuY29uc3QgTGVnYWxQYWdlID0gbGF6eVdpdGhSZXRyeSgoKSA9PlxuICBpbXBvcnQoXCIuLi8uLi9wYWdlcy9wdWJsaWMvTGVnYWxQYWdlXCIpLnRoZW4oKG0pID0+ICh7XG4gICAgZGVmYXVsdDogbS5MZWdhbFBhZ2UsXG4gIH0pKVxuKTtcbmNvbnN0IFBheW1lbnRJbmZvUGFnZSA9IGxhenlXaXRoUmV0cnkoKCkgPT5cbiAgaW1wb3J0KFwiLi4vLi4vcGFnZXMvcHVibGljL1BheW1lbnRJbmZvUGFnZVwiKS50aGVuKChtKSA9PiAoe1xuICAgIGRlZmF1bHQ6IG0uUGF5bWVudEluZm9QYWdlLFxuICB9KSlcbik7XG5jb25zdCBDb250YWN0c1BhZ2UgPSBsYXp5V2l0aFJldHJ5KCgpID0+XG4gIGltcG9ydChcIi4uLy4uL3BhZ2VzL3B1YmxpYy9Db250YWN0c1BhZ2VcIikudGhlbigobSkgPT4gKHtcbiAgICBkZWZhdWx0OiBtLkNvbnRhY3RzUGFnZSxcbiAgfSkpXG4pO1xuXG5leHBvcnQgZnVuY3Rpb24gQXBwUm91dGVyKCkge1xuICByZXR1cm4gKFxuICAgIDxCcm93c2VyUm91dGVyPlxuICAgICAgPEFjdGl2aXR5Um91dGVUcmFja2VyIC8+XG4gICAgICA8U3VzcGVuc2VcbiAgICAgICAgZmFsbGJhY2s9e1xuICAgICAgICAgIDxkaXYgY2xhc3NOYW1lPVwibWluLWgtc2NyZWVuIGdyaWQgcGxhY2UtaXRlbXMtY2VudGVyIHRleHQtc2xhdGUtNTAwXCI+XG4gICAgICAgICAgICDQl9Cw0LPRgNGD0LfQutCwLi4uXG4gICAgICAgICAgPC9kaXY+XG4gICAgICAgIH1cbiAgICAgID5cbiAgICAgICAgPFJvdXRlcz5cbiAgICAgICAgICB7LyogUFVCTElDICovfVxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL1wiIGVsZW1lbnQ9ezxIb21lUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9jYXRhbG9nXCIgZWxlbWVudD17PENhdGFsb2dQYWdlIC8+fSAvPlxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2FjdG9yc1wiIGVsZW1lbnQ9ezxDYXRhbG9nUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9jcmVhdG9yc1wiIGVsZW1lbnQ9ezxDYXRhbG9nUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9sb2NhdGlvbnNcIiBlbGVtZW50PXs8Q2F0YWxvZ1BhZ2UgLz59IC8+XG4gICAgICAgICAgPFJvdXRlIHBhdGg9XCIvcHJvZmlsZXMvOmlkXCIgZWxlbWVudD17PFByb2ZpbGVEZXRhaWxzUGFnZSAvPn0gLz5cblxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2Fkc1wiIGVsZW1lbnQ9ezxQdWJsaXNoZWRBZHNQYWdlIC8+fSAvPlxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2xlZ2FsXCIgZWxlbWVudD17PExlZ2FsUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9wYXltZW50LWluZm9cIiBlbGVtZW50PXs8UGF5bWVudEluZm9QYWdlIC8+fSAvPlxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2NvbnRhY3RzXCIgZWxlbWVudD17PENvbnRhY3RzUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGVcbiAgICAgICAgICAgIHBhdGg9XCIvYWRzL21hbmFnZVwiXG4gICAgICAgICAgICBlbGVtZW50PXtcbiAgICAgICAgICAgICAgPFByb3RlY3RlZFJvdXRlPlxuICAgICAgICAgICAgICAgIDxBZHNQYWdlIC8+XG4gICAgICAgICAgICAgIDwvUHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICB9XG4gICAgICAgICAgLz5cblxuICAgICAgICAgIHsvKiBBVVRIICovfVxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2xvZ2luXCIgZWxlbWVudD17PExvZ2luUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9hdXRoL3JlZ2lzdGVyXCIgZWxlbWVudD17PFJlZ2lzdGVyUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9hdXRoL2NoZWNrLWVtYWlsXCIgZWxlbWVudD17PENoZWNrRW1haWxQYWdlIC8+fSAvPlxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2F1dGgvdmVyaWZ5LWVtYWlsXCIgZWxlbWVudD17PFZlcmlmeUVtYWlsUGFnZSAvPn0gLz5cbiAgICAgICAgICA8Um91dGVcbiAgICAgICAgICAgIHBhdGg9XCIvYXV0aC9vbmJvYXJkaW5nXCJcbiAgICAgICAgICAgIGVsZW1lbnQ9e1xuICAgICAgICAgICAgICA8UHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICAgICAgPE9uYm9hcmRpbmdQYWdlIC8+XG4gICAgICAgICAgICAgIDwvUHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICB9XG4gICAgICAgICAgLz5cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIi9hdXRoL3Jlc2V0LXBhc3N3b3JkXCIgZWxlbWVudD17PFJlc2V0UGFzc3dvcmRQYWdlIC8+fSAvPlxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL2F1dGgvcmVzZXQtcGFzc3dvcmQvOnRva2VuXCIgZWxlbWVudD17PFJlc2V0UGFzc3dvcmRQYWdlIC8+fSAvPlxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3Jlc2V0LXBhc3N3b3JkXCIgZWxlbWVudD17PFJlc2V0UGFzc3dvcmRQYWdlIC8+fSAvPlxuICAgICAgICAgIDxSb3V0ZSBwYXRoPVwiL3Jlc2V0LXBhc3N3b3JkLzp0b2tlblwiIGVsZW1lbnQ9ezxSZXNldFBhc3N3b3JkUGFnZSAvPn0gLz5cblxuICAgICAgICAgIHsvKiBQUklWQVRFICovfVxuICAgICAgICAgIDxSb3V0ZVxuICAgICAgICAgICAgcGF0aD1cIi9hY2NvdW50XCJcbiAgICAgICAgICAgIGVsZW1lbnQ9e1xuICAgICAgICAgICAgICA8UHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICAgICAgPEFjY291bnRMYXlvdXQgLz5cbiAgICAgICAgICAgICAgPC9Qcm90ZWN0ZWRSb3V0ZT5cbiAgICAgICAgICAgIH1cbiAgICAgICAgICA+XG4gICAgICAgICAgICA8Um91dGUgaW5kZXggZWxlbWVudD17PEFjY291bnRQYWdlIC8+fSAvPlxuICAgICAgICAgICAgPFJvdXRlIHBhdGg9XCJhcHBsaWNhdGlvbnNcIiBlbGVtZW50PXs8Q2FzdGluZ0FwcGxpY2F0aW9uc1BhZ2UgLz59IC8+XG4gICAgICAgICAgICA8Um91dGVcbiAgICAgICAgICAgICAgcGF0aD1cImNhc3RpbmctcmVzcG9uc2VzXCJcbiAgICAgICAgICAgICAgZWxlbWVudD17PEN1c3RvbWVyQ2FzdGluZ1Jlc3BvbnNlc1BhZ2UgLz59XG4gICAgICAgICAgICAvPlxuICAgICAgICAgICAgPFJvdXRlIHBhdGg9XCJteS1jYXN0aW5nc1wiIGVsZW1lbnQ9ezxDdXN0b21lck15Q2FzdGluZ3NQYWdlIC8+fSAvPlxuICAgICAgICAgIDwvUm91dGU+XG5cbiAgICAgICAgICA8Um91dGVcbiAgICAgICAgICAgIHBhdGg9XCIvY3VzdG9tZXJcIlxuICAgICAgICAgICAgZWxlbWVudD17XG4gICAgICAgICAgICAgIDxQcm90ZWN0ZWRSb3V0ZT5cbiAgICAgICAgICAgICAgICA8TmF2aWdhdGUgdG89XCIvYWNjb3VudFwiIHJlcGxhY2UgLz5cbiAgICAgICAgICAgICAgPC9Qcm90ZWN0ZWRSb3V0ZT5cbiAgICAgICAgICAgIH1cbiAgICAgICAgICAvPlxuICAgICAgICAgIDxSb3V0ZVxuICAgICAgICAgICAgcGF0aD1cIi9hY3RvclwiXG4gICAgICAgICAgICBlbGVtZW50PXtcbiAgICAgICAgICAgICAgPFByb3RlY3RlZFJvdXRlPlxuICAgICAgICAgICAgICAgIDxOYXZpZ2F0ZSB0bz1cIi9hY2NvdW50XCIgcmVwbGFjZSAvPlxuICAgICAgICAgICAgICA8L1Byb3RlY3RlZFJvdXRlPlxuICAgICAgICAgICAgfVxuICAgICAgICAgIC8+XG4gICAgICAgICAgPFJvdXRlXG4gICAgICAgICAgICBwYXRoPVwiL2NyZWF0b3JcIlxuICAgICAgICAgICAgZWxlbWVudD17XG4gICAgICAgICAgICAgIDxQcm90ZWN0ZWRSb3V0ZT5cbiAgICAgICAgICAgICAgICA8TmF2aWdhdGUgdG89XCIvYWNjb3VudFwiIHJlcGxhY2UgLz5cbiAgICAgICAgICAgICAgPC9Qcm90ZWN0ZWRSb3V0ZT5cbiAgICAgICAgICAgIH1cbiAgICAgICAgICAvPlxuICAgICAgICAgIDxSb3V0ZVxuICAgICAgICAgICAgcGF0aD1cIi9sb2NhdGlvblwiXG4gICAgICAgICAgICBlbGVtZW50PXtcbiAgICAgICAgICAgICAgPFByb3RlY3RlZFJvdXRlPlxuICAgICAgICAgICAgICAgIDxOYXZpZ2F0ZSB0bz1cIi9hY2NvdW50XCIgcmVwbGFjZSAvPlxuICAgICAgICAgICAgICA8L1Byb3RlY3RlZFJvdXRlPlxuICAgICAgICAgICAgfVxuICAgICAgICAgIC8+XG4gICAgICAgICAgPFJvdXRlXG4gICAgICAgICAgICBwYXRoPVwiL2FkbWluXCJcbiAgICAgICAgICAgIGVsZW1lbnQ9e1xuICAgICAgICAgICAgICA8UHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICAgICAgPEFkbWluUGFnZSAvPlxuICAgICAgICAgICAgICA8L1Byb3RlY3RlZFJvdXRlPlxuICAgICAgICAgICAgfVxuICAgICAgICAgIC8+XG4gICAgICAgICAgPFJvdXRlXG4gICAgICAgICAgICBwYXRoPVwiL2FkbWluL3VzZXJzXCJcbiAgICAgICAgICAgIGVsZW1lbnQ9e1xuICAgICAgICAgICAgICA8UHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICAgICAgPEFkbWluVXNlcnNQYWdlIC8+XG4gICAgICAgICAgICAgIDwvUHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICB9XG4gICAgICAgICAgLz5cbiAgICAgICAgICA8Um91dGVcbiAgICAgICAgICAgIHBhdGg9XCIvcGF5bWVudHMvc3RhdHVzXCJcbiAgICAgICAgICAgIGVsZW1lbnQ9e1xuICAgICAgICAgICAgICA8UHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICAgICAgPFBheW1lbnRTdGF0dXNQYWdlIC8+XG4gICAgICAgICAgICAgIDwvUHJvdGVjdGVkUm91dGU+XG4gICAgICAgICAgICB9XG4gICAgICAgICAgLz5cblxuICAgICAgICAgIHsvKiBGQUxMQkFDSyAqL31cbiAgICAgICAgICA8Um91dGUgcGF0aD1cIipcIiBlbGVtZW50PXs8TmF2aWdhdGUgdG89XCIvXCIgcmVwbGFjZSAvPn0gLz5cbiAgICAgICAgPC9Sb3V0ZXM+XG4gICAgICA8L1N1c3BlbnNlPlxuICAgIDwvQnJvd3NlclJvdXRlcj5cbiAgKTtcbn1cblxuZnVuY3Rpb24gQWN0aXZpdHlSb3V0ZVRyYWNrZXIoKSB7XG4gIGNvbnN0IGxvY2F0aW9uID0gdXNlTG9jYXRpb24oKTtcblxuICB1c2VFZmZlY3QoKCkgPT4ge1xuICAgIG1hcmtVc2VyQWN0aXZpdHkoKTtcbiAgfSwgW2xvY2F0aW9uLnBhdGhuYW1lLCBsb2NhdGlvbi5zZWFyY2gsIGxvY2F0aW9uLmhhc2hdKTtcblxuICByZXR1cm4gbnVsbDtcbn1cbiJdLCJmaWxlIjoiQzovVXNlcnMvdXNlci9EZXNrdG9wL2Nhc3RpbmctZnJvbnRlbmQvc3JjL2FwcC9yb3V0ZXIvQXBwUm91dGVyLnRzeCJ9

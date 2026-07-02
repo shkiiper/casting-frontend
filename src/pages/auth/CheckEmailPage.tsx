@@ -2,45 +2,61 @@ import { FormEvent, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { login as apiLogin, resendVerification, verifyEmail } from "../../api/auth";
 import { useAuthStore } from "../../entities/user/model/authStore";
+import type { UserRole } from "../../types/auth";
 import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
 import { getApiErrorMessage, sanitizeEmail, trimToNull } from "@/shared/lib/safety";
 import "./CheckEmailPage.css";
 
-type UserRole =
-  | "CUSTOMER"
-  | "ACTOR"
-  | "CREATOR"
-  | "LOCATION_OWNER"
-  | "LOCATION"
-  | "ADMIN";
+const REGISTRATION_DRAFT_KEY = "pendingRegistrationDraft";
 
 const resolveRedirectPath = (role?: string) => {
   const normalized = (role ?? "").toUpperCase();
-  if (normalized === "CUSTOMER") return "/customer";
-  if (normalized === "CREATOR") return "/creator";
-  if (normalized === "ACTOR") return "/actor";
-  if (normalized === "LOCATION_OWNER" || normalized === "LOCATION") return "/location";
-  return "/account";
+  if (normalized === "ADMIN") return "/admin";
+  return "/auth/onboarding";
+};
+
+const readPendingRole = (fallback?: string): UserRole | undefined => {
+  const raw =
+    fallback ??
+    localStorage.getItem("pendingVerificationRole") ??
+    (() => {
+      try {
+        return JSON.parse(sessionStorage.getItem(REGISTRATION_DRAFT_KEY) ?? "{}")
+          ?.role;
+      } catch {
+        return undefined;
+      }
+    })();
+
+  return raw ? (String(raw).toUpperCase() as UserRole) : undefined;
 };
 
 const persistAuth = (
   token: string,
   role: string | undefined,
-  loginStore: (token: string, role?: string | null) => void
+  loginStore: (
+    token: string,
+    role?: string | null,
+    availableRoles?: string[] | null
+  ) => void,
+  availableRoles?: string[] | null
 ) => {
-  loginStore(token, role);
+  loginStore(token, role, availableRoles);
   localStorage.removeItem("pendingVerificationEmail");
+  localStorage.removeItem("pendingVerificationRole");
   sessionStorage.removeItem("pendingVerificationPassword");
 };
 
 export function CheckEmailPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = (location.state as { email?: string } | null) ?? null;
+  const locationState =
+    (location.state as { email?: string; role?: UserRole } | null) ?? null;
   const loginStore = useAuthStore((s) => s.login);
 
   const initialEmail =
     locationState?.email ?? localStorage.getItem("pendingVerificationEmail") ?? "";
+  const pendingRole = readPendingRole(locationState?.role);
 
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
@@ -66,17 +82,23 @@ export function CheckEmailPage() {
         setError("Введите корректные email и код");
         return;
       }
+
       const res = await verifyEmail({
         email: normalizedEmail,
         code: normalizedCode,
+        role: pendingRole,
       });
 
-      const maybeAuth = res as { token?: string | null; role?: string };
+      const maybeAuth = res as {
+        token?: string | null;
+        role?: string;
+        availableRoles?: string[];
+        message?: string;
+      };
+
       if (maybeAuth.token) {
-        persistAuth(maybeAuth.token, maybeAuth.role, loginStore);
-        navigate(resolveRedirectPath(maybeAuth.role as UserRole), {
-          replace: true,
-        });
+        persistAuth(maybeAuth.token, maybeAuth.role, loginStore, maybeAuth.availableRoles);
+        navigate(resolveRedirectPath(maybeAuth.role as UserRole), { replace: true });
         return;
       }
 
@@ -85,20 +107,22 @@ export function CheckEmailPage() {
         const auth = await apiLogin({
           email: normalizedEmail,
           password: pendingPassword,
+          role: pendingRole,
         });
 
         if (auth?.token) {
-          persistAuth(auth.token, auth.role, loginStore);
+          persistAuth(auth.token, auth.role, loginStore, auth.availableRoles);
           navigate(resolveRedirectPath(auth.role as UserRole), { replace: true });
           return;
         }
       }
 
       localStorage.removeItem("pendingVerificationEmail");
-      setMsg((res as { message?: string }).message || "Email подтверждён. Теперь войдите.");
+      localStorage.removeItem("pendingVerificationRole");
+      setMsg(maybeAuth.message || "Email подтвержден. Теперь войдите.");
       setTimeout(() => navigate("/login"), 600);
     } catch (error: unknown) {
-      setError(getApiErrorMessage(error, "Неверный код или код истёк"));
+      setError(getApiErrorMessage(error, "Неверный код или код истек"));
     } finally {
       setLoading(false);
     }
@@ -114,12 +138,19 @@ export function CheckEmailPage() {
         setError("Введите корректный email");
         return;
       }
-      const res = await resendVerification({ email: normalizedEmail });
+
+      const res = await resendVerification({
+        email: normalizedEmail,
+        role: pendingRole,
+      });
       localStorage.setItem("pendingVerificationEmail", normalizedEmail);
-      setMsg(res.message || "Письмо отправлено");
+      if (pendingRole) {
+        localStorage.setItem("pendingVerificationRole", pendingRole);
+      }
+      setMsg(res.message || "Код отправлен");
     } catch (error: unknown) {
       console.error(error);
-      setError(getApiErrorMessage(error, "Не удалось отправить письмо"));
+      setError(getApiErrorMessage(error, "Не удалось отправить код"));
     } finally {
       setLoading(false);
     }
@@ -129,7 +160,7 @@ export function CheckEmailPage() {
     <div className="check-root">
       <PageOctopusDecor />
       <div className="check-card relative z-10">
-        <h1 className="check-title">Проверь почту</h1>
+        <h1 className="check-title">Проверьте почту</h1>
         <p className="check-text">
           Мы отправили 6-значный код подтверждения на email. Введите его ниже.
         </p>
@@ -145,7 +176,7 @@ export function CheckEmailPage() {
               placeholder="you@example.com"
             />
             <div className="check-email-note">
-              Если ошиблись в почте, можно вернуться назад и исправить её.
+              Если ошиблись в почте, можно вернуться назад и исправить ее.
             </div>
           </div>
 
@@ -194,7 +225,7 @@ export function CheckEmailPage() {
         </form>
 
         <p className="check-hint">
-          Если письмо не приходит — проверь “Спам”.
+          Если письмо не приходит, проверьте папку "Спам".
         </p>
       </div>
     </div>

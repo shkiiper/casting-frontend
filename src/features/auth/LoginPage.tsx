@@ -84,7 +84,7 @@ export const LoginPage = () => {
 
         // 1) кладём в localStorage
         // 2) кладём в zustand‑store и storage
-        loginStore(resp.token, resp.role);
+        loginStore(resp.token, resp.role, resp.availableRoles);
 
         // 3) проверяем профиль в зависимости от роли
         const role = (resp.role ?? "").toUpperCase() as UserRole;

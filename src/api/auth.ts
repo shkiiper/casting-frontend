@@ -9,6 +9,7 @@ import type {
   ResendVerificationRequest,
   ForgotPasswordRequest,
   ResetPasswordRequest,
+  UserRole,
 } from "../types/auth";
 
 export async function register(payload: RegisterRequest): Promise<AuthResponse> {
@@ -58,5 +59,17 @@ export async function resetPassword(
     "/api/auth/reset-password",
     payload
   );
+  return data;
+}
+
+export async function getAuthAccounts(): Promise<UserRole[]> {
+  const { data } = await api.get<UserRole[]>("/api/auth/accounts");
+  return data;
+}
+
+export async function switchRole(role: UserRole): Promise<AuthResponse> {
+  const { data } = await api.post<AuthResponse>("/api/auth/switch-role", {
+    role,
+  });
   return data;
 }

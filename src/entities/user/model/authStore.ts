@@ -6,9 +6,12 @@ const ACCESS_TOKEN_KEY = "accessToken";
 const LEGACY_TOKEN_KEY = "token";
 const ROLE_KEY = "role";
 const ACCOUNT_NAME_KEY = "account_name";
+const ACCOUNT_ROLES_KEY = "account_roles";
 
 const toNormalizedRole = (role?: string | null): SessionRole =>
   role ? role.toUpperCase() : null;
+
+const isRoleString = (role: SessionRole): role is string => Boolean(role);
 
 const getAccountName = (role?: string | null) =>
   role === "CUSTOMER" ? "Заказчик" : role || "";
@@ -18,7 +21,38 @@ export const getStoredAccessToken = () =>
 
 export const getStoredRole = () => toNormalizedRole(localStorage.getItem(ROLE_KEY));
 
-export const persistSession = (token: string, role?: string | null) => {
+export const getStoredEmail = () => {
+  const token = getStoredAccessToken();
+  if (!token) return null;
+
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+
+    const normalizedPayload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const decoded = JSON.parse(atob(normalizedPayload));
+    return typeof decoded.sub === "string" ? decoded.sub : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getStoredAccountRoles = () => {
+  try {
+    const roles = JSON.parse(localStorage.getItem(ACCOUNT_ROLES_KEY) ?? "[]");
+    return Array.isArray(roles)
+      ? roles.map((role) => toNormalizedRole(String(role))).filter(isRoleString)
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+export const persistSession = (
+  token: string,
+  role?: string | null,
+  availableRoles?: string[] | null
+) => {
   localStorage.setItem(LEGACY_TOKEN_KEY, token);
   localStorage.setItem(ACCESS_TOKEN_KEY, token);
 
@@ -27,6 +61,13 @@ export const persistSession = (token: string, role?: string | null) => {
     localStorage.setItem(ROLE_KEY, normalizedRole);
     localStorage.setItem(ACCOUNT_NAME_KEY, getAccountName(normalizedRole));
   }
+
+  if (availableRoles) {
+    const normalizedRoles = availableRoles
+      .map((item) => toNormalizedRole(item))
+      .filter(isRoleString);
+    localStorage.setItem(ACCOUNT_ROLES_KEY, JSON.stringify(normalizedRoles));
+  }
 };
 
 export const clearStoredSession = () => {
@@ -34,6 +75,7 @@ export const clearStoredSession = () => {
   localStorage.removeItem(LEGACY_TOKEN_KEY);
   localStorage.removeItem(ROLE_KEY);
   localStorage.removeItem(ACCOUNT_NAME_KEY);
+  localStorage.removeItem(ACCOUNT_ROLES_KEY);
   localStorage.removeItem("refreshToken");
   sessionStorage.clear();
 };
@@ -41,9 +83,14 @@ export const clearStoredSession = () => {
 type AuthState = {
   accessToken: string | null;
   role: SessionRole;
+  availableRoles: string[];
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (token: string, role?: string | null) => void;
+  login: (
+    token: string,
+    role?: string | null,
+    availableRoles?: string[] | null
+  ) => void;
   logout: () => void;
   initFromStorage: () => void;
 };
@@ -54,6 +101,7 @@ const readSessionSnapshot = () => {
   return {
     accessToken,
     role,
+    availableRoles: getStoredAccountRoles(),
     isAuthenticated: Boolean(accessToken),
   };
 };
@@ -61,6 +109,7 @@ const readSessionSnapshot = () => {
 export const useAuthStore = create<AuthState>((set) => ({
   accessToken: null,
   role: null,
+  availableRoles: [],
   isAuthenticated: false,
   isLoading: true,
 
@@ -71,11 +120,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
   },
 
-  login: (token: string, role?: string | null) => {
-    persistSession(token, role);
+  login: (token: string, role?: string | null, availableRoles?: string[] | null) => {
+    persistSession(token, role, availableRoles);
     set({
       accessToken: token,
       role: toNormalizedRole(role) ?? getStoredRole(),
+      availableRoles: availableRoles
+        ? availableRoles.map((item) => toNormalizedRole(item)).filter(isRoleString)
+        : getStoredAccountRoles(),
       isAuthenticated: true,
       isLoading: false,
     });
@@ -86,6 +138,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({
       accessToken: null,
       role: null,
+      availableRoles: [],
       isAuthenticated: false,
       isLoading: false,
     });
@@ -99,6 +152,7 @@ export const logoutSession = () => {
 export const useSession = () => {
   const accessToken = useAuthStore((state) => state.accessToken);
   const role = useAuthStore((state) => state.role);
+  const availableRoles = useAuthStore((state) => state.availableRoles);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isLoading = useAuthStore((state) => state.isLoading);
   const login = useAuthStore((state) => state.login);
@@ -107,6 +161,7 @@ export const useSession = () => {
   return {
     accessToken,
     role,
+    availableRoles,
     isAuthenticated,
     isLoading,
     isAdmin: role === "ADMIN",
