@@ -8,8 +8,10 @@ import {
   Sparkles,
   UsersRound,
 } from "lucide-react";
-import { useSession } from "@/entities/user/model/authStore";
+import { getAuthAccounts, switchRole as apiSwitchRole } from "@/api/auth";
+import { getStoredEmail, useSession } from "@/entities/user/model/authStore";
 import { resolveMediaUrl, useProfileAvatar } from "@/shared/ui/useProfileAvatar";
+import type { UserRole } from "@/types/auth";
 
 type ActiveKey =
   | "home"
@@ -26,6 +28,41 @@ type MenuItem = {
   danger?: boolean;
 };
 
+const ROLE_LABELS: Record<string, string> = {
+  ACTOR: "Актер",
+  CREATOR: "Креатор",
+  LOCATION_OWNER: "Локация",
+  LOCATION: "Локация",
+  CUSTOMER: "Заказчик",
+  ADMIN: "Админ",
+};
+
+const PROFILE_ROLES: UserRole[] = [
+  "ACTOR",
+  "CREATOR",
+  "LOCATION_OWNER",
+  "CUSTOMER",
+];
+
+const resolveRolePath = (role?: string) => {
+  const normalized = (role ?? "").toUpperCase();
+  if (normalized === "ADMIN") return "/admin";
+  if (normalized === "CUSTOMER") return "/customer";
+  if (normalized === "CREATOR") return "/creator";
+  if (normalized === "ACTOR") return "/actor";
+  if (normalized === "LOCATION_OWNER" || normalized === "LOCATION") return "/location";
+  return "/account";
+};
+
+const normalizeRoles = (roles: Array<string | null | undefined>) =>
+  Array.from(
+    new Set(
+      roles
+        .map((item) => item?.toUpperCase())
+        .filter((item): item is string => Boolean(item))
+    )
+  );
+
 export const InlineNav = ({
   active,
   showProfile = true,
@@ -38,10 +75,82 @@ export const InlineNav = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { avatarUrl, isAuthed } = useProfileAvatar();
-  const { isAdmin, logout } = useSession();
+  const {
+    isAdmin,
+    logout,
+    login,
+    role: currentRole,
+    availableRoles,
+  } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountRoles, setAccountRoles] = useState<string[]>(
+    normalizeRoles(availableRoles)
+  );
+  const [switchingRole, setSwitchingRole] = useState<string | null>(null);
   const closeTimerRef = useRef<number | null>(null);
-  const effectiveProfileMenu =
+
+  useEffect(() => {
+    setAccountRoles(normalizeRoles(availableRoles));
+  }, [availableRoles]);
+
+  useEffect(() => {
+    if (!isAuthed) {
+      setAccountRoles([]);
+      return;
+    }
+
+    let cancelled = false;
+    getAuthAccounts()
+      .then((roles) => {
+        if (!cancelled) {
+          setAccountRoles(normalizeRoles(roles));
+        }
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthed, currentRole]);
+
+  const handleSwitchRole = async (nextRole: string) => {
+    setSwitchingRole(nextRole);
+    try {
+      const resp = await apiSwitchRole(nextRole as UserRole);
+      if (resp.token) {
+        login(resp.token, resp.role, resp.availableRoles);
+        navigate(resolveRolePath(resp.role), { replace: true });
+      }
+    } finally {
+      setSwitchingRole(null);
+    }
+  };
+
+  const switchProfileMenu: MenuItem[] = accountRoles
+    .filter((item) => item !== currentRole)
+    .map((item) => ({
+      label: `${switchingRole === item ? "Переключаем..." : "Перейти"}: ${
+        ROLE_LABELS[item] ?? item
+      }`,
+      onClick: () => void handleSwitchRole(item),
+    }));
+
+  const addRoleMenu: MenuItem[] =
+    isAdmin || !isAuthed
+      ? []
+      : PROFILE_ROLES.filter((item) => !accountRoles.includes(item)).map((item) => ({
+          label: `Добавить: ${ROLE_LABELS[item] ?? item}`,
+          onClick: () => {
+            const params = new URLSearchParams({ role: item, addRole: "1" });
+            const email = getStoredEmail();
+            if (email) {
+              params.set("email", email);
+            }
+            navigate(`/auth/register?${params.toString()}`);
+          },
+        }));
+
+  const baseProfileMenu =
     profileMenu ??
     (isAdmin
       ? [
@@ -55,6 +164,10 @@ export const InlineNav = ({
           },
         ]
       : undefined);
+  const effectiveProfileMenu =
+    switchProfileMenu.length > 0 || addRoleMenu.length > 0 || baseProfileMenu
+      ? [...switchProfileMenu, ...addRoleMenu, ...(baseProfileMenu ?? [])]
+      : undefined;
 
   const openMenu = () => {
     if (!effectiveProfileMenu) return;

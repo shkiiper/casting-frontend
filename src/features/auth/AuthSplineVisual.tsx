@@ -1,10 +1,34 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useRef, useState, type ReactNode } from "react";
 import "./AuthSplineVisual.css";
 
 const Spline = lazy(() => import("@splinetool/react-spline"));
 
 const AUTH_SCENE_URL =
   "https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode";
+
+type SplineBoundaryState = {
+  failed: boolean;
+};
+
+class SplineBoundary extends Component<{ children: ReactNode }, SplineBoundaryState> {
+  state: SplineBoundaryState = { failed: false };
+
+  static getDerivedStateFromError(): SplineBoundaryState {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("Auth robot failed to render", error);
+  }
+
+  render() {
+    if (this.state.failed) {
+      return <div className="auth-spline-fallback" />;
+    }
+
+    return this.props.children;
+  }
+}
 
 export function AuthSplineVisual() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -75,9 +99,11 @@ export function AuthSplineVisual() {
 
   return (
     <div ref={rootRef} className="auth-spline" aria-hidden="true">
-      <Suspense fallback={<div className="auth-spline-glow" />}>
-        <Spline scene={AUTH_SCENE_URL} className="auth-spline-canvas" />
-      </Suspense>
+      <SplineBoundary>
+        <Suspense fallback={<div className="auth-spline-glow" />}>
+          <Spline scene={AUTH_SCENE_URL} className="auth-spline-canvas" />
+        </Suspense>
+      </SplineBoundary>
       <div className="auth-spline-brand">
         <span className="auth-spline-brand-name">ONSET</span>
         <span className="auth-spline-brand-model">MODEL 01</span>

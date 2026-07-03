@@ -28,6 +28,11 @@ const VerifyEmailPage = lazyWithRetry(() =>
     default: m.VerifyEmailPage,
   }))
 );
+const OnboardingPage = lazyWithRetry(() =>
+  import("../../pages/auth/OnboardingPage").then((m) => ({
+    default: m.OnboardingPage,
+  }))
+);
 const ResetPasswordPage = lazyWithRetry(() =>
   import("../../pages/auth/ResetPasswordPage").then((m) => ({
     default: m.ResetPasswordPage,
@@ -148,6 +153,15 @@ export function AppRouter() {
           <Route path="/auth/register" element={<RegisterPage />} />
           <Route path="/auth/check-email" element={<CheckEmailPage />} />
           <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/auth/onboarding-preview" element={<OnboardingPage />} />
+          <Route
+            path="/auth/onboarding"
+            element={
+              <ProtectedRoute>
+                <OnboardingPage />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
           <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />

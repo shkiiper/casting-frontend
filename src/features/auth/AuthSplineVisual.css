@@ -117,6 +117,16 @@
   filter: blur(52px);
 }
 
+.auth-spline-fallback {
+  position: absolute;
+  inset: 14% 18%;
+  border-radius: 48%;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.82), transparent 18%),
+    radial-gradient(circle at 50% 52%, rgba(20, 184, 166, 0.16), transparent 56%);
+  filter: blur(18px);
+}
+
 @media (max-width: 900px) {
   .auth-spline {
     display: none;

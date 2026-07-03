@@ -1,6 +1,15 @@
+export type UserRole =
+  | "CUSTOMER"
+  | "ACTOR"
+  | "CREATOR"
+  | "LOCATION_OWNER"
+  | "LOCATION"
+  | "ADMIN";
+
 export interface AuthResponse {
   token: string | null;
-  role: string; // backend возвращает role.name()
+  role: string;
+  availableRoles?: UserRole[];
 }
 
 export interface MessageResponse {
@@ -13,21 +22,24 @@ export interface RegisterRequest {
   email: string;
   phone: string;
   password: string;
-  role: "CUSTOMER" | "ACTOR" | "CREATOR" | "LOCATION_OWNER" | "ADMIN";
+  role: UserRole;
 }
 
 export interface LoginRequest {
   email: string;
   password: string;
+  role?: UserRole;
 }
 
 export interface ResendVerificationRequest {
   email: string;
+  role?: UserRole;
 }
 
 export interface VerifyEmailRequest {
   email: string;
   code: string;
+  role?: UserRole;
 }
 
 export interface ForgotPasswordRequest {
