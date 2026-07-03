@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   BadgeCheck,
-  Camera,
-  Clapperboard,
   MapPin,
   Play,
   Radar,
@@ -75,7 +73,7 @@ const steps = [
     id: '01',
     title: 'Создайте объявление',
     text: 'Опишите проект, город, сроки и требования к участникам. Заявка выглядит понятно для исполнителей.',
-    icon: Clapperboard,
+    icon: Sparkles,
   },
   {
     id: '02',
@@ -93,8 +91,8 @@ const steps = [
 
 const liveCards = [
   { title: 'Актёр', text: '25 лет · Бишкек', accent: 'cyan' },
-  { title: 'Оператор', text: 'Reels · клипы · реклама', accent: 'amber' },
-  { title: 'Локация', text: 'Лофт · 120 м² · свет', accent: 'rose' },
+  { title: 'Креатор', text: 'Клипы · реклама · reels', accent: 'amber' },
+  { title: 'Локация', text: 'Лофт · 120 м² · daylight', accent: 'rose' },
 ];
 
 export const HomePage = () => {
@@ -153,60 +151,55 @@ export const HomePage = () => {
   );
 
   return (
-    <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
+    <div className="home-page relative min-h-screen overflow-x-hidden bg-[#f3f4f7] text-slate-900">
       <PageOctopusDecor />
       <div className="relative z-10 pb-8 pt-4 sm:pt-10">
         <Container>
           <div className="glass-object relative mx-auto max-w-7xl overflow-hidden rounded-[22px] sm:rounded-[36px] lg:rounded-[44px]">
-            <div className="absolute inset-0">
-              <img
-                src="/production-hero.png"
-                alt=""
-                className="h-full w-full object-cover object-right opacity-46"
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.96)_0%,rgba(255,255,255,0.78)_46%,rgba(255,255,255,0.48)_100%)]" />
+            <div className="home-editorial-bg absolute inset-0">
+              <div className="home-editorial-grid" />
             </div>
 
             <div className="relative z-10">
               <InlineNav active="home" />
 
-              <section className="grid min-h-[calc(100svh-220px)] items-center gap-8 px-4 py-8 sm:px-6 md:grid-cols-[minmax(0,1fr)_520px] md:px-8 md:py-12">
-              <div className="max-w-4xl">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/55 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-slate-700 backdrop-blur">
+              <section className="grid min-h-[calc(100svh-220px)] min-w-0 items-center gap-8 overflow-hidden px-4 py-8 sm:px-6 md:grid-cols-[minmax(0,1fr)_520px] md:px-8 md:py-12">
+              <div className="home-hero-copy w-full min-w-0 max-w-full sm:max-w-4xl">
+                <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/80 bg-white/55 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 backdrop-blur sm:text-xs sm:tracking-[0.22em]">
                   <Sparkles size={16} />
-                  Casting operating system
+                  <span className="truncate">Fashion casting digest</span>
                 </div>
 
                 <h1 className="mt-6 text-5xl font-black leading-[0.9] sm:text-6xl md:text-8xl">
                   ONSET
                 </h1>
-                <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-700 md:text-2xl md:leading-9">
-                  Кинематографичная платформа, где кастинг, команда, локации и объявления
-                  собираются в один быстрый рабочий поток.
+                <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8 md:text-2xl md:leading-9">
+                  Витрина кастингов, людей и локаций в формате модного досье:
+                  быстро выбрать, красиво представить, легко собрать проект.
                 </p>
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <div className="home-hero-actions mt-8 flex flex-col gap-3 sm:flex-row">
                   <Link
                     to="/actors"
-                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/80 px-6 text-sm font-bold text-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.10)] backdrop-blur transition-colors hover:bg-white"
+                    className="inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/80 px-5 text-sm font-bold text-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.10)] backdrop-blur transition-colors hover:bg-white sm:w-auto sm:px-6"
                   >
                     Открыть каталог
                     <ArrowRight size={18} />
                   </Link>
                   <Link
                     to="/ads"
-                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/55 px-6 text-sm font-bold text-slate-900 backdrop-blur transition-colors hover:bg-white/70"
+                    className="inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/55 px-5 text-sm font-bold text-slate-900 backdrop-blur transition-colors hover:bg-white/70 sm:w-auto sm:px-6"
                   >
                     <Play size={17} />
                     Смотреть кастинги
                   </Link>
                 </div>
 
-                <div className="mt-8 grid max-w-xl grid-cols-2 gap-3">
+                <div className="home-hero-metrics mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
                   {metricCards.map((item) => (
                     <div
                       key={item.label}
-                      className="rounded-2xl border border-white/80 bg-white/70 p-4 backdrop-blur"
+                      className="min-w-0 rounded-2xl border border-white/80 bg-white/70 p-4 backdrop-blur"
                     >
                       <div className="text-3xl font-black">
                         {new Intl.NumberFormat('ru-RU').format(item.value)}
@@ -217,11 +210,53 @@ export const HomePage = () => {
                 </div>
               </div>
 
-              <div className="home-radar-scene relative hidden min-h-[520px] md:block">
-                <div className="home-radar-ring home-radar-ring--outer" />
-                <div className="home-radar-ring home-radar-ring--middle" />
-                <div className="home-radar-ring home-radar-ring--inner" />
-                <div className="home-radar-beam" />
+              <div className="home-editorial-scene relative min-h-[380px] min-w-0 overflow-hidden sm:min-h-[440px] md:min-h-[520px]">
+                <div className="home-magazine home-magazine--back">
+                  <div className="home-magazine-label">LOOKBOOK</div>
+                  <div className="home-magazine-lines">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+
+                <div className="home-magazine home-magazine--front">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="home-magazine-label">ISSUE 07</div>
+                      <div className="mt-2 text-[11px] font-bold uppercase tracking-[0.26em] text-cyan-500">
+                        Bishkek talents
+                      </div>
+                    </div>
+                    <div className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-600">
+                      ONSET
+                    </div>
+                  </div>
+
+                  <div className="mt-7 text-4xl font-black leading-[0.88] text-slate-950 sm:text-5xl">
+                    Casting
+                    <br />
+                    Report
+                  </div>
+
+                  <div className="home-cover-portrait">
+                    <div className="home-cover-head" />
+                    <div className="home-cover-body" />
+                    <div className="home-cover-orbit home-cover-orbit--one" />
+                    <div className="home-cover-orbit home-cover-orbit--two" />
+                  </div>
+
+                  <div className="mt-6 grid grid-cols-3 gap-2">
+                    {['Role', 'City', 'Mood'].map((item) => (
+                      <div
+                        key={item}
+                        className="rounded-2xl border border-slate-200/80 bg-white/68 px-3 py-2 text-center text-[10px] font-black uppercase tracking-[0.14em] text-slate-600"
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
                 {liveCards.map((card, index) => (
                   <div
@@ -239,12 +274,12 @@ export const HomePage = () => {
                 <div className="home-command-card">
                   <div className="flex items-center gap-3">
                     <span className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400 text-slate-900">
-                      <Radar size={22} />
+                      <Sparkles size={22} />
                     </span>
                     <div>
-                      <div className="text-sm font-bold">Live matching</div>
+                      <div className="text-sm font-bold">Editor’s pick</div>
                       <div className="mt-1 text-xs text-slate-600">
-                        3 направления · 1 проект
+                        3 профиля · 1 проект
                       </div>
                     </div>
                   </div>
@@ -354,7 +389,7 @@ export const HomePage = () => {
                 кто нужен, кто готов и что уже можно брать в работу.
               </p>
               <div className="mt-6 grid grid-cols-3 gap-2">
-                <MiniIcon label="Кастинг" icon={<Clapperboard size={18} />} />
+                <MiniIcon label="Кастинг" icon={<Sparkles size={18} />} />
                 <MiniIcon label="Команда" icon={<UsersRound size={18} />} />
                 <MiniIcon label="Локации" icon={<MapPin size={18} />} />
               </div>
@@ -388,11 +423,11 @@ export const HomePage = () => {
             <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
               <div className="p-6 md:p-10">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-900">
-                  <Camera size={15} />
-                  Production ready
+                  <Sparkles size={15} />
+                  Profile showcase
                 </div>
                 <h3 className="mt-5 text-3xl font-black md:text-5xl">
-                  Публикуйте проект и собирайте людей быстрее
+                  Публикуйте проект как аккуратную редакционную подборку
                 </h3>
                 <p className="mt-4 max-w-2xl text-slate-600">
                   Для заказчика это короткий путь от задачи к реальным кандидатам.
@@ -413,13 +448,20 @@ export const HomePage = () => {
                   </Link>
                 </div>
               </div>
-              <div className="relative min-h-[320px] bg-white">
-                <img
-                  src="/production-hero.png"
-                  alt=""
-                  className="absolute inset-0 h-full w-full object-contain p-6 opacity-95"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/60 via-transparent to-transparent" />
+              <div className="home-cta-editorial relative min-h-[320px] overflow-hidden bg-white">
+                <div className="home-cta-sheet home-cta-sheet--one">
+                  <span>Actor</span>
+                  <strong>fresh face</strong>
+                </div>
+                <div className="home-cta-sheet home-cta-sheet--two">
+                  <span>Location</span>
+                  <strong>soft light</strong>
+                </div>
+                <div className="home-cta-sheet home-cta-sheet--three">
+                  <span>Team</span>
+                  <strong>ready</strong>
+                </div>
+                <div className="home-cta-editorial-title">ONSET</div>
               </div>
             </div>
           </section>

@@ -341,8 +341,8 @@ export const InlineNav = ({
         </div>
       </div>
     </header>
-    <nav className="fixed inset-x-0 bottom-0 z-50 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-5 rounded-[28px] border border-white/70 bg-white/[0.92] p-1.5 shadow-[0_16px_42px_rgba(15,23,42,0.18)] backdrop-blur">
+    <nav className="fixed inset-x-0 bottom-0 z-50 max-w-[100vw] overflow-hidden px-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-3 lg:hidden">
+      <div className="mx-auto grid w-full max-w-[calc(100vw-1rem)] grid-cols-[repeat(5,minmax(0,1fr))] rounded-[26px] border border-white/70 bg-white/[0.92] p-1.5 shadow-[0_16px_42px_rgba(15,23,42,0.18)] backdrop-blur sm:max-w-md sm:rounded-[28px]">
         {mobileItems.map((item) => {
           const Icon = item.icon;
           const selected = resolvedActive === item.key;
@@ -351,7 +351,7 @@ export const InlineNav = ({
               key={item.key}
               to={item.to}
               className={[
-                "flex min-h-[56px] flex-col items-center justify-center gap-1 rounded-[22px] px-1 text-[10px] font-semibold transition-colors",
+                "flex min-h-[54px] min-w-0 flex-col items-center justify-center gap-1 rounded-[20px] px-0.5 text-[9px] font-semibold transition-colors min-[390px]:text-[10px] sm:min-h-[56px] sm:rounded-[22px] sm:px-1",
                 selected
                   ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
                   : "text-slate-500 active:bg-slate-100",
@@ -359,7 +359,7 @@ export const InlineNav = ({
               aria-current={selected ? "page" : undefined}
             >
               <Icon size={20} strokeWidth={2.2} />
-              <span className="leading-none">{item.label}</span>
+              <span className="max-w-full truncate leading-none">{item.label}</span>
             </Link>
           );
         })}
