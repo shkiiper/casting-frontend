@@ -150,23 +150,21 @@ export const InlineNav = ({
           },
         }));
 
-  const baseProfileMenu =
-    profileMenu ??
-    (isAdmin
-      ? [
-          {
-            label: "Выйти",
-            onClick: () => {
-              logout();
-              navigate("/login", { replace: true });
-            },
-            danger: true,
-          },
-        ]
-      : undefined);
+  const logoutMenuItem: MenuItem = {
+    label: "Выйти",
+    onClick: () => {
+      logout();
+      navigate("/login", { replace: true });
+    },
+    danger: true,
+  };
+  const baseProfileMenu = profileMenu ?? [];
+  const hasCustomLogout = baseProfileMenu.some((item) => item.label === logoutMenuItem.label);
+  const profileActionsMenu =
+    isAuthed && !hasCustomLogout ? [...baseProfileMenu, logoutMenuItem] : baseProfileMenu;
   const effectiveProfileMenu =
-    switchProfileMenu.length > 0 || addRoleMenu.length > 0 || baseProfileMenu
-      ? [...switchProfileMenu, ...addRoleMenu, ...(baseProfileMenu ?? [])]
+    switchProfileMenu.length > 0 || addRoleMenu.length > 0 || profileActionsMenu.length > 0
+      ? [...switchProfileMenu, ...addRoleMenu, ...profileActionsMenu]
       : undefined;
 
   const openMenu = () => {
