@@ -6,7 +6,7 @@ import { Input } from "@/shared/ui/Input";
 import { Textarea } from "@/shared/ui/Textarea";
 import { CityMultiSelect } from "@/shared/ui/CityMultiSelect";
 import { InlineNav } from "@/shared/ui/InlineNav";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { AnimatedCodeBackdrop } from "@/shared/ui/AnimatedCodeBackdrop";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import type { PageResponse } from "@/types/common";
 import { trimMultilineToNull, trimToNull } from "@/shared/lib/safety";
@@ -117,7 +117,7 @@ export const AdsPage = () => {
 
   return (
     <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="relative z-10">
         <Container>
         <div className="mx-auto max-w-7xl mt-10">

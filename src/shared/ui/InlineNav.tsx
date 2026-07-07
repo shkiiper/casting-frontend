@@ -126,6 +126,17 @@ export const InlineNav = ({
     }
   };
 
+  const currentProfilePath = resolveRolePath(currentRole ?? undefined);
+  const currentProfileMenu: MenuItem[] =
+    isAuthed && currentRole && currentRole !== "ADMIN"
+      ? [
+          {
+            label: `Мой профиль: ${ROLE_LABELS[currentRole] ?? currentRole}`,
+            onClick: () => navigate(currentProfilePath),
+          },
+        ]
+      : [];
+
   const switchProfileMenu: MenuItem[] = accountRoles
     .filter((item) => item !== currentRole)
     .map((item) => ({
@@ -164,7 +175,7 @@ export const InlineNav = ({
     isAuthed && !hasCustomLogout ? [...baseProfileMenu, logoutMenuItem] : baseProfileMenu;
   const effectiveProfileMenu =
     switchProfileMenu.length > 0 || addRoleMenu.length > 0 || profileActionsMenu.length > 0
-      ? [...switchProfileMenu, ...addRoleMenu, ...profileActionsMenu]
+      ? [...currentProfileMenu, ...switchProfileMenu, ...addRoleMenu, ...profileActionsMenu]
       : undefined;
 
   const openMenu = () => {
@@ -281,14 +292,10 @@ export const InlineNav = ({
                 <button
                   type="button"
                   onClick={() => {
-                    if (effectiveProfileMenu) {
-                      setMenuOpen((v) => !v);
-                      return;
-                    }
                     if (isAdmin) {
                       return;
                     }
-                    navigate("/account");
+                    navigate(currentProfilePath);
                   }}
                   onFocus={openMenu}
                   className="h-10 w-10 overflow-hidden rounded-full border border-black/10 bg-slate-200 transition-shadow hover:ring-2 hover:ring-slate-300"

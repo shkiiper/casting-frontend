@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { login as apiLogin, verifyEmail } from "../../api/auth";
 import { useAuthStore } from "../../entities/user/model/authStore";
 import type { UserRole } from "../../types/auth";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { AnimatedCodeBackdrop } from "@/shared/ui/AnimatedCodeBackdrop";
 import { getApiErrorMessage } from "@/shared/lib/safety";
 import "./VerifyEmailPage.css";
 
@@ -107,7 +107,7 @@ export function VerifyEmailPage() {
 
   return (
     <div className="verify-root">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="verify-card relative z-10">
         {status === "loading" && (
           <>

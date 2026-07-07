@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { login as apiLogin, resendVerification, verifyEmail } from "../../api/auth";
 import { useAuthStore } from "../../entities/user/model/authStore";
 import type { UserRole } from "../../types/auth";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { AnimatedCodeBackdrop } from "@/shared/ui/AnimatedCodeBackdrop";
 import { getApiErrorMessage, sanitizeEmail, trimToNull } from "@/shared/lib/safety";
 import "./CheckEmailPage.css";
 
@@ -158,7 +158,7 @@ export function CheckEmailPage() {
 
   return (
     <div className="check-root">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="check-card relative z-10">
         <h1 className="check-title">Проверьте почту</h1>
         <p className="check-text">

@@ -8,7 +8,7 @@ import {
 } from "@/api/payments";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { AnimatedCodeBackdrop } from "@/shared/ui/AnimatedCodeBackdrop";
 import { CenterToast } from "@/shared/ui/CenterToast";
 import { sanitizeHttpUrl, sanitizeInternalPath } from "@/shared/lib/safety";
 
@@ -96,7 +96,7 @@ export const PaymentStatusPage = () => {
 
   return (
     <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="relative z-10 pt-8 pb-16">
         <Container>
           <div className="glass-object mx-auto max-w-4xl overflow-visible rounded-[28px] sm:rounded-[36px]">

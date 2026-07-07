@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import api from "@/api/client";
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { AnimatedCodeBackdrop } from "@/shared/ui/AnimatedCodeBackdrop";
 import type { PageResponse } from "@/types/common";
 import {
   getCastingApplications,
@@ -56,7 +56,7 @@ export const CustomerCastingResponsesPage = () => {
 
   return (
     <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="relative z-10">
         <Container>
         <div className="mx-auto max-w-7xl mt-10 bg-white rounded-[36px] shadow border border-black/5 overflow-visible">

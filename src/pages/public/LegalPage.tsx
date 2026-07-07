@@ -1,13 +1,13 @@
 import { Container } from "@/shared/ui/Container";
 import { InlineNav } from "@/shared/ui/InlineNav";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { AnimatedCodeBackdrop } from "@/shared/ui/AnimatedCodeBackdrop";
 import { PublicFooter } from "@/shared/ui/PublicFooter";
 import { COMPANY_EMAIL, COMPANY_NAME } from "@/shared/config/company";
 
 export const LegalPage = () => {
   return (
     <div className="relative min-h-screen bg-[#f3f4f7] text-slate-900">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="relative z-10 pt-10">
         <Container>
           <div className="mx-auto max-w-5xl overflow-hidden rounded-[30px] border border-black/5 bg-white/88 shadow-[0_16px_56px_rgba(15,23,42,0.10)] sm:rounded-[36px]">

@@ -1,48 +1,33 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
   BadgeCheck,
   MapPin,
-  Play,
   Radar,
   Sparkles,
   UsersRound,
 } from 'lucide-react';
 import { Container } from '@/shared/ui/Container';
 import { InlineNav } from '@/shared/ui/InlineNav';
-import publicApi from '@/shared/api/publicClient';
-import { PageOctopusDecor } from '@/shared/ui/PageOctopusDecor';
+import { AnimatedCodeBackdrop } from '@/shared/ui/AnimatedCodeBackdrop';
 import { PublicFooter } from '@/shared/ui/PublicFooter';
 import actorIcon from '@/shared/assets/actor-icon.svg';
 import directorIcon from '@/shared/assets/director-icon.svg';
 import locationIcon from '@/shared/assets/location-icon.svg';
-import type { PageResponse } from '@/types/common';
 
 const studios = [
-  'Atom Creative Studio',
-  'Silverline Production',
-  'Nomad Pictures',
-  'Blue Frame Studio',
-  'Kyrgyz Film Lab',
-  'Ala-Too Media',
-  'CineCraft Bishkek',
-  'Steppe Studio',
-  'Urban Lens',
-  'Onset Production',
+  'Атом Креатив',
+  'Серебряная Линия',
+  'Номад Пикчерс',
+  'Синяя Рамка',
+  'Кыргыз Фильм Лаб',
+  'Ала-Тоо Медиа',
+  'СинеКрафт Бишкек',
+  'Степная Студия',
+  'Городская Линза',
+  'Онсет Продакшен',
 ];
-
-type CastingResponse = {
-  id: number;
-};
-
-type CastingListResponse = PageResponse<CastingResponse> | CastingResponse[];
-
-type HomeMetrics = {
-  totalProfiles: number;
-  activeAds: number;
-  actorProfiles: number;
-};
 
 const profileDirections = [
   {
@@ -89,70 +74,10 @@ const steps = [
   },
 ];
 
-const liveCards = [
-  { title: 'Актёр', text: '25 лет · Бишкек', accent: 'cyan' },
-  { title: 'Креатор', text: 'Клипы · реклама · reels', accent: 'amber' },
-  { title: 'Локация', text: 'Лофт · 120 м² · daylight', accent: 'rose' },
-];
-
 export const HomePage = () => {
-  const [metrics, setMetrics] = useState<HomeMetrics>({
-    totalProfiles: 0,
-    activeAds: 0,
-    actorProfiles: 0,
-  });
-
-  useEffect(() => {
-    (async () => {
-      const [actorsRes, creatorsRes, locationsRes, activeCastingsRes] =
-        await Promise.allSettled([
-          publicApi.get<PageResponse<unknown>>('/api/catalog/actors', {
-            params: { page: 0, size: 1 },
-          }),
-          publicApi.get<PageResponse<unknown>>('/api/catalog/creators', {
-            params: { page: 0, size: 1 },
-          }),
-          publicApi.get<PageResponse<unknown>>('/api/catalog/locations', {
-            params: { page: 0, size: 1 },
-          }),
-          publicApi.get<CastingListResponse>('/api/castings/active', {
-            params: { page: 0, size: 1 },
-          }),
-        ]);
-
-      const actorProfiles =
-        actorsRes.status === 'fulfilled' ? actorsRes.value.data.totalElements ?? 0 : 0;
-      const creatorProfiles =
-        creatorsRes.status === 'fulfilled' ? creatorsRes.value.data.totalElements ?? 0 : 0;
-      const locationProfiles =
-        locationsRes.status === 'fulfilled' ? locationsRes.value.data.totalElements ?? 0 : 0;
-
-      const activeAds =
-        activeCastingsRes.status === 'fulfilled'
-          ? Array.isArray(activeCastingsRes.value.data)
-            ? activeCastingsRes.value.data.length
-            : activeCastingsRes.value.data.totalElements ?? 0
-          : 0;
-
-      setMetrics({
-        totalProfiles: actorProfiles + creatorProfiles + locationProfiles,
-        activeAds,
-        actorProfiles,
-      });
-    })();
-  }, []);
-
-  const metricCards = useMemo(
-    () => [
-      { label: 'Профилей в каталоге', value: metrics.totalProfiles },
-      { label: 'Активных объявлений', value: metrics.activeAds },
-    ],
-    [metrics]
-  );
-
   return (
     <div className="home-page relative min-h-screen overflow-x-hidden bg-[#f3f4f7] text-slate-900">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="relative z-10 pb-8 pt-4 sm:pt-10">
         <Container>
           <div className="glass-object relative mx-auto max-w-7xl overflow-hidden rounded-[22px] sm:rounded-[36px] lg:rounded-[44px]">
@@ -163,145 +88,54 @@ export const HomePage = () => {
             <div className="relative z-10">
               <InlineNav active="home" />
 
-              <section className="grid min-h-[calc(100svh-220px)] min-w-0 items-center gap-8 overflow-hidden px-4 py-8 sm:px-6 md:grid-cols-[minmax(0,1fr)_520px] md:px-8 md:py-12">
-              <div className="home-hero-copy w-full min-w-0 max-w-full sm:max-w-4xl">
-                <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/80 bg-white/55 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700 backdrop-blur sm:text-xs sm:tracking-[0.22em]">
-                  <Sparkles size={16} />
-                  <span className="truncate">Fashion casting digest</span>
-                </div>
+              <section className="home-hero-stage home-hero-reimagined home-cover-hero min-w-0 overflow-hidden px-4 py-8 sm:px-6 md:px-8 md:py-14">
+                <div className="home-cover-issue">Выпуск 01 · Бишкек</div>
+                <div className="home-cover-date">Кастинги / люди / локации</div>
 
-                <h1 className="mt-6 text-5xl font-black leading-[0.9] sm:text-6xl md:text-8xl">
-                  ONSET
-                </h1>
-                <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8 md:text-2xl md:leading-9">
-                  Витрина кастингов, людей и локаций в формате модного досье:
-                  быстро выбрать, красиво представить, легко собрать проект.
-                </p>
-
-                <div className="home-hero-actions mt-8 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    to="/actors"
-                    className="inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/80 px-5 text-sm font-bold text-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.10)] backdrop-blur transition-colors hover:bg-white sm:w-auto sm:px-6"
-                  >
-                    Открыть каталог
-                    <ArrowRight size={18} />
-                  </Link>
-                  <Link
-                    to="/ads"
-                    className="inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/55 px-5 text-sm font-bold text-slate-900 backdrop-blur transition-colors hover:bg-white/70 sm:w-auto sm:px-6"
-                  >
-                    <Play size={17} />
-                    Смотреть кастинги
-                  </Link>
-                </div>
-
-                <div className="home-hero-metrics mt-8 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-2">
-                  {metricCards.map((item) => (
-                    <div
-                      key={item.label}
-                      className="min-w-0 rounded-2xl border border-white/80 bg-white/70 p-4 backdrop-blur"
-                    >
-                      <div className="text-3xl font-black">
-                        {new Intl.NumberFormat('ru-RU').format(item.value)}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-600">{item.label}</div>
+                <div className="home-cover-layout">
+                  <div className="home-cover-copy">
+                    <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-white/80 bg-white/62 px-3 py-2 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600 shadow-[0_10px_34px_rgba(15,23,42,0.06)] backdrop-blur sm:text-xs sm:tracking-[0.22em]">
+                      <Sparkles size={16} />
+                      <span className="truncate">Модный кастинг-дайджест</span>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="home-editorial-scene relative min-h-[380px] min-w-0 overflow-hidden sm:min-h-[440px] md:min-h-[520px]">
-                <div className="home-magazine home-magazine--back">
-                  <div className="home-magazine-label">LOOKBOOK</div>
-                  <div className="home-magazine-lines">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                </div>
-
-                <div className="home-magazine home-magazine--front">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="home-magazine-label">ISSUE 07</div>
-                      <div className="mt-2 text-[11px] font-bold uppercase tracking-[0.26em] text-cyan-500">
-                        Bishkek talents
-                      </div>
-                    </div>
-                    <div className="rounded-full border border-slate-200 bg-white/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-slate-600">
+                    <h1 className="home-cover-title mt-8 text-slate-950">
                       ONSET
+                    </h1>
+                    <div className="home-cover-headline">
+                      Витрина кастингов как обложка модного журнала.
                     </div>
-                  </div>
+                    <p className="home-cover-lead">
+                      Люди, локации и проекты собраны в аккуратную редакционную подборку,
+                      где всё выглядит дорого, чисто и понятно с первого взгляда.
+                    </p>
 
-                  <div className="mt-7 text-4xl font-black leading-[0.88] text-slate-950 sm:text-5xl">
-                    Casting
-                    <br />
-                    Report
-                  </div>
-
-                  <div className="home-cover-portrait">
-                    <div className="home-cover-head" />
-                    <div className="home-cover-body" />
-                    <div className="home-cover-orbit home-cover-orbit--one" />
-                    <div className="home-cover-orbit home-cover-orbit--two" />
-                  </div>
-
-                  <div className="mt-6 grid grid-cols-3 gap-2">
-                    {['Role', 'City', 'Mood'].map((item) => (
-                      <div
-                        key={item}
-                        className="rounded-2xl border border-slate-200/80 bg-white/68 px-3 py-2 text-center text-[10px] font-black uppercase tracking-[0.14em] text-slate-600"
+                    <div className="home-hero-actions mt-8 flex flex-col gap-3 sm:flex-row">
+                      <Link
+                        to="/ads"
+                        className="inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-slate-950 bg-slate-950 px-5 text-sm font-bold text-white shadow-[0_18px_46px_rgba(15,23,42,0.20)] transition-transform hover:-translate-y-0.5 sm:w-auto sm:px-6"
                       >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {liveCards.map((card, index) => (
-                  <div
-                    key={card.title}
-                    className={`home-live-card home-live-card--${index + 1}`}
-                  >
-                    <div className={`home-live-dot home-live-dot--${card.accent}`} />
-                    <div>
-                      <div className="text-sm font-bold">{card.title}</div>
-                      <div className="mt-1 text-xs text-slate-600">{card.text}</div>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="home-command-card">
-                  <div className="flex items-center gap-3">
-                    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-400 text-slate-900">
-                      <Sparkles size={22} />
-                    </span>
-                    <div>
-                      <div className="text-sm font-bold">Editor’s pick</div>
-                      <div className="mt-1 text-xs text-slate-600">
-                        3 профиля · 1 проект
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-5 grid grid-cols-3 gap-2">
-                    {['Актёр', 'Локация', 'Команда'].map((item) => (
-                      <div
-                        key={item}
-                        className="rounded-xl border border-black/10 bg-white/70 px-3 py-2 text-center text-[11px] font-semibold text-slate-700"
+                        Смотреть кастинги
+                        <ArrowRight size={18} />
+                      </Link>
+                      <Link
+                        to="/actors"
+                        className="inline-flex min-h-12 w-full min-w-0 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/70 px-5 text-sm font-bold text-slate-900 shadow-[0_14px_36px_rgba(15,23,42,0.08)] backdrop-blur transition-colors hover:bg-white sm:w-auto sm:px-6"
                       >
-                        {item}
-                      </div>
-                    ))}
+                        Каталог
+                      </Link>
+                    </div>
                   </div>
+
+                  <div className="home-cover-side" aria-hidden="true" />
                 </div>
-              </div>
               </section>
             </div>
           </div>
         </Container>
       </div>
 
-      <main className="relative z-10 bg-[#f3f4f7] pb-16">
+      <main className="relative z-10 pb-16">
         <Container>
           <section className="-mt-8 rounded-[28px] border border-white/80 bg-white/72 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.12)] backdrop-blur md:rounded-[36px] md:p-4">
             <div className="marquee">
@@ -424,7 +258,7 @@ export const HomePage = () => {
               <div className="p-6 md:p-10">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-bold uppercase tracking-[0.18em] text-slate-900">
                   <Sparkles size={15} />
-                  Profile showcase
+                  Витрина профилей
                 </div>
                 <h3 className="mt-5 text-3xl font-black md:text-5xl">
                   Публикуйте проект как аккуратную редакционную подборку
@@ -448,27 +282,21 @@ export const HomePage = () => {
                   </Link>
                 </div>
               </div>
-              <div className="home-cta-editorial relative min-h-[320px] overflow-hidden bg-white">
-                <div className="home-cta-sheet home-cta-sheet--one">
-                  <span>Actor</span>
-                  <strong>fresh face</strong>
+              <div className="home-cta-editorial home-cta-cover relative min-h-[320px] overflow-hidden bg-white">
+                <div className="home-cta-cover-line">Кастинг-отчёт</div>
+                <div className="home-cta-cover-title">ONSET</div>
+                <div className="home-cta-cover-meta">
+                  <span>актёр</span>
+                  <span>локация</span>
+                  <span>команда</span>
                 </div>
-                <div className="home-cta-sheet home-cta-sheet--two">
-                  <span>Location</span>
-                  <strong>soft light</strong>
-                </div>
-                <div className="home-cta-sheet home-cta-sheet--three">
-                  <span>Team</span>
-                  <strong>ready</strong>
-                </div>
-                <div className="home-cta-editorial-title">ONSET</div>
               </div>
             </div>
           </section>
         </Container>
       </main>
 
-      <div className="bg-[#f3f4f7]">
+      <div className="relative z-10">
         <PublicFooter />
       </div>
     </div>

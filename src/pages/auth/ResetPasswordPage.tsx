@@ -1,7 +1,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../../api/auth";
-import { PageOctopusDecor } from "@/shared/ui/PageOctopusDecor";
+import { AnimatedCodeBackdrop } from "@/shared/ui/AnimatedCodeBackdrop";
 import { getApiErrorMessage, trimToNull } from "@/shared/lib/safety";
 import "./ResetPasswordPage.css";
 
@@ -48,7 +48,7 @@ export function ResetPasswordPage() {
 
   return (
     <div className="reset-root">
-      <PageOctopusDecor />
+      <AnimatedCodeBackdrop />
       <div className="reset-card relative z-10">
         <h1 className="reset-title">Новый пароль</h1>
         {!token ? (
